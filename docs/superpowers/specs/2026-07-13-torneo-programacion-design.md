@@ -8,6 +8,7 @@ Un salón de clase quiere organizar un torneo de programación competitiva, insp
 
 - Evento único, presencial, en un salón de clase.
 - 20-40 participantes aproximadamente.
+- Dos categorías de competencia: `senior` y `junior` (el participante elige la suya al registrarse). La categoría `junior` tiene acceso a un asistente de IA limitado (ver sección "Asistente de IA para categoría Junior"); `senior` no.
 - Lenguajes soportados: Python, JavaScript, y potencialmente otros que soporte el motor de ejecución (a definir la lista exacta al cargar los problemas).
 - Fuera de alcance: múltiples torneos/histórico de eventos, detección de plagio, modo espectador aparte del leaderboard, más de un torneo corriendo simultáneamente.
 
@@ -49,11 +50,12 @@ Se descartaron: (a) usar WebSockets/SSE para el leaderboard — complejidad de i
 
 ## Modelo de datos
 
-- **`users`**: id, nombre, email, avatar (de OAuth), rol (`participant` | `admin`), `checkin_token` (único, generado al crear la cuenta), `checked_in_at` (nullable — null hasta que el organizador escanea su QR).
+- **`users`**: id, nombre, email, avatar (de OAuth), rol (`participant` | `admin`), `category` (`senior` | `junior`, elegida al registrarse), `checkin_token` (único, generado al crear la cuenta), `checked_in_at` (nullable — null hasta que el organizador escanea su QR), `ai_questions_used` (0-2, solo relevante para `junior`).
 - **`problems`**: id, título, descripción (markdown), dificultad, lenguajes permitidos, orden/puntos.
 - **`test_cases`**: id, problem_id, input, expected_output. Todos son visibles para el participante (no hay casos ocultos).
 - **`submissions`**: id, user_id, problem_id, código, lenguaje, timestamp, status (`pending`|`accepted`|`wrong_answer`|`runtime_error`|`timeout`), tiempo de ejecución, feedback de Claude (texto, nullable hasta que se genera).
-- **Standings**: vista/cálculo derivado de `submissions`, no es una tabla propia — problemas resueltos (count) + tiempo total desde el inicio del torneo + penalización de +20 minutos por cada intento fallido previo al intento correcto, por problema (regla estándar de ICPC). Si un problema nunca se resuelve, no penaliza (solo cuentan los intentos previos al `accepted`).
+- **`ai_questions`**: id, user_id, problem_id (nullable, en qué problema estaba cuando preguntó), pregunta, respuesta, timestamp. Log de las preguntas al asistente de Haiku (solo aplica a `junior`).
+- **Standings**: vista/cálculo derivado de `submissions`, no es una tabla propia — problemas resueltos (count) + tiempo total desde el inicio del torneo + penalización de +20 minutos por cada intento fallido previo al intento correcto, por problema (regla estándar de ICPC). Si un problema nunca se resuelve, no penaliza (solo cuentan los intentos previos al `accepted`). El ranking se calcula por separado dentro de cada categoría (`senior` y `junior` no compiten entre sí).
 - **Estado global del torneo**: un registro simple (ej. tabla `tournament_state` de una sola fila) con el timestamp de inicio, usado para calcular tiempos en el leaderboard.
 
 ## Flujos principales
@@ -92,6 +94,17 @@ Esto evita que alguien se registre y resuelva los problemas remotamente sin supe
 
 - Página `/leaderboard` (para proyectar en pantalla) hace polling cada 3-4 segundos a una server function que calcula standings desde `submissions`.
 - Orden: número de problemas resueltos (desc), luego tiempo total con penalización (asc) — estilo ICPC.
+- Se muestran **dos tablas separadas**, una para `senior` y otra para `junior` — cada categoría tiene su propio primer, segundo y tercer lugar. No compiten entre sí, ya que junior tiene acceso al asistente de IA y senior no.
+
+## Asistente de IA para categoría Junior
+
+- Motivado por la temática del seminario (Agentic Coding): un apoyo puntual de IA para quienes están aprendiendo, sin resolverles el problema.
+- Visible únicamente para participantes con `category = junior`. Los `senior` no ven esta opción.
+- **UI**: botón "Preguntar a Haiku" junto al editor de código, que abre un modal con un campo de texto libre y un contador ("Preguntas restantes: 2/2"). Cada pregunta enviada y su respuesta se muestran como un mini-chat de máximo 2 turnos dentro del mismo modal.
+- **Límite**: 2 preguntas en total durante todo el torneo (no por problema), llevado en `users.ai_questions_used`. Al llegar a 2, el input queda deshabilitado con un tooltip explicando que ya agotó sus preguntas.
+- **Modelo**: Claude Haiku 4.5 (rápido y barato, apropiado para respuestas cortas de sintaxis).
+- **Restricción de contenido**: la llamada a Haiku incluye el enunciado del problema actual como contexto, junto con instrucciones estrictas de responder únicamente preguntas generales de sintaxis o uso de funciones/estructuras estándar del lenguaje (ej. "¿cómo uso `.filter` en JS?", "¿cómo declaro un array en Java?"). Si la pregunta pide o insinúa la lógica/solución del problema actual, Haiku debe rechazar amablemente y sugerir reformular hacia algo más general. Esto es un control por prompt (buena fe), no una garantía absoluta contra manipulación deliberada del prompt — aceptable para el contexto de un evento de salón de clase.
+- Cada pregunta y respuesta se guarda en `ai_questions` para poder revisar después qué se preguntó durante el evento.
 
 ## Autenticación y roles
 
@@ -118,5 +131,5 @@ Esto evita que alguien se registre y resuelva los problemas remotamente sin supe
 ## Testing
 
 - Foco en pruebas de la lógica de standings (cálculo de ranking con penalización por intentos) — es la pieza de lógica pura más propensa a errores sutiles.
-- Pruebas de integración manuales para: flujo OAuth, escaneo de QR/check-in, ejecución vía Piston (Run y Submit), CRUD de problemas en el panel de admin.
+- Pruebas de integración manuales para: flujo OAuth, escaneo de QR/check-in, ejecución vía Piston (Run y Submit), CRUD de problemas en el panel de admin, límite de 2 preguntas del asistente de IA (que se bloquee correctamente al llegar a 0), y verificación manual de que el asistente rechaza preguntas que piden la solución directa del problema.
 - Dado el timeline corto de un evento único, no se justifica una suite E2E exhaustiva; se prioriza verificar manualmente el camino feliz y los casos de error de Piston (timeout, runtime error) antes del evento.
