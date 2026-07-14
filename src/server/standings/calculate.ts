@@ -50,8 +50,9 @@ export function calculateStandings(
       solvedCount += 1
       const acceptedSubmission = problemSubs[acceptedIndex]
       const failedAttemptsBefore = acceptedIndex
-      const minutesSinceStart =
-        (acceptedSubmission.createdAt.getTime() - tournamentStartedAt.getTime()) / 60000
+      const minutesSinceStart = Math.floor(
+        (acceptedSubmission.createdAt.getTime() - tournamentStartedAt.getTime()) / 60000,
+      )
       totalPenaltyMinutes += minutesSinceStart + failedAttemptsBefore * 20
     }
 
