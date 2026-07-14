@@ -36,7 +36,7 @@ The `scripts/install-piston-languages.sh` script handles language runtime instal
    ```
 3. Once complete, disable the public domain on the Piston service
 
-The script installs Python 3.10.0 and JavaScript 18.15.0 runtimes.
+The script installs Python, JavaScript, Java, C# and PHP runtimes (see `scripts/install-piston-languages.sh` for exact pinned versions).
 
 ### Step 4: Create the Main App Service
 
