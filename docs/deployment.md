@@ -52,15 +52,9 @@ Set the following environment variables on the app service:
 - `DATABASE_URL` - Reference to the MySQL plugin: `${{MySQL.DATABASE_URL}}`
 - `PISTON_URL=http://piston.railway.internal:2000` (private network address)
 - `ANTHROPIC_API_KEY` - Your Anthropic API key
-- `GOOGLE_CLIENT_ID` - From Google OAuth app
-- `GOOGLE_CLIENT_SECRET` - From Google OAuth app
-- `GITHUB_CLIENT_ID` - From GitHub OAuth app
-- `GITHUB_CLIENT_SECRET` - From GitHub OAuth app
 - `BETTER_AUTH_SECRET` - A secure random string for authentication
-
-**Important:** Update the Google and GitHub OAuth app callback URLs to point to the Railway-provided domain:
-- Google: `https://<app>.up.railway.app/api/auth/callback/google`
-- GitHub: `https://<app>.up.railway.app/api/auth/callback/github`
+- `BREVO_API_KEY` / `BREVO_CORREO_REMITENTE`: credenciales de Brevo (ver Task 4) para enviar el correo de bienvenida con usuario y contraseña a cada participante registrado manualmente.
+- Ya no se usa login OAuth (Google/GitHub): las cuentas las crea el administrador desde `/admin/participantes`, con correo + contraseña generada.
 
 ### Step 6: Run Database Migrations
 

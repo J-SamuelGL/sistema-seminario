@@ -1,25 +1,66 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createAuthClient } from 'better-auth/react'
+
+const authClient = createAuthClient()
 
 export const Route = createFileRoute('/')({ component: Home })
 
 function Home() {
+  const navigate = useNavigate()
+  const [correo, setCorreo] = useState('')
+  const [contrasena, setContrasena] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviando(true)
+    setError(null)
+    const { error: errorLogin } = await authClient.signIn.email({
+      email: correo,
+      password: contrasena,
+    })
+    setEnviando(false)
+    if (errorLogin) {
+      setError('Correo o contraseña incorrectos.')
+      return
+    }
+    await navigate({ to: '/perfil' })
+  }
+
   return (
     <div className="flex flex-col items-center gap-8 p-8">
       <h1 className="text-4xl font-bold">Torneo de Programación</h1>
-      <div className="flex gap-4">
-        <a
-          href="/api/auth/sign-in/google"
-          className="rounded bg-blue-600 px-6 py-3 text-white"
+      <form className="flex w-72 flex-col gap-4" onSubmit={handleLogin}>
+        <p className="text-sm text-gray-500">
+          Usa el correo y la contraseña que te llegaron por correo cuando te registraste.
+        </p>
+        <input
+          className="border p-2"
+          type="email"
+          placeholder="Correo"
+          value={correo}
+          onChange={(e) => setCorreo(e.target.value)}
+          required
+        />
+        <input
+          className="border p-2"
+          type="password"
+          placeholder="Contraseña"
+          value={contrasena}
+          onChange={(e) => setContrasena(e.target.value)}
+          required
+        />
+        <button
+          className="rounded bg-blue-600 px-6 py-3 text-white disabled:bg-gray-300"
+          type="submit"
+          disabled={enviando}
         >
-          Iniciar sesión con Google
-        </a>
-        <a
-          href="/api/auth/sign-in/github"
-          className="rounded bg-gray-800 px-6 py-3 text-white"
-        >
-          Iniciar sesión con GitHub
-        </a>
-      </div>
+          {enviando ? 'Ingresando...' : 'Iniciar sesión'}
+        </button>
+        {error && <p className="text-red-600">{error}</p>}
+      </form>
     </div>
   )
 }
