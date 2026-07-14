@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import { determineVerdict } from '../src/server/judge/verdict'
 import { runTestCases } from '../src/server/judge/runTestCases'
+import { pistonExecute } from '../src/server/piston/client'
 
 vi.mock('../src/server/piston/client', () => ({
   pistonExecute: vi.fn(),
 }))
-import { pistonExecute } from '../src/server/piston/client'
 
 describe('determineVerdict', () => {
   it('returns accepted when all cases pass', () => {

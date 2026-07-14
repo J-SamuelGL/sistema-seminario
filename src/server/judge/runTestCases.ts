@@ -1,5 +1,6 @@
 import { pistonExecute } from '../piston/client'
-import { determineVerdict, type CaseResult, type Verdict } from './verdict'
+import { determineVerdict } from './verdict'
+import type { CaseResult, Verdict } from './verdict'
 
 export type TestCase = { input: string; expectedOutput: string }
 
