@@ -10,10 +10,6 @@ function RegisterPage() {
 
   async function choose(category: 'senior' | 'junior') {
     await setCategory({ data: category })
-    // '/problems' is created in a later task in this plan; the router's
-    // generated route-type union won't include it until that route file
-    // exists. Remove this suppression once it does.
-    // @ts-expect-error -- '/problems' route not created until a later task
     navigate({ to: '/problems' })
   }
 

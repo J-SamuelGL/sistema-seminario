@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProblemsIndexRouteImport } from './routes/problems/index'
+import { Route as ProblemsProblemIdRouteImport } from './routes/problems/$problemId'
 import { Route as AdminCheckinRouteImport } from './routes/admin/checkin'
 import { Route as AdminProblemsIndexRouteImport } from './routes/admin/problems/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -30,6 +32,16 @@ const ProfileRoute = ProfileRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProblemsIndexRoute = ProblemsIndexRouteImport.update({
+  id: '/problems/',
+  path: '/problems/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProblemsProblemIdRoute = ProblemsProblemIdRouteImport.update({
+  id: '/problems/$problemId',
+  path: '/problems/$problemId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCheckinRoute = AdminCheckinRouteImport.update({
@@ -58,6 +70,8 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/problems/$problemId': typeof ProblemsProblemIdRoute
+  '/problems/': typeof ProblemsIndexRoute
   '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/problems/': typeof AdminProblemsIndexRoute
@@ -67,6 +81,8 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/problems/$problemId': typeof ProblemsProblemIdRoute
+  '/problems': typeof ProblemsIndexRoute
   '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/problems': typeof AdminProblemsIndexRoute
@@ -77,6 +93,8 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/problems/$problemId': typeof ProblemsProblemIdRoute
+  '/problems/': typeof ProblemsIndexRoute
   '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/problems/': typeof AdminProblemsIndexRoute
@@ -88,6 +106,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/admin/checkin'
+    | '/problems/$problemId'
+    | '/problems/'
     | '/admin/problems/$problemId'
     | '/api/auth/$'
     | '/admin/problems/'
@@ -97,6 +117,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/admin/checkin'
+    | '/problems/$problemId'
+    | '/problems'
     | '/admin/problems/$problemId'
     | '/api/auth/$'
     | '/admin/problems'
@@ -106,6 +128,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/admin/checkin'
+    | '/problems/$problemId'
+    | '/problems/'
     | '/admin/problems/$problemId'
     | '/api/auth/$'
     | '/admin/problems/'
@@ -116,6 +140,8 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   AdminCheckinRoute: typeof AdminCheckinRoute
+  ProblemsProblemIdRoute: typeof ProblemsProblemIdRoute
+  ProblemsIndexRoute: typeof ProblemsIndexRoute
   AdminProblemsProblemIdRoute: typeof AdminProblemsProblemIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   AdminProblemsIndexRoute: typeof AdminProblemsIndexRoute
@@ -142,6 +168,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/problems/': {
+      id: '/problems/'
+      path: '/problems'
+      fullPath: '/problems/'
+      preLoaderRoute: typeof ProblemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/problems/$problemId': {
+      id: '/problems/$problemId'
+      path: '/problems/$problemId'
+      fullPath: '/problems/$problemId'
+      preLoaderRoute: typeof ProblemsProblemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/checkin': {
@@ -180,6 +220,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   AdminCheckinRoute: AdminCheckinRoute,
+  ProblemsProblemIdRoute: ProblemsProblemIdRoute,
+  ProblemsIndexRoute: ProblemsIndexRoute,
   AdminProblemsProblemIdRoute: AdminProblemsProblemIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   AdminProblemsIndexRoute: AdminProblemsIndexRoute,
