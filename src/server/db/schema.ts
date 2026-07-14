@@ -1,6 +1,7 @@
 import {
   mysqlTable,
   text,
+  varchar,
   timestamp,
   int,
   boolean,
@@ -10,16 +11,16 @@ import {
 
 // Tablas centrales de Better Auth
 export const usuarios = mysqlTable('usuario', {
-  id: text('id').primaryKey(),
+  id: varchar('id', { length: 36 }).primaryKey(),
   name: text('nombre').notNull(),
-  email: text('email').notNull().unique(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
   emailVerified: boolean('correo_verificado').notNull().default(false),
   image: text('imagen'),
   createdAt: timestamp('creado_en').notNull().defaultNow(),
   updatedAt: timestamp('actualizado_en').notNull().defaultNow(),
   rol: mysqlEnum('rol', ['participante', 'admin']).notNull().default('participante'),
   categoria: mysqlEnum('categoria', ['senior', 'junior']),
-  tokenIngreso: text('token_ingreso')
+  tokenIngreso: varchar('token_ingreso', { length: 255 })
     .$defaultFn(() => crypto.randomUUID())
     .notNull()
     .unique(),
@@ -28,11 +29,11 @@ export const usuarios = mysqlTable('usuario', {
 })
 
 export const sesiones = mysqlTable('sesion', {
-  id: text('id').primaryKey(),
-  userId: text('usuario_id')
+  id: varchar('id', { length: 36 }).primaryKey(),
+  userId: varchar('usuario_id', { length: 36 })
     .notNull()
     .references(() => usuarios.id, { onDelete: 'cascade' }),
-  token: text('token').notNull().unique(),
+  token: varchar('token', { length: 255 }).notNull().unique(),
   expiresAt: timestamp('expira_en').notNull(),
   createdAt: timestamp('creado_en').notNull().defaultNow(),
   updatedAt: timestamp('actualizado_en').notNull().defaultNow(),
@@ -41,8 +42,8 @@ export const sesiones = mysqlTable('sesion', {
 })
 
 export const cuentas = mysqlTable('cuenta', {
-  id: text('id').primaryKey(),
-  userId: text('usuario_id')
+  id: varchar('id', { length: 36 }).primaryKey(),
+  userId: varchar('usuario_id', { length: 36 })
     .notNull()
     .references(() => usuarios.id, { onDelete: 'cascade' }),
   accountId: text('id_cuenta_proveedor').notNull(),
@@ -58,7 +59,7 @@ export const cuentas = mysqlTable('cuenta', {
 })
 
 export const verificaciones = mysqlTable('verificacion', {
-  id: text('id').primaryKey(),
+  id: varchar('id', { length: 36 }).primaryKey(),
   identifier: text('identificador').notNull(),
   value: text('valor').notNull(),
   expiresAt: timestamp('expira_en').notNull(),
@@ -67,7 +68,9 @@ export const verificaciones = mysqlTable('verificacion', {
 
 // Tablas de dominio
 export const problemas = mysqlTable('problemas', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: varchar('id', { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   titulo: text('titulo').notNull(),
   descripcion: text('descripcion').notNull(),
   dificultad: text('dificultad').notNull(),
@@ -76,8 +79,10 @@ export const problemas = mysqlTable('problemas', {
 })
 
 export const casosPrueba = mysqlTable('casos_prueba', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  problemaId: text('problema_id')
+  id: varchar('id', { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  problemaId: varchar('problema_id', { length: 36 })
     .notNull()
     .references(() => problemas.id, { onDelete: 'cascade' }),
   entrada: text('entrada').notNull(),
@@ -85,11 +90,13 @@ export const casosPrueba = mysqlTable('casos_prueba', {
 })
 
 export const envios = mysqlTable('envios', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  usuarioId: text('usuario_id')
+  id: varchar('id', { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  usuarioId: varchar('usuario_id', { length: 36 })
     .notNull()
     .references(() => usuarios.id),
-  problemaId: text('problema_id')
+  problemaId: varchar('problema_id', { length: 36 })
     .notNull()
     .references(() => problemas.id),
   codigo: text('codigo').notNull(),
@@ -108,11 +115,13 @@ export const envios = mysqlTable('envios', {
 })
 
 export const preguntasIa = mysqlTable('preguntas_ia', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  usuarioId: text('usuario_id')
+  id: varchar('id', { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  usuarioId: varchar('usuario_id', { length: 36 })
     .notNull()
     .references(() => usuarios.id),
-  problemaId: text('problema_id').references(() => problemas.id),
+  problemaId: varchar('problema_id', { length: 36 }).references(() => problemas.id),
   pregunta: text('pregunta').notNull(),
   respuesta: text('respuesta').notNull(),
   creadoEn: timestamp('creado_en').notNull().defaultNow(),
