@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as ClasificacionRouteImport } from './routes/clasificacion'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,11 +22,6 @@ import { Route as AdminProblemasIndexRouteImport } from './routes/admin/problema
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminProblemasProblemaIdRouteImport } from './routes/admin/problemas/$problemaId'
 
-const RegistroRoute = RegistroRouteImport.update({
-  id: '/registro',
-  path: '/registro',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -94,7 +88,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clasificacion': typeof ClasificacionRoute
   '/perfil': typeof PerfilRoute
-  '/registro': typeof RegistroRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
@@ -109,7 +102,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clasificacion': typeof ClasificacionRoute
   '/perfil': typeof PerfilRoute
-  '/registro': typeof RegistroRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
@@ -125,7 +117,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/clasificacion': typeof ClasificacionRoute
   '/perfil': typeof PerfilRoute
-  '/registro': typeof RegistroRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
@@ -142,7 +133,6 @@ export interface FileRouteTypes {
     | '/'
     | '/clasificacion'
     | '/perfil'
-    | '/registro'
     | '/admin/envios'
     | '/admin/ingreso'
     | '/admin/participantes'
@@ -157,7 +147,6 @@ export interface FileRouteTypes {
     | '/'
     | '/clasificacion'
     | '/perfil'
-    | '/registro'
     | '/admin/envios'
     | '/admin/ingreso'
     | '/admin/participantes'
@@ -172,7 +161,6 @@ export interface FileRouteTypes {
     | '/'
     | '/clasificacion'
     | '/perfil'
-    | '/registro'
     | '/admin/envios'
     | '/admin/ingreso'
     | '/admin/participantes'
@@ -188,7 +176,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClasificacionRoute: typeof ClasificacionRoute
   PerfilRoute: typeof PerfilRoute
-  RegistroRoute: typeof RegistroRoute
   AdminEnviosRoute: typeof AdminEnviosRoute
   AdminIngresoRoute: typeof AdminIngresoRoute
   AdminParticipantesRoute: typeof AdminParticipantesRoute
@@ -202,13 +189,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/registro': {
-      id: '/registro'
-      path: '/registro'
-      fullPath: '/registro'
-      preLoaderRoute: typeof RegistroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/perfil': {
       id: '/perfil'
       path: '/perfil'
@@ -300,7 +280,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClasificacionRoute: ClasificacionRoute,
   PerfilRoute: PerfilRoute,
-  RegistroRoute: RegistroRoute,
   AdminEnviosRoute: AdminEnviosRoute,
   AdminIngresoRoute: AdminIngresoRoute,
   AdminParticipantesRoute: AdminParticipantesRoute,
