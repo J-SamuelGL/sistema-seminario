@@ -2,16 +2,21 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problems, testCases, submissions } from '../db/schema'
+import { problems, testCases, submissions, tournamentState } from '../db/schema'
 import { requireCheckedInParticipant } from '../auth/middleware'
 import { runTestCases } from '../judge/runTestCases'
 import { generateSubmissionFeedback } from '../claude/feedback'
+import { assertStarted } from '../tournament/guard'
 
 export const submitCode = createServerFn({ method: 'POST' })
   .validator((input: { problemId: string; language: string; code: string }) => input)
   .handler(async ({ data }): Promise<{ submissionId: string; verdict: string | null; error: string | null }> => {
     const request = getRequest()
     const user = await requireCheckedInParticipant(request.headers)
+
+    const stateRows = await db.select().from(tournamentState).where(eq(tournamentState.id, 1))
+    const state = stateRows.length > 0 ? stateRows[0] : null
+    assertStarted(state ?? { startedAt: null })
 
     const problemRows = await db.select().from(problems).where(eq(problems.id, data.problemId))
     const problem = problemRows.length > 0 ? problemRows[0] : null

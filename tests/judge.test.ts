@@ -10,28 +10,59 @@ import { pistonExecute } from '../src/server/piston/client'
 describe('determineVerdict', () => {
   it('returns accepted when all cases pass', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '2', passed: true, stderr: '', timedOut: false },
+      { input: '1', expectedOutput: '2', actualOutput: '2', passed: true, stderr: '', timedOut: false, exitCode: 0 },
     ])
     expect(verdict).toBe('accepted')
   })
 
   it('returns wrong_answer when a case fails without error', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '3', passed: false, stderr: '', timedOut: false },
+      { input: '1', expectedOutput: '2', actualOutput: '3', passed: false, stderr: '', timedOut: false, exitCode: 0 },
     ])
     expect(verdict).toBe('wrong_answer')
   })
 
-  it('returns runtime_error when stderr is present', () => {
+  it('returns runtime_error when a case has a nonzero exit code', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '', passed: false, stderr: 'Traceback', timedOut: false },
+      {
+        input: '1',
+        expectedOutput: '2',
+        actualOutput: '',
+        passed: false,
+        stderr: 'Traceback',
+        exitCode: 1,
+        timedOut: false,
+      },
     ])
     expect(verdict).toBe('runtime_error')
   })
 
+  it('returns accepted when a case passes despite incidental stderr output (nonzero-exit-code is what matters, not stderr presence)', () => {
+    const verdict = determineVerdict([
+      {
+        input: '1',
+        expectedOutput: '2',
+        actualOutput: '2',
+        passed: true,
+        stderr: 'DeprecationWarning: ...',
+        exitCode: 0,
+        timedOut: false,
+      },
+    ])
+    expect(verdict).toBe('accepted')
+  })
+
   it('returns timeout when a case timed out, taking priority over other failures', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '', passed: false, stderr: 'Traceback', timedOut: true },
+      {
+        input: '1',
+        expectedOutput: '2',
+        actualOutput: '',
+        passed: false,
+        stderr: 'Traceback',
+        timedOut: true,
+        exitCode: 1,
+      },
     ])
     expect(verdict).toBe('timeout')
   })

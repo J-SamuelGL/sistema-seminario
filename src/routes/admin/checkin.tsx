@@ -10,10 +10,16 @@ export const Route = createFileRoute('/admin/checkin')({
 
 function CheckinPage() {
   const [lastResult, setLastResult] = useState<CheckinResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleScan(token: string) {
-    const result = await checkinByToken({ data: token })
-    setLastResult(result)
+    try {
+      const result = await checkinByToken({ data: token })
+      setLastResult(result)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -31,6 +37,7 @@ function CheckinPage() {
       {lastResult?.status === 'not_found' && (
         <p className="text-red-600">❌ Código no reconocido</p>
       )}
+      {error && <p className="mt-4 text-red-600">{error}</p>}
     </div>
   )
 }

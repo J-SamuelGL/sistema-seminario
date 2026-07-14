@@ -65,6 +65,9 @@ function ProblemDetailPage() {
         setSubmitResult({ submissionId: result.submissionId, verdict: result.verdict })
         setSubmitError(null)
       }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+      setSubmitResult(null)
     } finally {
       setIsSubmitting(false)
     }

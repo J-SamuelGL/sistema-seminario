@@ -20,6 +20,7 @@ export async function runTestCases(
       passed: actualOutput === testCase.expectedOutput.trim(),
       stderr: output.stderr,
       timedOut: output.timedOut,
+      exitCode: output.exitCode,
     })
   }
 

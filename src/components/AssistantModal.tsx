@@ -14,6 +14,7 @@ export function AssistantModal({
   const [turns, setTurns] = useState<{ question: string; answer: string }[]>([])
   const [remaining, setRemaining] = useState(2 - questionsUsed)
   const [isAsking, setIsAsking] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleAsk() {
     setIsAsking(true)
@@ -22,6 +23,9 @@ export function AssistantModal({
       setTurns([...turns, { question, answer: result.answer }])
       setRemaining(result.questionsRemaining)
       setQuestion('')
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setIsAsking(false)
     }
@@ -37,6 +41,7 @@ export function AssistantModal({
         <p className="text-sm text-gray-500">
           Preguntas restantes: {remaining}/2
         </p>
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         {turns.map((t, i) => (
           <div key={i} className="mt-2 text-sm">
             <p className="font-bold">Tú: {t.question}</p>

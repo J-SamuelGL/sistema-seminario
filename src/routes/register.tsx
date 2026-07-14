@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { setCategory } from '#/server/functions/auth'
 
@@ -7,10 +8,15 @@ export const Route = createFileRoute('/register')({
 
 function RegisterPage() {
   const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
 
   async function choose(category: 'senior' | 'junior') {
-    await setCategory({ data: category })
-    navigate({ to: '/problems' })
+    try {
+      await setCategory({ data: category })
+      navigate({ to: '/problems' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -30,6 +36,7 @@ function RegisterPage() {
           Junior
         </button>
       </div>
+      {error && <p className="mt-4 text-red-600">{error}</p>}
     </div>
   )
 }
