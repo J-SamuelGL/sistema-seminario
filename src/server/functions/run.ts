@@ -35,25 +35,32 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
 
         let hint: string | null = null
         if (user.categoria === 'invitado') {
-          await db
-            .insert(corridas)
-            .values({ usuarioId: user.id, problemaId: data.problemaId, contador: 1 })
-            .onDuplicateKeyUpdate({ set: { contador: sql`${corridas.contador} + 1` } })
-          const filasCorrida = await db
-            .select()
-            .from(corridas)
-            .where(and(eq(corridas.usuarioId, user.id), eq(corridas.problemaId, data.problemaId)))
-          const contador = filasCorrida.length > 0 ? filasCorrida[0].contador : 1
+          try {
+            await db
+              .insert(corridas)
+              .values({ usuarioId: user.id, problemaId: data.problemaId, contador: 1 })
+              .onDuplicateKeyUpdate({ set: { contador: sql`${corridas.contador} + 1` } })
+            const filasCorrida = await db
+              .select()
+              .from(corridas)
+              .where(
+                and(eq(corridas.usuarioId, user.id), eq(corridas.problemaId, data.problemaId)),
+              )
+            const contador = filasCorrida.length > 0 ? filasCorrida[0].contador : 1
 
-          if (debeMostrarHint(contador)) {
-            const salidaError = resultados.find((r) => r.salidaError)?.salidaError ?? ''
-            hint = await generarComentarioEnvio({
-              tituloProblema: problema.titulo,
-              descripcionProblema: problema.descripcion,
-              codigo: data.codigo,
-              veredicto,
-              salidaError,
-            })
+            if (debeMostrarHint(contador)) {
+              const salidaError = resultados.find((r) => r.salidaError)?.salidaError ?? ''
+              hint = await generarComentarioEnvio({
+                tituloProblema: problema.titulo,
+                descripcionProblema: problema.descripcion,
+                codigo: data.codigo,
+                veredicto,
+                salidaError,
+              })
+            }
+          } catch (err) {
+            console.error('No se pudo generar el hint de Claude', err)
+            hint = null
           }
         }
 

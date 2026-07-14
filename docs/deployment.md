@@ -69,10 +69,11 @@ Set the following environment variables on the app service:
 1. Trigger a deploy from the Railway dashboard
 2. Once live, verify the deployment:
    - Visit the app's public URL
-   - Log in with Google
-   - Confirm redirect to `/registro` page
-   - Pick a category to complete registration
-   - Verify the `usuario` row appears in the Railway MySQL console
+   - Log in with an existing admin credential
+   - Go to `/admin/participantes` and create a test participant (email, name, categoria, carnet)
+   - Verify the `usuario` row appears in the Railway MySQL console with the expected `categoria`
+   - Confirm the welcome email with credentials arrives via Brevo, or, if email delivery fails, confirm the credentials are shown in the admin UI as a fallback
+   - Log out and log in as the test participant using the emailed/shown email + password
    - Navigate to `/problemas`
    - Submit a solution (e.g., "print hello") for a problem with matching test cases
    - Confirm the verdict returns `aceptado`
@@ -80,7 +81,8 @@ Set the following environment variables on the app service:
 
 These checks confirm:
 - Database connectivity and migration success
-- Google OAuth integration
+- Brevo transactional email delivery
+- Email+password authentication
 - Piston service connectivity (code execution)
 - Anthropic API integration (feedback generation)
 
