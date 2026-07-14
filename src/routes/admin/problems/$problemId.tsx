@@ -16,6 +16,15 @@ function AdminProblemEditPage() {
   const data = Route.useLoaderData()
   const navigate = useNavigate()
 
+  if (problemId !== 'new' && !data?.problem) {
+    return (
+      <div className="p-8">
+        <h1 className="text-xl font-bold">Problema no encontrado</h1>
+        <p className="text-red-600">No existe un problema con el id "{problemId}".</p>
+      </div>
+    )
+  }
+
   const initial: ProblemFormValue =
     data && data.problem
       ? {
