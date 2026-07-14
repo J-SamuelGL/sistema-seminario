@@ -3,20 +3,25 @@ import { createFileRoute } from '@tanstack/react-router'
 import { getProblem } from '#/server/functions/problems'
 import { runCode } from '#/server/functions/run'
 import { submitCode } from '#/server/functions/submit'
+import { getMe } from '#/server/functions/auth'
 import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
 import { SubmitResult } from '#/components/SubmitResult'
+import { AssistantModal } from '#/components/AssistantModal'
 import type { CaseResult } from '#/server/judge/verdict'
 
 export const Route = createFileRoute('/problems/$problemId')({
-  loader: ({ params }) => getProblem({ data: params.problemId }),
+  loader: async ({ params }) => {
+    const [problemData, user] = await Promise.all([getProblem({ data: params.problemId }), getMe().catch(() => null)])
+    return { ...problemData, user }
+  },
   component: ProblemDetailPage,
 })
 
 function ProblemDetailPage() {
   const { problemId } = Route.useParams()
-  const { problem } = Route.useLoaderData()
+  const { problem, user } = Route.useLoaderData()
   const [language, setLanguage] = useState(problem?.allowedLanguages[0] ?? '')
   const [code, setCode] = useState('')
   const [runResults, setRunResults] = useState<CaseResult[] | null>(null)
@@ -25,6 +30,7 @@ function ProblemDetailPage() {
   const [submitResult, setSubmitResult] = useState<{ submissionId: string; verdict: string } | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showAssistant, setShowAssistant] = useState(false)
 
   if (!problem) {
     return (
@@ -91,6 +97,21 @@ function ProblemDetailPage() {
         {submitError && <p className="mt-4 text-red-600">{submitError}</p>}
         {!submitError && submitResult && (
           <SubmitResult submissionId={submitResult.submissionId} verdict={submitResult.verdict} />
+        )}
+        {user && user.category === 'junior' && (
+          <button
+            className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
+            onClick={() => setShowAssistant(true)}
+          >
+            Preguntar a Haiku
+          </button>
+        )}
+        {showAssistant && user && (
+          <AssistantModal
+            problemId={currentProblemId}
+            questionsUsed={user.aiQuestionsUsed}
+            onClose={() => setShowAssistant(false)}
+          />
         )}
       </div>
     </div>
