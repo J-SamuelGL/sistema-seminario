@@ -9,8 +9,8 @@ export type ResultadoPiston = {
 
 export async function ejecutarPiston(
   lenguaje: string,
+  nombreArchivo: string,
   codigo: string,
-  entradaEstandar: string,
 ): Promise<ResultadoPiston> {
   const mapeo = MAPA_LENGUAJES[lenguaje]
   if (!mapeo) {
@@ -24,9 +24,11 @@ export async function ejecutarPiston(
     body: JSON.stringify({
       language: mapeo.language,
       version: mapeo.version,
-      files: [{ content: codigo }],
-      stdin: entradaEstandar,
+      files: [{ name: nombreArchivo, content: codigo }],
       run_timeout: 5000,
+      compile_timeout: 10000,
+      run_memory_limit: 268435456,
+      compile_memory_limit: 268435456,
     }),
   })
 
