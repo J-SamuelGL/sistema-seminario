@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react'
 import { obtenerEnvio } from '#/server/functions/submit'
 
-export function SubmitResult({ envioId, veredicto }: { envioId: string; veredicto: string }) {
+export function SubmitResult({
+  envioId,
+  veredicto,
+  mostrarFeedback,
+}: {
+  envioId: string
+  veredicto: string
+  mostrarFeedback: boolean
+}) {
   const [comentario, setComentario] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!mostrarFeedback) return
     let cancelado = false
     const interval = setInterval(() => {
       obtenerEnvio({ data: envioId })
@@ -20,12 +29,14 @@ export function SubmitResult({ envioId, veredicto }: { envioId: string; veredict
       cancelado = true
       clearInterval(interval)
     }
-  }, [envioId])
+  }, [envioId, mostrarFeedback])
 
   return (
     <div className="mt-4 rounded border p-4">
       <p className="font-bold">Veredicto: {veredicto}</p>
-      <p className="mt-2 text-sm text-gray-600">{comentario ?? 'Generando feedback...'}</p>
+      {mostrarFeedback && (
+        <p className="mt-2 text-sm text-gray-600">{comentario ?? 'Generando feedback...'}</p>
+      )}
     </div>
   )
 }

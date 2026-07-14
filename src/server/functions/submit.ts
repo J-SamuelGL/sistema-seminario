@@ -43,17 +43,19 @@ export const enviarCodigo = createServerFn({ method: 'POST' })
 
       await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
 
-      generarComentarioEnvio({
-        tituloProblema: problema.titulo,
-        descripcionProblema: problema.descripcion,
-        codigo: data.codigo,
-        veredicto,
-        salidaError,
-      })
-        .then((comentario) =>
-          db.update(envios).set({ comentarioClaude: comentario }).where(eq(envios.id, envioId)),
-        )
-        .catch((err: unknown) => console.error('Comentario de Claude falló', err))
+      if (user.categoria === 'invitado') {
+        generarComentarioEnvio({
+          tituloProblema: problema.titulo,
+          descripcionProblema: problema.descripcion,
+          codigo: data.codigo,
+          veredicto,
+          salidaError,
+        })
+          .then((comentario) =>
+            db.update(envios).set({ comentarioClaude: comentario }).where(eq(envios.id, envioId)),
+          )
+          .catch((err: unknown) => console.error('Comentario de Claude falló', err))
+      }
 
       return { envioId, veredicto, error: null }
     } catch (err) {

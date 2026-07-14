@@ -29,6 +29,7 @@ function ProblemDetailPage() {
   const [codigo, setCodigo] = useState('')
   const [resultadosEjecucion, setResultadosEjecucion] = useState<ResultadoCaso[] | null>(null)
   const [errorEjecucion, setErrorEjecucion] = useState<string | null>(null)
+  const [hint, setHint] = useState<string | null>(null)
   const [ejecutando, setEjecutando] = useState(false)
   const [resultadoEnvio, setResultadoEnvio] = useState<{ envioId: string; veredicto: string } | null>(null)
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null)
@@ -49,9 +50,12 @@ function ProblemDetailPage() {
   async function handleRun() {
     setEjecutando(true)
     try {
-      const { resultados, error } = await ejecutarCodigo({ data: { problemaId: problemaIdActual, lenguaje, codigo } })
+      const { resultados, error, hint: nuevoHint } = await ejecutarCodigo({
+        data: { problemaId: problemaIdActual, lenguaje, codigo },
+      })
       setResultadosEjecucion(resultados)
       setErrorEjecucion(error)
+      setHint(nuevoHint)
     } finally {
       setEjecutando(false)
     }
@@ -92,7 +96,9 @@ function ProblemDetailPage() {
           {ejecutando ? 'Ejecutando...' : 'Run'}
         </button>
         {errorEjecucion && <p className="mt-4 text-red-600">{errorEjecucion}</p>}
-        {!errorEjecucion && resultadosEjecucion && <RunResults results={resultadosEjecucion} />}
+        {!errorEjecucion && resultadosEjecucion && (
+          <RunResults results={resultadosEjecucion} hint={hint} />
+        )}
         <button
           className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white"
           onClick={handleSubmit}
@@ -102,7 +108,11 @@ function ProblemDetailPage() {
         </button>
         {errorEnvio && <p className="mt-4 text-red-600">{errorEnvio}</p>}
         {!errorEnvio && resultadoEnvio && (
-          <SubmitResult envioId={resultadoEnvio.envioId} veredicto={resultadoEnvio.veredicto} />
+          <SubmitResult
+            envioId={resultadoEnvio.envioId}
+            veredicto={resultadoEnvio.veredicto}
+            mostrarFeedback={user?.categoria === 'invitado'}
+          />
         )}
         {user && user.categoria === 'invitado' && (
           <button
