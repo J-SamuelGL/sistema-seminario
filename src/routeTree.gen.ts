@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProblemasIndexRouteImport } from './routes/problemas/index'
 import { Route as ProblemasProblemaIdRouteImport } from './routes/problemas/$problemaId'
 import { Route as AdminTorneoRouteImport } from './routes/admin/torneo'
+import { Route as AdminParticipantesRouteImport } from './routes/admin/participantes'
 import { Route as AdminIngresoRouteImport } from './routes/admin/ingreso'
 import { Route as AdminEnviosRouteImport } from './routes/admin/envios'
 import { Route as AdminProblemasIndexRouteImport } from './routes/admin/problemas/index'
@@ -57,6 +58,11 @@ const AdminTorneoRoute = AdminTorneoRouteImport.update({
   path: '/admin/torneo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminParticipantesRoute = AdminParticipantesRouteImport.update({
+  id: '/admin/participantes',
+  path: '/admin/participantes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIngresoRoute = AdminIngresoRouteImport.update({
   id: '/admin/ingreso',
   path: '/admin/ingreso',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/registro': typeof RegistroRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
+  '/admin/participantes': typeof AdminParticipantesRoute
   '/admin/torneo': typeof AdminTorneoRoute
   '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
   '/problemas/': typeof ProblemasIndexRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/registro': typeof RegistroRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
+  '/admin/participantes': typeof AdminParticipantesRoute
   '/admin/torneo': typeof AdminTorneoRoute
   '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
   '/problemas': typeof ProblemasIndexRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/registro': typeof RegistroRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
+  '/admin/participantes': typeof AdminParticipantesRoute
   '/admin/torneo': typeof AdminTorneoRoute
   '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
   '/problemas/': typeof ProblemasIndexRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/admin/envios'
     | '/admin/ingreso'
+    | '/admin/participantes'
     | '/admin/torneo'
     | '/problemas/$problemaId'
     | '/problemas/'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/admin/envios'
     | '/admin/ingreso'
+    | '/admin/participantes'
     | '/admin/torneo'
     | '/problemas/$problemaId'
     | '/problemas'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/admin/envios'
     | '/admin/ingreso'
+    | '/admin/participantes'
     | '/admin/torneo'
     | '/problemas/$problemaId'
     | '/problemas/'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   RegistroRoute: typeof RegistroRoute
   AdminEnviosRoute: typeof AdminEnviosRoute
   AdminIngresoRoute: typeof AdminIngresoRoute
+  AdminParticipantesRoute: typeof AdminParticipantesRoute
   AdminTorneoRoute: typeof AdminTorneoRoute
   ProblemasProblemaIdRoute: typeof ProblemasProblemaIdRoute
   ProblemasIndexRoute: typeof ProblemasIndexRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTorneoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/participantes': {
+      id: '/admin/participantes'
+      path: '/admin/participantes'
+      fullPath: '/admin/participantes'
+      preLoaderRoute: typeof AdminParticipantesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/ingreso': {
       id: '/admin/ingreso'
       path: '/admin/ingreso'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegistroRoute: RegistroRoute,
   AdminEnviosRoute: AdminEnviosRoute,
   AdminIngresoRoute: AdminIngresoRoute,
+  AdminParticipantesRoute: AdminParticipantesRoute,
   AdminTorneoRoute: AdminTorneoRoute,
   ProblemasProblemaIdRoute: ProblemasProblemaIdRoute,
   ProblemasIndexRoute: ProblemasIndexRoute,
@@ -293,12 +314,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
