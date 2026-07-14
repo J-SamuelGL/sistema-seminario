@@ -7,6 +7,7 @@ import {
   boolean,
   json,
   mysqlEnum,
+  unique,
 } from 'drizzle-orm/mysql-core'
 
 // Tablas centrales de Better Auth
@@ -19,7 +20,8 @@ export const usuarios = mysqlTable('usuario', {
   createdAt: timestamp('creado_en').notNull().defaultNow(),
   updatedAt: timestamp('actualizado_en').notNull().defaultNow(),
   rol: mysqlEnum('rol', ['participante', 'admin']).notNull().default('participante'),
-  categoria: mysqlEnum('categoria', ['senior', 'junior']),
+  categoria: mysqlEnum('categoria', ['invitado', 'junior', 'senior']).notNull(),
+  carnet: text('carnet'),
   tokenIngreso: varchar('token_ingreso', { length: 255 })
     .$defaultFn(() => crypto.randomUUID())
     .notNull()
@@ -48,6 +50,7 @@ export const cuentas = mysqlTable('cuenta', {
     .references(() => usuarios.id, { onDelete: 'cascade' }),
   accountId: text('id_cuenta_proveedor').notNull(),
   providerId: text('id_proveedor').notNull(),
+  password: text('contrasena'),
   accessToken: text('token_acceso'),
   refreshToken: text('token_refresco'),
   accessTokenExpiresAt: timestamp('token_acceso_expira_en'),
@@ -76,6 +79,7 @@ export const problemas = mysqlTable('problemas', {
   dificultad: text('dificultad').notNull(),
   lenguajesPermitidos: json('lenguajes_permitidos').$type<string[]>().notNull(),
   orden: int('orden').notNull().default(0),
+  grupo: mysqlEnum('grupo', ['invitado_junior', 'senior']).notNull(),
 })
 
 export const casosPrueba = mysqlTable('casos_prueba', {
@@ -126,6 +130,23 @@ export const preguntasIa = mysqlTable('preguntas_ia', {
   respuesta: text('respuesta').notNull(),
   creadoEn: timestamp('creado_en').notNull().defaultNow(),
 })
+
+export const corridas = mysqlTable(
+  'corridas',
+  {
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    usuarioId: varchar('usuario_id', { length: 36 })
+      .notNull()
+      .references(() => usuarios.id, { onDelete: 'cascade' }),
+    problemaId: varchar('problema_id', { length: 36 })
+      .notNull()
+      .references(() => problemas.id, { onDelete: 'cascade' }),
+    contador: int('contador').notNull().default(0),
+  },
+  (table) => [unique('corridas_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
+)
 
 export const estadoTorneo = mysqlTable('estado_torneo', {
   id: int('id').primaryKey().default(1),

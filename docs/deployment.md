@@ -89,3 +89,7 @@ These checks confirm:
 - Google OAuth integration
 - Piston service connectivity (code execution)
 - Anthropic API integration (feedback generation)
+
+## Creating Admin Accounts Manually
+
+Admin accounts (`usuario.rol = 'admin'`) are created directly in the database, not through the registration screen. Since `usuario.categoria` is `NOT NULL` (values: `invitado`, `junior`, `senior`), you must still supply a value even though `categoria` has no real meaning for an admin — it only drives participant-facing grouping (e.g. problem filtering by `problemas.grupo`). Use `'senior'` as the conventional placeholder value for admin rows.
