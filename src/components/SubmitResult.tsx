@@ -1,31 +1,31 @@
 import { useEffect, useState } from 'react'
-import { getSubmission } from '#/server/functions/submit'
+import { obtenerEnvio } from '#/server/functions/submit'
 
-export function SubmitResult({ submissionId, verdict }: { submissionId: string; verdict: string }) {
-  const [feedback, setFeedback] = useState<string | null>(null)
+export function SubmitResult({ envioId, veredicto }: { envioId: string; veredicto: string }) {
+  const [comentario, setComentario] = useState<string | null>(null)
 
   useEffect(() => {
-    let cancelled = false
+    let cancelado = false
     const interval = setInterval(() => {
-      getSubmission({ data: submissionId })
-        .then((submission) => {
-          if (!cancelled && submission?.claudeFeedback) {
-            setFeedback(submission.claudeFeedback)
+      obtenerEnvio({ data: envioId })
+        .then((envio) => {
+          if (!cancelado && envio?.comentarioClaude) {
+            setComentario(envio.comentarioClaude)
             clearInterval(interval)
           }
         })
-        .catch((err: unknown) => console.error('Failed to poll submission', err))
+        .catch((err: unknown) => console.error('No se pudo consultar el envío', err))
     }, 2000)
     return () => {
-      cancelled = true
+      cancelado = true
       clearInterval(interval)
     }
-  }, [submissionId])
+  }, [envioId])
 
   return (
     <div className="mt-4 rounded border p-4">
-      <p className="font-bold">Veredicto: {verdict}</p>
-      <p className="mt-2 text-sm text-gray-600">{feedback ?? 'Generando feedback...'}</p>
+      <p className="font-bold">Veredicto: {veredicto}</p>
+      <p className="mt-2 text-sm text-gray-600">{comentario ?? 'Generando feedback...'}</p>
     </div>
   )
 }

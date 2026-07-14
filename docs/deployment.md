@@ -10,11 +10,11 @@ This document outlines the steps to deploy the Torneo de Programación applicati
 
 ## Deployment Steps
 
-### Step 1: Create the Postgres Service
+### Step 1: Create the MySQL Service
 
 1. In the Railway dashboard, create a new project
-2. Add a **Postgres** plugin to the project
-3. Note the generated `DATABASE_URL` (Railway exposes it as a reference variable, e.g. `${{Postgres.DATABASE_URL}}`)
+2. Add a **MySQL** plugin to the project
+3. Note the generated `DATABASE_URL` (Railway exposes it as a reference variable, e.g. `${{MySQL.DATABASE_URL}}`)
 
 ### Step 2: Create the Piston Service
 
@@ -49,7 +49,7 @@ The script installs Python 3.10.0 and JavaScript 18.15.0 runtimes.
 
 Set the following environment variables on the app service:
 
-- `DATABASE_URL` - Reference to the Postgres plugin: `${{Postgres.DATABASE_URL}}`
+- `DATABASE_URL` - Reference to the MySQL plugin: `${{MySQL.DATABASE_URL}}`
 - `PISTON_URL=http://piston.railway.internal:2000` (private network address)
 - `ANTHROPIC_API_KEY` - Your Anthropic API key
 - `GOOGLE_CLIENT_ID` - From Google OAuth app
@@ -76,12 +76,12 @@ Set the following environment variables on the app service:
 2. Once live, verify the deployment:
    - Visit the app's public URL
    - Log in with Google
-   - Confirm redirect to `/register` page
+   - Confirm redirect to `/registro` page
    - Pick a category to complete registration
-   - Verify the `user` row appears in the Railway Postgres console
-   - Navigate to `/problems`
+   - Verify the `usuario` row appears in the Railway MySQL console
+   - Navigate to `/problemas`
    - Submit a solution (e.g., "print hello") for a problem with matching test cases
-   - Confirm the verdict returns `accepted`
+   - Confirm the verdict returns `aceptado`
    - Verify Claude feedback appears within a few seconds
 
 These checks confirm:

@@ -1,12 +1,12 @@
-export function validateProblemInput(input: {
-  title: string
-  description: string
-  difficulty: string
-  allowedLanguages: string[]
+export function validarDatosProblema(input: {
+  titulo: string
+  descripcion: string
+  dificultad: string
+  lenguajesPermitidos: string[]
 }) {
-  const errors: string[] = []
-  if (!input.title.trim()) errors.push('El título es requerido')
-  if (!input.description.trim()) errors.push('La descripción es requerida')
-  if (input.allowedLanguages.length === 0) errors.push('Debe permitir al menos un lenguaje')
-  return errors
+  const errores: string[] = []
+  if (!input.titulo.trim()) errores.push('El título es requerido')
+  if (!input.descripcion.trim()) errores.push('La descripción es requerida')
+  if (input.lenguajesPermitidos.length === 0) errores.push('Debe permitir al menos un lenguaje')
+  return errores
 }

@@ -2,42 +2,42 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-export function buildFeedbackPrompt(input: {
-  problemTitle: string
-  problemDescription: string
-  code: string
-  verdict: string
-  stderr: string
+export function construirPromptComentario(input: {
+  tituloProblema: string
+  descripcionProblema: string
+  codigo: string
+  veredicto: string
+  salidaError: string
 }): string {
   return [
-    `Problema: ${input.problemTitle}`,
-    input.problemDescription,
+    `Problema: ${input.tituloProblema}`,
+    input.descripcionProblema,
     '',
     'Código enviado por el participante:',
     '```',
-    input.code,
+    input.codigo,
     '```',
     '',
-    `Veredicto del juez automático: ${input.verdict}`,
-    input.stderr ? `Salida de error:\n${input.stderr}` : '',
+    `Veredicto del juez automático: ${input.veredicto}`,
+    input.salidaError ? `Salida de error:\n${input.salidaError}` : '',
     '',
-    input.verdict === 'accepted'
+    input.veredicto === 'aceptado'
       ? 'La solución es correcta. Da un comentario breve (2-3 frases) sobre el estilo o eficiencia del código.'
       : 'La solución no pasó. Da una pista breve (2-3 frases) sobre qué pudo haber fallado, sin escribir el código corregido ni la solución completa.',
   ].join('\n')
 }
 
-export async function generateSubmissionFeedback(input: {
-  problemTitle: string
-  problemDescription: string
-  code: string
-  verdict: string
-  stderr: string
+export async function generarComentarioEnvio(input: {
+  tituloProblema: string
+  descripcionProblema: string
+  codigo: string
+  veredicto: string
+  salidaError: string
 }): Promise<string> {
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5',
     max_tokens: 300,
-    messages: [{ role: 'user', content: buildFeedbackPrompt(input) }],
+    messages: [{ role: 'user', content: construirPromptComentario(input) }],
   })
   const block = message.content[0]
   return block.type === 'text' ? block.text : ''

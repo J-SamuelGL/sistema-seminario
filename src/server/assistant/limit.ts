@@ -1,6 +1,6 @@
-export function canAskQuestion(user: {
-  category: string
-  aiQuestionsUsed: number
+export function puedePreguntar(user: {
+  categoria: string
+  preguntasIaUsadas: number
 }): boolean {
-  return user.category === 'junior' && user.aiQuestionsUsed < 2
+  return user.categoria === 'junior' && user.preguntasIaUsadas < 2
 }

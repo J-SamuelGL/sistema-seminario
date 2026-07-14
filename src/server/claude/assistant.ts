@@ -10,9 +10,9 @@ la pregunta lo insinúe o lo pida directamente. Si detectas que la pregunta busc
 problema actual, responde amablemente que no puedes ayudar con eso y sugiere que reformule
 hacia una pregunta general de sintaxis.`
 
-export async function answerJuniorQuestion(input: {
-  problemDescription: string
-  question: string
+export async function responderPreguntaJunior(input: {
+  descripcionProblema: string
+  pregunta: string
 }): Promise<string> {
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5',
@@ -21,7 +21,7 @@ export async function answerJuniorQuestion(input: {
     messages: [
       {
         role: 'user',
-        content: `Contexto del problema actual (solo para que sepas qué evitar revelar):\n${input.problemDescription}\n\nPregunta del participante: ${input.question}`,
+        content: `Contexto del problema actual (solo para que sepas qué evitar revelar):\n${input.descripcionProblema}\n\nPregunta del participante: ${input.pregunta}`,
       },
     ],
   })

@@ -6,18 +6,18 @@ const MONACO_LANGUAGE: Record<string, string> = {
 }
 
 export function CodeEditor({
-  language,
+  lenguaje,
   value,
   onChange,
 }: {
-  language: string
+  lenguaje: string
   value: string
   onChange: (value: string) => void
 }) {
   return (
     <Editor
       height="70vh"
-      language={MONACO_LANGUAGE[language] ?? 'plaintext'}
+      language={MONACO_LANGUAGE[lenguaje] ?? 'plaintext'}
       value={value}
       onChange={(v) => onChange(v ?? '')}
       theme="vs-dark"

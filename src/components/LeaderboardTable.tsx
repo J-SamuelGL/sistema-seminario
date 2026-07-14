@@ -1,6 +1,6 @@
-import type { StandingRow } from '#/server/standings/calculate'
+import type { FilaClasificacion } from '#/server/standings/calculate'
 
-export function LeaderboardTable({ title, rows }: { title: string; rows: Array<StandingRow> }) {
+export function LeaderboardTable({ title, rows }: { title: string; rows: Array<FilaClasificacion> }) {
   return (
     <div>
       <h2 className="text-lg font-bold">{title}</h2>
@@ -15,11 +15,11 @@ export function LeaderboardTable({ title, rows }: { title: string; rows: Array<S
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={row.userId}>
+            <tr key={row.usuarioId}>
               <td className="border p-2">{i + 1}</td>
-              <td className="border p-2">{row.name}</td>
-              <td className="border p-2">{row.solvedCount}</td>
-              <td className="border p-2">{Math.round(row.totalPenaltyMinutes)} min</td>
+              <td className="border p-2">{row.nombre}</td>
+              <td className="border p-2">{row.cantidadResueltos}</td>
+              <td className="border p-2">{Math.round(row.minutosPenalizacionTotal)} min</td>
             </tr>
           ))}
         </tbody>

@@ -2,31 +2,31 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problems, testCases } from '../db/schema'
-import { requireCheckedInParticipant } from '../auth/middleware'
-import { runTestCases } from '../judge/runTestCases'
-import type { CaseResult } from '../judge/verdict'
+import { problemas, casosPrueba } from '../db/schema'
+import { requerirParticipanteIngresado } from '../auth/middleware'
+import { ejecutarCasosPrueba } from '../judge/runTestCases'
+import type { ResultadoCaso } from '../judge/verdict'
 
-export const runCode = createServerFn({ method: 'POST' })
-  .validator((input: { problemId: string; language: string; code: string }) => input)
-  .handler(async ({ data }): Promise<{ results: CaseResult[]; error: string | null }> => {
+export const ejecutarCodigo = createServerFn({ method: 'POST' })
+  .validator((input: { problemaId: string; lenguaje: string; codigo: string }) => input)
+  .handler(async ({ data }): Promise<{ resultados: ResultadoCaso[]; error: string | null }> => {
     const request = getRequest()
-    await requireCheckedInParticipant(request.headers)
+    await requerirParticipanteIngresado(request.headers)
 
-    const rows = await db.select().from(problems).where(eq(problems.id, data.problemId))
-    const problem = rows.length > 0 ? rows[0] : null
-    if (!problem) throw new Error('Problem not found')
-    const cases = await db.select().from(testCases).where(eq(testCases.problemId, data.problemId))
+    const rows = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
+    const problema = rows.length > 0 ? rows[0] : null
+    if (!problema) throw new Error('Problema no encontrado')
+    const casos = await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data.problemaId))
 
     try {
-      const { results } = await runTestCases(
-        data.language,
-        data.code,
-        cases.map((c) => ({ input: c.input, expectedOutput: c.expectedOutput })),
+      const { resultados } = await ejecutarCasosPrueba(
+        data.lenguaje,
+        data.codigo,
+        casos.map((c) => ({ entrada: c.entrada, salidaEsperada: c.salidaEsperada })),
       )
-      return { results, error: null }
+      return { resultados, error: null }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      return { results: [], error: `No se pudo ejecutar el código. Intenta de nuevo. (${message})` }
+      return { resultados: [], error: `No se pudo ejecutar el código. Intenta de nuevo. (${message})` }
     }
   })

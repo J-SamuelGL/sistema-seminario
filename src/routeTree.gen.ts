@@ -9,32 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as ClasificacionRouteImport } from './routes/clasificacion'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProblemsIndexRouteImport } from './routes/problems/index'
-import { Route as ProblemsProblemIdRouteImport } from './routes/problems/$problemId'
-import { Route as AdminTournamentRouteImport } from './routes/admin/tournament'
-import { Route as AdminSubmissionsRouteImport } from './routes/admin/submissions'
-import { Route as AdminCheckinRouteImport } from './routes/admin/checkin'
-import { Route as AdminProblemsIndexRouteImport } from './routes/admin/problems/index'
+import { Route as ProblemasIndexRouteImport } from './routes/problemas/index'
+import { Route as ProblemasProblemaIdRouteImport } from './routes/problemas/$problemaId'
+import { Route as AdminTorneoRouteImport } from './routes/admin/torneo'
+import { Route as AdminIngresoRouteImport } from './routes/admin/ingreso'
+import { Route as AdminEnviosRouteImport } from './routes/admin/envios'
+import { Route as AdminProblemasIndexRouteImport } from './routes/admin/problemas/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as AdminProblemsProblemIdRouteImport } from './routes/admin/problems/$problemId'
+import { Route as AdminProblemasProblemaIdRouteImport } from './routes/admin/problemas/$problemaId'
 
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+const RegistroRoute = RegistroRouteImport.update({
+  id: '/registro',
+  path: '/registro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LeaderboardRoute = LeaderboardRouteImport.update({
-  id: '/leaderboard',
-  path: '/leaderboard',
+const ClasificacionRoute = ClasificacionRouteImport.update({
+  id: '/clasificacion',
+  path: '/clasificacion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -42,34 +42,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProblemsIndexRoute = ProblemsIndexRouteImport.update({
-  id: '/problems/',
-  path: '/problems/',
+const ProblemasIndexRoute = ProblemasIndexRouteImport.update({
+  id: '/problemas/',
+  path: '/problemas/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProblemsProblemIdRoute = ProblemsProblemIdRouteImport.update({
-  id: '/problems/$problemId',
-  path: '/problems/$problemId',
+const ProblemasProblemaIdRoute = ProblemasProblemaIdRouteImport.update({
+  id: '/problemas/$problemaId',
+  path: '/problemas/$problemaId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminTournamentRoute = AdminTournamentRouteImport.update({
-  id: '/admin/tournament',
-  path: '/admin/tournament',
+const AdminTorneoRoute = AdminTorneoRouteImport.update({
+  id: '/admin/torneo',
+  path: '/admin/torneo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
-  id: '/admin/submissions',
-  path: '/admin/submissions',
+const AdminIngresoRoute = AdminIngresoRouteImport.update({
+  id: '/admin/ingreso',
+  path: '/admin/ingreso',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCheckinRoute = AdminCheckinRouteImport.update({
-  id: '/admin/checkin',
-  path: '/admin/checkin',
+const AdminEnviosRoute = AdminEnviosRouteImport.update({
+  id: '/admin/envios',
+  path: '/admin/envios',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminProblemsIndexRoute = AdminProblemsIndexRouteImport.update({
-  id: '/admin/problems/',
-  path: '/admin/problems/',
+const AdminProblemasIndexRoute = AdminProblemasIndexRouteImport.update({
+  id: '/admin/problemas/',
+  path: '/admin/problemas/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -77,136 +77,137 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminProblemsProblemIdRoute = AdminProblemsProblemIdRouteImport.update({
-  id: '/admin/problems/$problemId',
-  path: '/admin/problems/$problemId',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AdminProblemasProblemaIdRoute =
+  AdminProblemasProblemaIdRouteImport.update({
+    id: '/admin/problemas/$problemaId',
+    path: '/admin/problemas/$problemaId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/leaderboard': typeof LeaderboardRoute
-  '/profile': typeof ProfileRoute
-  '/register': typeof RegisterRoute
-  '/admin/checkin': typeof AdminCheckinRoute
-  '/admin/submissions': typeof AdminSubmissionsRoute
-  '/admin/tournament': typeof AdminTournamentRoute
-  '/problems/$problemId': typeof ProblemsProblemIdRoute
-  '/problems/': typeof ProblemsIndexRoute
-  '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
+  '/clasificacion': typeof ClasificacionRoute
+  '/perfil': typeof PerfilRoute
+  '/registro': typeof RegistroRoute
+  '/admin/envios': typeof AdminEnviosRoute
+  '/admin/ingreso': typeof AdminIngresoRoute
+  '/admin/torneo': typeof AdminTorneoRoute
+  '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
+  '/problemas/': typeof ProblemasIndexRoute
+  '/admin/problemas/$problemaId': typeof AdminProblemasProblemaIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/admin/problems/': typeof AdminProblemsIndexRoute
+  '/admin/problemas/': typeof AdminProblemasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/leaderboard': typeof LeaderboardRoute
-  '/profile': typeof ProfileRoute
-  '/register': typeof RegisterRoute
-  '/admin/checkin': typeof AdminCheckinRoute
-  '/admin/submissions': typeof AdminSubmissionsRoute
-  '/admin/tournament': typeof AdminTournamentRoute
-  '/problems/$problemId': typeof ProblemsProblemIdRoute
-  '/problems': typeof ProblemsIndexRoute
-  '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
+  '/clasificacion': typeof ClasificacionRoute
+  '/perfil': typeof PerfilRoute
+  '/registro': typeof RegistroRoute
+  '/admin/envios': typeof AdminEnviosRoute
+  '/admin/ingreso': typeof AdminIngresoRoute
+  '/admin/torneo': typeof AdminTorneoRoute
+  '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
+  '/problemas': typeof ProblemasIndexRoute
+  '/admin/problemas/$problemaId': typeof AdminProblemasProblemaIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/admin/problems': typeof AdminProblemsIndexRoute
+  '/admin/problemas': typeof AdminProblemasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/leaderboard': typeof LeaderboardRoute
-  '/profile': typeof ProfileRoute
-  '/register': typeof RegisterRoute
-  '/admin/checkin': typeof AdminCheckinRoute
-  '/admin/submissions': typeof AdminSubmissionsRoute
-  '/admin/tournament': typeof AdminTournamentRoute
-  '/problems/$problemId': typeof ProblemsProblemIdRoute
-  '/problems/': typeof ProblemsIndexRoute
-  '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
+  '/clasificacion': typeof ClasificacionRoute
+  '/perfil': typeof PerfilRoute
+  '/registro': typeof RegistroRoute
+  '/admin/envios': typeof AdminEnviosRoute
+  '/admin/ingreso': typeof AdminIngresoRoute
+  '/admin/torneo': typeof AdminTorneoRoute
+  '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
+  '/problemas/': typeof ProblemasIndexRoute
+  '/admin/problemas/$problemaId': typeof AdminProblemasProblemaIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/admin/problems/': typeof AdminProblemsIndexRoute
+  '/admin/problemas/': typeof AdminProblemasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/leaderboard'
-    | '/profile'
-    | '/register'
-    | '/admin/checkin'
-    | '/admin/submissions'
-    | '/admin/tournament'
-    | '/problems/$problemId'
-    | '/problems/'
-    | '/admin/problems/$problemId'
+    | '/clasificacion'
+    | '/perfil'
+    | '/registro'
+    | '/admin/envios'
+    | '/admin/ingreso'
+    | '/admin/torneo'
+    | '/problemas/$problemaId'
+    | '/problemas/'
+    | '/admin/problemas/$problemaId'
     | '/api/auth/$'
-    | '/admin/problems/'
+    | '/admin/problemas/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/leaderboard'
-    | '/profile'
-    | '/register'
-    | '/admin/checkin'
-    | '/admin/submissions'
-    | '/admin/tournament'
-    | '/problems/$problemId'
-    | '/problems'
-    | '/admin/problems/$problemId'
+    | '/clasificacion'
+    | '/perfil'
+    | '/registro'
+    | '/admin/envios'
+    | '/admin/ingreso'
+    | '/admin/torneo'
+    | '/problemas/$problemaId'
+    | '/problemas'
+    | '/admin/problemas/$problemaId'
     | '/api/auth/$'
-    | '/admin/problems'
+    | '/admin/problemas'
   id:
     | '__root__'
     | '/'
-    | '/leaderboard'
-    | '/profile'
-    | '/register'
-    | '/admin/checkin'
-    | '/admin/submissions'
-    | '/admin/tournament'
-    | '/problems/$problemId'
-    | '/problems/'
-    | '/admin/problems/$problemId'
+    | '/clasificacion'
+    | '/perfil'
+    | '/registro'
+    | '/admin/envios'
+    | '/admin/ingreso'
+    | '/admin/torneo'
+    | '/problemas/$problemaId'
+    | '/problemas/'
+    | '/admin/problemas/$problemaId'
     | '/api/auth/$'
-    | '/admin/problems/'
+    | '/admin/problemas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  LeaderboardRoute: typeof LeaderboardRoute
-  ProfileRoute: typeof ProfileRoute
-  RegisterRoute: typeof RegisterRoute
-  AdminCheckinRoute: typeof AdminCheckinRoute
-  AdminSubmissionsRoute: typeof AdminSubmissionsRoute
-  AdminTournamentRoute: typeof AdminTournamentRoute
-  ProblemsProblemIdRoute: typeof ProblemsProblemIdRoute
-  ProblemsIndexRoute: typeof ProblemsIndexRoute
-  AdminProblemsProblemIdRoute: typeof AdminProblemsProblemIdRoute
+  ClasificacionRoute: typeof ClasificacionRoute
+  PerfilRoute: typeof PerfilRoute
+  RegistroRoute: typeof RegistroRoute
+  AdminEnviosRoute: typeof AdminEnviosRoute
+  AdminIngresoRoute: typeof AdminIngresoRoute
+  AdminTorneoRoute: typeof AdminTorneoRoute
+  ProblemasProblemaIdRoute: typeof ProblemasProblemaIdRoute
+  ProblemasIndexRoute: typeof ProblemasIndexRoute
+  AdminProblemasProblemaIdRoute: typeof AdminProblemasProblemaIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  AdminProblemsIndexRoute: typeof AdminProblemsIndexRoute
+  AdminProblemasIndexRoute: typeof AdminProblemasIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
+    '/registro': {
+      id: '/registro'
+      path: '/registro'
+      fullPath: '/registro'
+      preLoaderRoute: typeof RegistroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/leaderboard': {
-      id: '/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/leaderboard'
-      preLoaderRoute: typeof LeaderboardRouteImport
+    '/clasificacion': {
+      id: '/clasificacion'
+      path: '/clasificacion'
+      fullPath: '/clasificacion'
+      preLoaderRoute: typeof ClasificacionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -216,46 +217,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/problems/': {
-      id: '/problems/'
-      path: '/problems'
-      fullPath: '/problems/'
-      preLoaderRoute: typeof ProblemsIndexRouteImport
+    '/problemas/': {
+      id: '/problemas/'
+      path: '/problemas'
+      fullPath: '/problemas/'
+      preLoaderRoute: typeof ProblemasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/problems/$problemId': {
-      id: '/problems/$problemId'
-      path: '/problems/$problemId'
-      fullPath: '/problems/$problemId'
-      preLoaderRoute: typeof ProblemsProblemIdRouteImport
+    '/problemas/$problemaId': {
+      id: '/problemas/$problemaId'
+      path: '/problemas/$problemaId'
+      fullPath: '/problemas/$problemaId'
+      preLoaderRoute: typeof ProblemasProblemaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/tournament': {
-      id: '/admin/tournament'
-      path: '/admin/tournament'
-      fullPath: '/admin/tournament'
-      preLoaderRoute: typeof AdminTournamentRouteImport
+    '/admin/torneo': {
+      id: '/admin/torneo'
+      path: '/admin/torneo'
+      fullPath: '/admin/torneo'
+      preLoaderRoute: typeof AdminTorneoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/submissions': {
-      id: '/admin/submissions'
-      path: '/admin/submissions'
-      fullPath: '/admin/submissions'
-      preLoaderRoute: typeof AdminSubmissionsRouteImport
+    '/admin/ingreso': {
+      id: '/admin/ingreso'
+      path: '/admin/ingreso'
+      fullPath: '/admin/ingreso'
+      preLoaderRoute: typeof AdminIngresoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/checkin': {
-      id: '/admin/checkin'
-      path: '/admin/checkin'
-      fullPath: '/admin/checkin'
-      preLoaderRoute: typeof AdminCheckinRouteImport
+    '/admin/envios': {
+      id: '/admin/envios'
+      path: '/admin/envios'
+      fullPath: '/admin/envios'
+      preLoaderRoute: typeof AdminEnviosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/problems/': {
-      id: '/admin/problems/'
-      path: '/admin/problems'
-      fullPath: '/admin/problems/'
-      preLoaderRoute: typeof AdminProblemsIndexRouteImport
+    '/admin/problemas/': {
+      id: '/admin/problemas/'
+      path: '/admin/problemas'
+      fullPath: '/admin/problemas/'
+      preLoaderRoute: typeof AdminProblemasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -265,11 +266,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/problems/$problemId': {
-      id: '/admin/problems/$problemId'
-      path: '/admin/problems/$problemId'
-      fullPath: '/admin/problems/$problemId'
-      preLoaderRoute: typeof AdminProblemsProblemIdRouteImport
+    '/admin/problemas/$problemaId': {
+      id: '/admin/problemas/$problemaId'
+      path: '/admin/problemas/$problemaId'
+      fullPath: '/admin/problemas/$problemaId'
+      preLoaderRoute: typeof AdminProblemasProblemaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -277,17 +278,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  LeaderboardRoute: LeaderboardRoute,
-  ProfileRoute: ProfileRoute,
-  RegisterRoute: RegisterRoute,
-  AdminCheckinRoute: AdminCheckinRoute,
-  AdminSubmissionsRoute: AdminSubmissionsRoute,
-  AdminTournamentRoute: AdminTournamentRoute,
-  ProblemsProblemIdRoute: ProblemsProblemIdRoute,
-  ProblemsIndexRoute: ProblemsIndexRoute,
-  AdminProblemsProblemIdRoute: AdminProblemsProblemIdRoute,
+  ClasificacionRoute: ClasificacionRoute,
+  PerfilRoute: PerfilRoute,
+  RegistroRoute: RegistroRoute,
+  AdminEnviosRoute: AdminEnviosRoute,
+  AdminIngresoRoute: AdminIngresoRoute,
+  AdminTorneoRoute: AdminTorneoRoute,
+  ProblemasProblemaIdRoute: ProblemasProblemaIdRoute,
+  ProblemasIndexRoute: ProblemasIndexRoute,
+  AdminProblemasProblemaIdRoute: AdminProblemasProblemaIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  AdminProblemsIndexRoute: AdminProblemsIndexRoute,
+  AdminProblemasIndexRoute: AdminProblemasIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

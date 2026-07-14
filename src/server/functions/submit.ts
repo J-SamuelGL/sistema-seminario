@@ -2,78 +2,75 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problems, testCases, submissions, tournamentState } from '../db/schema'
-import { requireCheckedInParticipant } from '../auth/middleware'
-import { runTestCases } from '../judge/runTestCases'
-import { generateSubmissionFeedback } from '../claude/feedback'
-import { assertStarted } from '../tournament/guard'
+import { problemas, casosPrueba, envios, estadoTorneo } from '../db/schema'
+import { requerirParticipanteIngresado } from '../auth/middleware'
+import { ejecutarCasosPrueba } from '../judge/runTestCases'
+import { generarComentarioEnvio } from '../claude/feedback'
+import { asegurarIniciado } from '../tournament/guard'
 
-export const submitCode = createServerFn({ method: 'POST' })
-  .validator((input: { problemId: string; language: string; code: string }) => input)
-  .handler(async ({ data }): Promise<{ submissionId: string; verdict: string | null; error: string | null }> => {
+export const enviarCodigo = createServerFn({ method: 'POST' })
+  .validator((input: { problemaId: string; lenguaje: string; codigo: string }) => input)
+  .handler(async ({ data }): Promise<{ envioId: string; veredicto: string | null; error: string | null }> => {
     const request = getRequest()
-    const user = await requireCheckedInParticipant(request.headers)
+    const user = await requerirParticipanteIngresado(request.headers)
 
-    const stateRows = await db.select().from(tournamentState).where(eq(tournamentState.id, 1))
-    const state = stateRows.length > 0 ? stateRows[0] : null
-    assertStarted(state ?? { startedAt: null })
+    const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
+    const estado = filasEstado.length > 0 ? filasEstado[0] : null
+    asegurarIniciado(estado ?? { iniciadoEn: null })
 
-    const problemRows = await db.select().from(problems).where(eq(problems.id, data.problemId))
-    const problem = problemRows.length > 0 ? problemRows[0] : null
-    if (!problem) throw new Error('Problem not found')
-    const cases = await db.select().from(testCases).where(eq(testCases.problemId, data.problemId))
+    const filasProblema = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
+    const problema = filasProblema.length > 0 ? filasProblema[0] : null
+    if (!problema) throw new Error('Problema no encontrado')
+    const casos = await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data.problemaId))
 
-    const insertedRows = await db
-      .insert(submissions)
-      .values({
-        userId: user.id,
-        problemId: data.problemId,
-        code: data.code,
-        language: data.language,
-        status: 'pending',
-      })
-      .returning()
-    const submission = insertedRows.length > 0 ? insertedRows[0] : null
-    if (!submission) throw new Error('Failed to create submission')
+    const envioId = crypto.randomUUID()
+    await db.insert(envios).values({
+      id: envioId,
+      usuarioId: user.id,
+      problemaId: data.problemaId,
+      codigo: data.codigo,
+      lenguaje: data.lenguaje,
+      estado: 'pendiente',
+    })
 
     try {
-      const { results, verdict } = await runTestCases(
-        data.language,
-        data.code,
-        cases.map((c) => ({ input: c.input, expectedOutput: c.expectedOutput })),
+      const { resultados, veredicto } = await ejecutarCasosPrueba(
+        data.lenguaje,
+        data.codigo,
+        casos.map((c) => ({ entrada: c.entrada, salidaEsperada: c.salidaEsperada })),
       )
-      const stderr = results.find((r) => r.stderr)?.stderr ?? ''
+      const salidaError = resultados.find((r) => r.salidaError)?.salidaError ?? ''
 
-      await db.update(submissions).set({ status: verdict }).where(eq(submissions.id, submission.id))
+      await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
 
-      generateSubmissionFeedback({
-        problemTitle: problem.title,
-        problemDescription: problem.description,
-        code: data.code,
-        verdict,
-        stderr,
+      generarComentarioEnvio({
+        tituloProblema: problema.titulo,
+        descripcionProblema: problema.descripcion,
+        codigo: data.codigo,
+        veredicto,
+        salidaError,
       })
-        .then((feedback) =>
-          db.update(submissions).set({ claudeFeedback: feedback }).where(eq(submissions.id, submission.id)),
+        .then((comentario) =>
+          db.update(envios).set({ comentarioClaude: comentario }).where(eq(envios.id, envioId)),
         )
-        .catch((err: unknown) => console.error('Claude feedback failed', err))
+        .catch((err: unknown) => console.error('Comentario de Claude falló', err))
 
-      return { submissionId: submission.id, verdict, error: null }
+      return { envioId, veredicto, error: null }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       return {
-        submissionId: submission.id,
-        verdict: null,
+        envioId,
+        veredicto: null,
         error: `No se pudo evaluar el envío. Intenta de nuevo. (${message})`,
       }
     }
   })
 
-export const getSubmission = createServerFn({ method: 'GET' })
+export const obtenerEnvio = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requireCheckedInParticipant(request.headers)
-    const rows = await db.select().from(submissions).where(eq(submissions.id, data))
+    await requerirParticipanteIngresado(request.headers)
+    const rows = await db.select().from(envios).where(eq(envios.id, data))
     return rows.length > 0 ? rows[0] : null
   })

@@ -1,79 +1,79 @@
-export type SubmissionRecord = {
-  userId: string
-  problemId: string
-  status: 'pending' | 'accepted' | 'wrong_answer' | 'runtime_error' | 'timeout'
-  createdAt: Date
+export type RegistroEnvio = {
+  usuarioId: string
+  problemaId: string
+  estado: 'pendiente' | 'aceptado' | 'respuesta_incorrecta' | 'error_ejecucion' | 'tiempo_excedido'
+  creadoEn: Date
 }
 
-export type UserRecord = {
+export type RegistroUsuario = {
   id: string
-  name: string
-  category: 'senior' | 'junior'
+  nombre: string
+  categoria: 'senior' | 'junior'
 }
 
-export type StandingRow = {
-  userId: string
-  name: string
-  category: 'senior' | 'junior'
-  solvedCount: number
-  totalPenaltyMinutes: number
+export type FilaClasificacion = {
+  usuarioId: string
+  nombre: string
+  categoria: 'senior' | 'junior'
+  cantidadResueltos: number
+  minutosPenalizacionTotal: number
 }
 
-export function calculateStandings(
-  users: UserRecord[],
-  submissions: SubmissionRecord[],
-  tournamentStartedAt: Date,
-): StandingRow[] {
-  const byUser = new Map<string, SubmissionRecord[]>()
-  for (const s of submissions) {
-    if (s.status === 'pending') continue
-    if (!byUser.has(s.userId)) byUser.set(s.userId, [])
-    byUser.get(s.userId)!.push(s)
+export function calcularClasificacion(
+  usuarios: RegistroUsuario[],
+  envios: RegistroEnvio[],
+  torneoIniciadoEn: Date,
+): FilaClasificacion[] {
+  const porUsuario = new Map<string, RegistroEnvio[]>()
+  for (const e of envios) {
+    if (e.estado === 'pendiente') continue
+    if (!porUsuario.has(e.usuarioId)) porUsuario.set(e.usuarioId, [])
+    porUsuario.get(e.usuarioId)!.push(e)
   }
 
-  const rows = users.map((user): StandingRow => {
-    const subs = (byUser.get(user.id) ?? []).slice().sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+  const filas = usuarios.map((usuario): FilaClasificacion => {
+    const enviosUsuario = (porUsuario.get(usuario.id) ?? []).slice().sort(
+      (a, b) => a.creadoEn.getTime() - b.creadoEn.getTime(),
     )
-    const byProblem = new Map<string, SubmissionRecord[]>()
-    for (const s of subs) {
-      if (!byProblem.has(s.problemId)) byProblem.set(s.problemId, [])
-      byProblem.get(s.problemId)!.push(s)
+    const porProblema = new Map<string, RegistroEnvio[]>()
+    for (const e of enviosUsuario) {
+      if (!porProblema.has(e.problemaId)) porProblema.set(e.problemaId, [])
+      porProblema.get(e.problemaId)!.push(e)
     }
 
-    let solvedCount = 0
-    let totalPenaltyMinutes = 0
+    let cantidadResueltos = 0
+    let minutosPenalizacionTotal = 0
 
-    for (const [, problemSubs] of byProblem) {
-      const acceptedIndex = problemSubs.findIndex((s) => s.status === 'accepted')
-      if (acceptedIndex === -1) continue
-      solvedCount += 1
-      const acceptedSubmission = problemSubs[acceptedIndex]
-      const failedAttemptsBefore = acceptedIndex
-      const minutesSinceStart = Math.floor(
-        (acceptedSubmission.createdAt.getTime() - tournamentStartedAt.getTime()) / 60000,
+    for (const [, enviosProblema] of porProblema) {
+      const indiceAceptado = enviosProblema.findIndex((e) => e.estado === 'aceptado')
+      if (indiceAceptado === -1) continue
+      cantidadResueltos += 1
+      const envioAceptado = enviosProblema[indiceAceptado]
+      const intentosFallidosAntes = indiceAceptado
+      const minutosDesdeInicio = Math.floor(
+        (envioAceptado.creadoEn.getTime() - torneoIniciadoEn.getTime()) / 60000,
       )
-      totalPenaltyMinutes += minutesSinceStart + failedAttemptsBefore * 20
+      minutosPenalizacionTotal += minutosDesdeInicio + intentosFallidosAntes * 20
     }
 
     return {
-      userId: user.id,
-      name: user.name,
-      category: user.category,
-      solvedCount,
-      totalPenaltyMinutes,
+      usuarioId: usuario.id,
+      nombre: usuario.nombre,
+      categoria: usuario.categoria,
+      cantidadResueltos,
+      minutosPenalizacionTotal,
     }
   })
 
-  return rows.sort((a, b) => {
-    if (b.solvedCount !== a.solvedCount) return b.solvedCount - a.solvedCount
-    return a.totalPenaltyMinutes - b.totalPenaltyMinutes
+  return filas.sort((a, b) => {
+    if (b.cantidadResueltos !== a.cantidadResueltos) return b.cantidadResueltos - a.cantidadResueltos
+    return a.minutosPenalizacionTotal - b.minutosPenalizacionTotal
   })
 }
 
-export function groupStandingsByCategory(rows: StandingRow[]) {
+export function agruparClasificacionPorCategoria(filas: FilaClasificacion[]) {
   return {
-    senior: rows.filter((r) => r.category === 'senior'),
-    junior: rows.filter((r) => r.category === 'junior'),
+    senior: filas.filter((f) => f.categoria === 'senior'),
+    junior: filas.filter((f) => f.categoria === 'junior'),
   }
 }

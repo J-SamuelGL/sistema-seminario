@@ -2,105 +2,104 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problems, testCases } from '../db/schema'
-import { requireAdmin, requireCheckedInParticipant } from '../auth/middleware'
-import { validateProblemInput } from '../problems/validate'
+import { problemas, casosPrueba } from '../db/schema'
+import { requerirAdmin, requerirParticipanteIngresado } from '../auth/middleware'
+import { validarDatosProblema } from '../problems/validate'
 
-type ProblemInput = {
-  title: string
-  description: string
-  difficulty: string
-  allowedLanguages: string[]
-  sortOrder: number
-  testCases: { input: string; expectedOutput: string }[]
+type DatosProblema = {
+  titulo: string
+  descripcion: string
+  dificultad: string
+  lenguajesPermitidos: string[]
+  orden: number
+  casosPrueba: { entrada: string; salidaEsperada: string }[]
 }
 
-export const listProblems = createServerFn({ method: 'GET' }).handler(async () => {
+export const listarProblemas = createServerFn({ method: 'GET' }).handler(async () => {
   const request = getRequest()
-  await requireCheckedInParticipant(request.headers)
-  return db.select().from(problems).orderBy(problems.sortOrder)
+  await requerirParticipanteIngresado(request.headers)
+  return db.select().from(problemas).orderBy(problemas.orden)
 })
 
-export const getProblem = createServerFn({ method: 'GET' })
+export const obtenerProblema = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requireCheckedInParticipant(request.headers)
-    const rows = await db.select().from(problems).where(eq(problems.id, data))
-    const problem = rows.length > 0 ? rows[0] : null
-    const cases = await db.select().from(testCases).where(eq(testCases.problemId, data))
-    return { problem, testCases: cases }
+    await requerirParticipanteIngresado(request.headers)
+    const rows = await db.select().from(problemas).where(eq(problemas.id, data))
+    const problema = rows.length > 0 ? rows[0] : null
+    const casos = await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
+    return { problema, casosPrueba: casos }
   })
 
-export const createProblem = createServerFn({ method: 'POST' })
-  .validator((input: ProblemInput) => input)
+export const crearProblema = createServerFn({ method: 'POST' })
+  .validator((input: DatosProblema) => input)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requireAdmin(request.headers)
+    await requerirAdmin(request.headers)
 
-    const errors = validateProblemInput(data)
-    if (errors.length > 0) throw new Error(errors.join(', '))
+    const errores = validarDatosProblema(data)
+    if (errores.length > 0) throw new Error(errores.join(', '))
 
-    const [problem] = await db
-      .insert(problems)
-      .values({
-        title: data.title,
-        description: data.description,
-        difficulty: data.difficulty,
-        allowedLanguages: data.allowedLanguages,
-        sortOrder: data.sortOrder,
-      })
-      .returning()
+    const id = crypto.randomUUID()
+    await db.insert(problemas).values({
+      id,
+      titulo: data.titulo,
+      descripcion: data.descripcion,
+      dificultad: data.dificultad,
+      lenguajesPermitidos: data.lenguajesPermitidos,
+      orden: data.orden,
+    })
 
-    if (data.testCases.length > 0) {
-      await db.insert(testCases).values(
-        data.testCases.map((tc) => ({
-          problemId: problem.id,
-          input: tc.input,
-          expectedOutput: tc.expectedOutput,
+    if (data.casosPrueba.length > 0) {
+      await db.insert(casosPrueba).values(
+        data.casosPrueba.map((cp) => ({
+          problemaId: id,
+          entrada: cp.entrada,
+          salidaEsperada: cp.salidaEsperada,
         })),
       )
     }
 
-    return problem
+    return { id, ...data }
   })
 
-export const updateProblem = createServerFn({ method: 'POST' })
-  .validator((input: ProblemInput & { id: string }) => input)
+export const actualizarProblema = createServerFn({ method: 'POST' })
+  .validator((input: DatosProblema & { id: string }) => input)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requireAdmin(request.headers)
+    await requerirAdmin(request.headers)
 
-    const errors = validateProblemInput(data)
-    if (errors.length > 0) throw new Error(errors.join(', '))
+    const errores = validarDatosProblema(data)
+    if (errores.length > 0) throw new Error(errores.join(', '))
 
     await db
-      .update(problems)
+      .update(problemas)
       .set({
-        title: data.title,
-        description: data.description,
-        difficulty: data.difficulty,
-        allowedLanguages: data.allowedLanguages,
-        sortOrder: data.sortOrder,
+        titulo: data.titulo,
+        descripcion: data.descripcion,
+        dificultad: data.dificultad,
+        lenguajesPermitidos: data.lenguajesPermitidos,
+        orden: data.orden,
       })
-      .where(eq(problems.id, data.id))
+      .where(eq(problemas.id, data.id))
 
-    await db.delete(testCases).where(eq(testCases.problemId, data.id))
-    if (data.testCases.length > 0) {
-      await db.insert(testCases).values(
-        data.testCases.map((tc) => ({
-          problemId: data.id,
-          input: tc.input,
-          expectedOutput: tc.expectedOutput,
+    await db.delete(casosPrueba).where(eq(casosPrueba.problemaId, data.id))
+    if (data.casosPrueba.length > 0) {
+      await db.insert(casosPrueba).values(
+        data.casosPrueba.map((cp) => ({
+          problemaId: data.id,
+          entrada: cp.entrada,
+          salidaEsperada: cp.salidaEsperada,
         })),
       )
     }
   })
 
-export const deleteProblem = createServerFn({ method: 'POST' })
+export const eliminarProblema = createServerFn({ method: 'POST' })
   .validator((id: string) => id)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requireAdmin(request.headers)
-    await db.delete(problems).where(eq(problems.id, data))
+    await requerirAdmin(request.headers)
+    await db.delete(problemas).where(eq(problemas.id, data))
   })

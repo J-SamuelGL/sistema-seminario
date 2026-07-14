@@ -1,5 +1,5 @@
-export function assertCategoryNotSet(user: { category?: string | null }) {
-  if (user.category) {
-    throw new Error('Category already set')
+export function asegurarCategoriaNoDefinida(user: { categoria?: string | null }) {
+  if (user.categoria) {
+    throw new Error('La categoría ya está definida')
   }
 }

@@ -1,17 +1,17 @@
-export type CaseResult = {
-  input: string
-  expectedOutput: string
-  actualOutput: string
-  passed: boolean
-  stderr: string
-  timedOut: boolean
-  exitCode: number
+export type ResultadoCaso = {
+  entrada: string
+  salidaEsperada: string
+  salidaObtenida: string
+  aprobado: boolean
+  salidaError: string
+  tiempoExcedido: boolean
+  codigoSalida: number
 }
 
-export type Verdict = 'accepted' | 'wrong_answer' | 'runtime_error' | 'timeout'
+export type Veredicto = 'aceptado' | 'respuesta_incorrecta' | 'error_ejecucion' | 'tiempo_excedido'
 
-export function determineVerdict(results: CaseResult[]): Verdict {
-  if (results.some((r) => r.timedOut)) return 'timeout'
-  if (results.some((r) => r.exitCode !== 0)) return 'runtime_error'
-  return results.every((r) => r.passed) ? 'accepted' : 'wrong_answer'
+export function determinarVeredicto(resultados: ResultadoCaso[]): Veredicto {
+  if (resultados.some((r) => r.tiempoExcedido)) return 'tiempo_excedido'
+  if (resultados.some((r) => r.codigoSalida !== 0)) return 'error_ejecucion'
+  return resultados.every((r) => r.aprobado) ? 'aceptado' : 'respuesta_incorrecta'
 }

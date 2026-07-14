@@ -1,29 +1,29 @@
-import { pistonExecute } from '../piston/client'
-import { determineVerdict } from './verdict'
-import type { CaseResult, Verdict } from './verdict'
+import { ejecutarPiston } from '../piston/client'
+import { determinarVeredicto } from './verdict'
+import type { ResultadoCaso, Veredicto } from './verdict'
 
-export type TestCase = { input: string; expectedOutput: string }
+export type CasoPrueba = { entrada: string; salidaEsperada: string }
 
-export async function runTestCases(
-  language: string,
-  code: string,
-  testCases: TestCase[],
-): Promise<{ results: CaseResult[]; verdict: Verdict }> {
-  const results: CaseResult[] = []
+export async function ejecutarCasosPrueba(
+  lenguaje: string,
+  codigo: string,
+  casosPrueba: CasoPrueba[],
+): Promise<{ resultados: ResultadoCaso[]; veredicto: Veredicto }> {
+  const resultados: ResultadoCaso[] = []
 
-  for (const testCase of testCases) {
-    const output = await pistonExecute(language, code, testCase.input)
-    const actualOutput = output.stdout.trim()
-    results.push({
-      input: testCase.input,
-      expectedOutput: testCase.expectedOutput,
-      actualOutput,
-      passed: actualOutput === testCase.expectedOutput.trim(),
-      stderr: output.stderr,
-      timedOut: output.timedOut,
-      exitCode: output.exitCode,
+  for (const casoPrueba of casosPrueba) {
+    const salida = await ejecutarPiston(lenguaje, codigo, casoPrueba.entrada)
+    const salidaObtenida = salida.salidaEstandar.trim()
+    resultados.push({
+      entrada: casoPrueba.entrada,
+      salidaEsperada: casoPrueba.salidaEsperada,
+      salidaObtenida,
+      aprobado: salidaObtenida === casoPrueba.salidaEsperada.trim(),
+      salidaError: salida.salidaError,
+      tiempoExcedido: salida.tiempoExcedido,
+      codigoSalida: salida.codigoSalida,
     })
   }
 
-  return { results, verdict: determineVerdict(results) }
+  return { resultados, veredicto: determinarVeredicto(resultados) }
 }

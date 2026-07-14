@@ -1,11 +1,11 @@
-export function assertNotStarted(state: { startedAt: Date | null }) {
-  if (state.startedAt) {
+export function asegurarNoIniciado(estado: { iniciadoEn: Date | null }) {
+  if (estado.iniciadoEn) {
     throw new Error('El torneo ya comenzó')
   }
 }
 
-export function assertStarted(state: { startedAt: Date | null }) {
-  if (!state.startedAt) {
+export function asegurarIniciado(estado: { iniciadoEn: Date | null }) {
+  if (!estado.iniciadoEn) {
     throw new Error('El torneo aún no ha comenzado')
   }
 }

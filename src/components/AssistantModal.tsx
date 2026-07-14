@@ -1,33 +1,33 @@
 import { useState } from 'react'
-import { askAssistant } from '#/server/functions/assistant'
+import { preguntarAsistente } from '#/server/functions/assistant'
 
 export function AssistantModal({
-  problemId,
-  questionsUsed,
+  problemaId,
+  preguntasUsadas,
   onClose,
 }: {
-  problemId: string
-  questionsUsed: number
+  problemaId: string
+  preguntasUsadas: number
   onClose: () => void
 }) {
-  const [question, setQuestion] = useState('')
-  const [turns, setTurns] = useState<{ question: string; answer: string }[]>([])
-  const [remaining, setRemaining] = useState(2 - questionsUsed)
-  const [isAsking, setIsAsking] = useState(false)
+  const [pregunta, setPregunta] = useState('')
+  const [turnos, setTurnos] = useState<{ pregunta: string; respuesta: string }[]>([])
+  const [restantes, setRestantes] = useState(2 - preguntasUsadas)
+  const [preguntando, setPreguntando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleAsk() {
-    setIsAsking(true)
+    setPreguntando(true)
     try {
-      const result = await askAssistant({ data: { problemId, question } })
-      setTurns([...turns, { question, answer: result.answer }])
-      setRemaining(result.questionsRemaining)
-      setQuestion('')
+      const resultado = await preguntarAsistente({ data: { problemaId, pregunta } })
+      setTurnos([...turnos, { pregunta, respuesta: resultado.respuesta }])
+      setRestantes(resultado.preguntasRestantes)
+      setPregunta('')
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setIsAsking(false)
+      setPreguntando(false)
     }
   }
 
@@ -39,30 +39,30 @@ export function AssistantModal({
           <button onClick={onClose}>✕</button>
         </div>
         <p className="text-sm text-gray-500">
-          Preguntas restantes: {remaining}/2
+          Preguntas restantes: {restantes}/2
         </p>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        {turns.map((t, i) => (
+        {turnos.map((t, i) => (
           <div key={i} className="mt-2 text-sm">
-            <p className="font-bold">Tú: {t.question}</p>
-            <p>Haiku: {t.answer}</p>
+            <p className="font-bold">Tú: {t.pregunta}</p>
+            <p>Haiku: {t.respuesta}</p>
           </div>
         ))}
         <textarea
           className="mt-2 w-full border p-2"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          disabled={remaining <= 0}
+          value={pregunta}
+          onChange={(e) => setPregunta(e.target.value)}
+          disabled={restantes <= 0}
           placeholder="Ej: ¿cómo uso .filter en JavaScript?"
         />
         <button
           className="mt-2 w-full rounded bg-green-600 px-4 py-2 text-white disabled:bg-gray-300"
           onClick={handleAsk}
-          disabled={remaining <= 0 || isAsking || !question.trim()}
+          disabled={restantes <= 0 || preguntando || !pregunta.trim()}
         >
-          {remaining <= 0
+          {restantes <= 0
             ? 'Ya usaste tus 2 preguntas'
-            : isAsking
+            : preguntando
               ? 'Preguntando...'
               : 'Preguntar'}
         </button>

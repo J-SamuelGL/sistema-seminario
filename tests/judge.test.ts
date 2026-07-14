@@ -1,89 +1,89 @@
 import { describe, it, expect, vi } from 'vitest'
-import { determineVerdict } from '../src/server/judge/verdict'
-import { runTestCases } from '../src/server/judge/runTestCases'
-import { pistonExecute } from '../src/server/piston/client'
+import { determinarVeredicto } from '../src/server/judge/verdict'
+import { ejecutarCasosPrueba } from '../src/server/judge/runTestCases'
+import { ejecutarPiston } from '../src/server/piston/client'
 
 vi.mock('../src/server/piston/client', () => ({
-  pistonExecute: vi.fn(),
+  ejecutarPiston: vi.fn(),
 }))
 
-describe('determineVerdict', () => {
+describe('determinarVeredicto', () => {
   it('returns accepted when all cases pass', () => {
-    const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '2', passed: true, stderr: '', timedOut: false, exitCode: 0 },
+    const veredicto = determinarVeredicto([
+      { entrada: '1', salidaEsperada: '2', salidaObtenida: '2', aprobado: true, salidaError: '', tiempoExcedido: false, codigoSalida: 0 },
     ])
-    expect(verdict).toBe('accepted')
+    expect(veredicto).toBe('aceptado')
   })
 
   it('returns wrong_answer when a case fails without error', () => {
-    const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '3', passed: false, stderr: '', timedOut: false, exitCode: 0 },
+    const veredicto = determinarVeredicto([
+      { entrada: '1', salidaEsperada: '2', salidaObtenida: '3', aprobado: false, salidaError: '', tiempoExcedido: false, codigoSalida: 0 },
     ])
-    expect(verdict).toBe('wrong_answer')
+    expect(veredicto).toBe('respuesta_incorrecta')
   })
 
   it('returns runtime_error when a case has a nonzero exit code', () => {
-    const verdict = determineVerdict([
+    const veredicto = determinarVeredicto([
       {
-        input: '1',
-        expectedOutput: '2',
-        actualOutput: '',
-        passed: false,
-        stderr: 'Traceback',
-        exitCode: 1,
-        timedOut: false,
+        entrada: '1',
+        salidaEsperada: '2',
+        salidaObtenida: '',
+        aprobado: false,
+        salidaError: 'Traceback',
+        codigoSalida: 1,
+        tiempoExcedido: false,
       },
     ])
-    expect(verdict).toBe('runtime_error')
+    expect(veredicto).toBe('error_ejecucion')
   })
 
   it('returns accepted when a case passes despite incidental stderr output (nonzero-exit-code is what matters, not stderr presence)', () => {
-    const verdict = determineVerdict([
+    const veredicto = determinarVeredicto([
       {
-        input: '1',
-        expectedOutput: '2',
-        actualOutput: '2',
-        passed: true,
-        stderr: 'DeprecationWarning: ...',
-        exitCode: 0,
-        timedOut: false,
+        entrada: '1',
+        salidaEsperada: '2',
+        salidaObtenida: '2',
+        aprobado: true,
+        salidaError: 'DeprecationWarning: ...',
+        codigoSalida: 0,
+        tiempoExcedido: false,
       },
     ])
-    expect(verdict).toBe('accepted')
+    expect(veredicto).toBe('aceptado')
   })
 
   it('returns timeout when a case timed out, taking priority over other failures', () => {
-    const verdict = determineVerdict([
+    const veredicto = determinarVeredicto([
       {
-        input: '1',
-        expectedOutput: '2',
-        actualOutput: '',
-        passed: false,
-        stderr: 'Traceback',
-        timedOut: true,
-        exitCode: 1,
+        entrada: '1',
+        salidaEsperada: '2',
+        salidaObtenida: '',
+        aprobado: false,
+        salidaError: 'Traceback',
+        tiempoExcedido: true,
+        codigoSalida: 1,
       },
     ])
-    expect(verdict).toBe('timeout')
+    expect(veredicto).toBe('tiempo_excedido')
   })
 })
 
-describe('runTestCases', () => {
+describe('ejecutarCasosPrueba', () => {
   it('runs each test case through Piston and aggregates the verdict', async () => {
-    vi.mocked(pistonExecute).mockImplementation(async (_lang, _code, stdin) => ({
-      stdout: stdin === '1 2' ? '3' : '999',
-      stderr: '',
-      exitCode: 0,
-      timedOut: false,
+    vi.mocked(ejecutarPiston).mockImplementation(async (_lenguaje, _codigo, entradaEstandar) => ({
+      salidaEstandar: entradaEstandar === '1 2' ? '3' : '999',
+      salidaError: '',
+      codigoSalida: 0,
+      tiempoExcedido: false,
     }))
 
-    const { results, verdict } = await runTestCases('python', 'code', [
-      { input: '1 2', expectedOutput: '3' },
-      { input: '5 5', expectedOutput: '10' },
+    const { resultados, veredicto } = await ejecutarCasosPrueba('python', 'code', [
+      { entrada: '1 2', salidaEsperada: '3' },
+      { entrada: '5 5', salidaEsperada: '10' },
     ])
 
-    expect(results[0].passed).toBe(true)
-    expect(results[1].passed).toBe(false)
-    expect(verdict).toBe('wrong_answer')
+    expect(resultados[0].aprobado).toBe(true)
+    expect(resultados[1].aprobado).toBe(false)
+    expect(veredicto).toBe('respuesta_incorrecta')
   })
 })

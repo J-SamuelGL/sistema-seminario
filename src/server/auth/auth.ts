@@ -6,12 +6,12 @@ import * as schema from '../db/schema'
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
-    provider: 'pg',
+    provider: 'mysql',
     schema: {
-      user: schema.users,
-      session: schema.sessions,
-      account: schema.accounts,
-      verification: schema.verifications,
+      user: schema.usuarios,
+      session: schema.sesiones,
+      account: schema.cuentas,
+      verification: schema.verificaciones,
     },
   }),
   socialProviders: {
@@ -26,11 +26,11 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      role: { type: 'string', defaultValue: 'participant', input: false },
-      category: { type: 'string', required: false, input: false },
-      checkinToken: { type: 'string', input: false },
-      checkedInAt: { type: 'date', required: false, input: false },
-      aiQuestionsUsed: { type: 'number', defaultValue: 0, input: false },
+      rol: { type: 'string', defaultValue: 'participante', input: false },
+      categoria: { type: 'string', required: false, input: false },
+      tokenIngreso: { type: 'string', input: false },
+      ingresadoEn: { type: 'date', required: false, input: false },
+      preguntasIaUsadas: { type: 'number', defaultValue: 0, input: false },
     },
   },
 })

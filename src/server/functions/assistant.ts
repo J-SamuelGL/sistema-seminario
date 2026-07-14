@@ -2,57 +2,59 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, lt, sql } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problems, aiQuestions, users } from '../db/schema'
-import { requireCheckedInParticipant } from '../auth/middleware'
-import { canAskQuestion } from '../assistant/limit'
-import { answerJuniorQuestion } from '../claude/assistant'
+import { problemas, preguntasIa, usuarios } from '../db/schema'
+import { requerirParticipanteIngresado } from '../auth/middleware'
+import { puedePreguntar } from '../assistant/limit'
+import { responderPreguntaJunior } from '../claude/assistant'
 
-export const askAssistant = createServerFn({ method: 'POST' })
-  .validator((input: { problemId: string; question: string }) => input)
+export const preguntarAsistente = createServerFn({ method: 'POST' })
+  .validator((input: { problemaId: string; pregunta: string }) => input)
   .handler(async ({ data }) => {
     const request = getRequest()
-    const user = await requireCheckedInParticipant(request.headers)
+    const user = await requerirParticipanteIngresado(request.headers)
 
     if (
-      !user.category ||
-      !canAskQuestion({
-        category: user.category,
-        aiQuestionsUsed: user.aiQuestionsUsed,
+      !user.categoria ||
+      !puedePreguntar({
+        categoria: user.categoria,
+        preguntasIaUsadas: user.preguntasIaUsadas,
       })
     ) {
       throw new Error('AI_LIMIT_REACHED')
     }
 
-    // Atomically reserve a question slot before calling Claude, so two
-    // concurrent requests can't both observe aiQuestionsUsed < 2 and both
-    // proceed. The WHERE clause is checked against the current DB row, not
-    // the stale in-memory `user` value, closing the race window.
-    const reserved = await db
-      .update(users)
-      .set({ aiQuestionsUsed: sql`${users.aiQuestionsUsed} + 1` })
-      .where(and(eq(users.id, user.id), lt(users.aiQuestionsUsed, 2)))
-      .returning()
-    const reservedUser = reserved.length > 0 ? reserved[0] : null
-    if (!reservedUser) throw new Error('AI_LIMIT_REACHED')
+    // Reserva atómicamente un cupo de pregunta antes de llamar a Claude, para que dos
+    // solicitudes concurrentes no puedan ambas observar preguntasIaUsadas < 2 y ambas
+    // avanzar. La cláusula WHERE se evalúa contra la fila actual de la BD, no contra
+    // el valor `user` en memoria (potencialmente desactualizado), cerrando la ventana de carrera.
+    const resultado = await db
+      .update(usuarios)
+      .set({ preguntasIaUsadas: sql`${usuarios.preguntasIaUsadas} + 1` })
+      .where(and(eq(usuarios.id, user.id), lt(usuarios.preguntasIaUsadas, 2)))
+    if (resultado[0].affectedRows === 0) throw new Error('AI_LIMIT_REACHED')
 
-    const problemRows = await db
+    const filasUsuario = await db.select().from(usuarios).where(eq(usuarios.id, user.id))
+    const usuarioActualizado = filasUsuario.length > 0 ? filasUsuario[0] : null
+    if (!usuarioActualizado) throw new Error('AI_LIMIT_REACHED')
+
+    const filasProblema = await db
       .select()
-      .from(problems)
-      .where(eq(problems.id, data.problemId))
-    const problem = problemRows.length > 0 ? problemRows[0] : null
-    if (!problem) throw new Error('Problem not found')
+      .from(problemas)
+      .where(eq(problemas.id, data.problemaId))
+    const problema = filasProblema.length > 0 ? filasProblema[0] : null
+    if (!problema) throw new Error('Problema no encontrado')
 
-    const answer = await answerJuniorQuestion({
-      problemDescription: problem.description,
-      question: data.question,
+    const respuesta = await responderPreguntaJunior({
+      descripcionProblema: problema.descripcion,
+      pregunta: data.pregunta,
     })
 
-    await db.insert(aiQuestions).values({
-      userId: user.id,
-      problemId: data.problemId,
-      question: data.question,
-      answer,
+    await db.insert(preguntasIa).values({
+      usuarioId: user.id,
+      problemaId: data.problemaId,
+      pregunta: data.pregunta,
+      respuesta,
     })
 
-    return { answer, questionsRemaining: 2 - reservedUser.aiQuestionsUsed }
+    return { respuesta, preguntasRestantes: 2 - usuarioActualizado.preguntasIaUsadas }
   })

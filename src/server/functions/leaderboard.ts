@@ -1,34 +1,34 @@
 import { createServerFn } from '@tanstack/react-start'
 import { eq, isNotNull } from 'drizzle-orm'
 import { db } from '../db/client'
-import { users, submissions, tournamentState } from '../db/schema'
-import { calculateStandings, groupStandingsByCategory } from '../standings/calculate'
-import type { UserRecord } from '../standings/calculate'
+import { usuarios, envios, estadoTorneo } from '../db/schema'
+import { calcularClasificacion, agruparClasificacionPorCategoria } from '../standings/calculate'
+import type { RegistroUsuario } from '../standings/calculate'
 
-export const getStandings = createServerFn({ method: 'GET' }).handler(async () => {
-  const stateRows = await db.select().from(tournamentState).where(eq(tournamentState.id, 1))
-  const state = stateRows.length > 0 ? stateRows[0] : null
-  if (!state?.startedAt) {
-    return { started: false as const, senior: [], junior: [] }
+export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(async () => {
+  const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
+  const estado = filasEstado.length > 0 ? filasEstado[0] : null
+  if (!estado?.iniciadoEn) {
+    return { iniciado: false as const, senior: [], junior: [] }
   }
 
-  const allUsers = await db.select().from(users).where(isNotNull(users.category))
-  const allSubmissions = await db.select().from(submissions)
+  const todosUsuarios = await db.select().from(usuarios).where(isNotNull(usuarios.categoria))
+  const todosEnvios = await db.select().from(envios)
 
-  const eligibleUsers: Array<UserRecord> = allUsers
-    .filter((u): u is typeof u & { category: 'senior' | 'junior' } => u.category !== null)
-    .map((u) => ({ id: u.id, name: u.name, category: u.category }))
+  const usuariosElegibles: Array<RegistroUsuario> = todosUsuarios
+    .filter((u): u is typeof u & { categoria: 'senior' | 'junior' } => u.categoria !== null)
+    .map((u) => ({ id: u.id, nombre: u.name, categoria: u.categoria }))
 
-  const rows = calculateStandings(
-    eligibleUsers,
-    allSubmissions.map((s) => ({
-      userId: s.userId,
-      problemId: s.problemId,
-      status: s.status,
-      createdAt: s.createdAt,
+  const filas = calcularClasificacion(
+    usuariosElegibles,
+    todosEnvios.map((e) => ({
+      usuarioId: e.usuarioId,
+      problemaId: e.problemaId,
+      estado: e.estado,
+      creadoEn: e.creadoEn,
     })),
-    state.startedAt,
+    estado.iniciadoEn,
   )
-  const grouped = groupStandingsByCategory(rows)
-  return { started: true as const, ...grouped }
+  const agrupado = agruparClasificacionPorCategoria(filas)
+  return { iniciado: true as const, ...agrupado }
 })

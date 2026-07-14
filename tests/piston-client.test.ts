@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { pistonExecute } from '../src/server/piston/client'
+import { ejecutarPiston } from '../src/server/piston/client'
 
-describe('pistonExecute', () => {
+describe('ejecutarPiston', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
   })
@@ -13,9 +13,9 @@ describe('pistonExecute', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    const result = await pistonExecute('python', 'print("hi")', '')
+    const resultado = await ejecutarPiston('python', 'print("hi")', '')
 
-    expect(result).toEqual({ stdout: 'hi\n', stderr: '', exitCode: 0, timedOut: false })
+    expect(resultado).toEqual({ salidaEstandar: 'hi\n', salidaError: '', codigoSalida: 0, tiempoExcedido: false })
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toContain('/api/v2/execute')
     const body = JSON.parse(options.body)
@@ -31,11 +31,11 @@ describe('pistonExecute', () => {
         json: async () => ({ run: { stdout: '', stderr: '', code: 1, signal: 'SIGKILL' } }),
       }),
     )
-    const result = await pistonExecute('python', 'while True: pass', '')
-    expect(result.timedOut).toBe(true)
+    const resultado = await ejecutarPiston('python', 'while True: pass', '')
+    expect(resultado.tiempoExcedido).toBe(true)
   })
 
   it('throws for an unsupported language', async () => {
-    await expect(pistonExecute('cobol', 'x', '')).rejects.toThrow('Unsupported language: cobol')
+    await expect(ejecutarPiston('cobol', 'x', '')).rejects.toThrow('Lenguaje no soportado: cobol')
   })
 })
