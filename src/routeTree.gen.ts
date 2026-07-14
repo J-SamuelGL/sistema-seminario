@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProblemsIndexRouteImport } from './routes/problems/index'
 import { Route as ProblemsProblemIdRouteImport } from './routes/problems/$problemId'
 import { Route as AdminTournamentRouteImport } from './routes/admin/tournament'
+import { Route as AdminSubmissionsRouteImport } from './routes/admin/submissions'
 import { Route as AdminCheckinRouteImport } from './routes/admin/checkin'
 import { Route as AdminProblemsIndexRouteImport } from './routes/admin/problems/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -56,6 +57,11 @@ const AdminTournamentRoute = AdminTournamentRouteImport.update({
   path: '/admin/tournament',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
+  id: '/admin/submissions',
+  path: '/admin/submissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCheckinRoute = AdminCheckinRouteImport.update({
   id: '/admin/checkin',
   path: '/admin/checkin',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/tournament': typeof AdminTournamentRoute
   '/problems/$problemId': typeof ProblemsProblemIdRoute
   '/problems/': typeof ProblemsIndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/tournament': typeof AdminTournamentRoute
   '/problems/$problemId': typeof ProblemsProblemIdRoute
   '/problems': typeof ProblemsIndexRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/tournament': typeof AdminTournamentRoute
   '/problems/$problemId': typeof ProblemsProblemIdRoute
   '/problems/': typeof ProblemsIndexRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/admin/checkin'
+    | '/admin/submissions'
     | '/admin/tournament'
     | '/problems/$problemId'
     | '/problems/'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/admin/checkin'
+    | '/admin/submissions'
     | '/admin/tournament'
     | '/problems/$problemId'
     | '/problems'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/admin/checkin'
+    | '/admin/submissions'
     | '/admin/tournament'
     | '/problems/$problemId'
     | '/problems/'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   AdminCheckinRoute: typeof AdminCheckinRoute
+  AdminSubmissionsRoute: typeof AdminSubmissionsRoute
   AdminTournamentRoute: typeof AdminTournamentRoute
   ProblemsProblemIdRoute: typeof ProblemsProblemIdRoute
   ProblemsIndexRoute: typeof ProblemsIndexRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTournamentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/submissions': {
+      id: '/admin/submissions'
+      path: '/admin/submissions'
+      fullPath: '/admin/submissions'
+      preLoaderRoute: typeof AdminSubmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/checkin': {
       id: '/admin/checkin'
       path: '/admin/checkin'
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   AdminCheckinRoute: AdminCheckinRoute,
+  AdminSubmissionsRoute: AdminSubmissionsRoute,
   AdminTournamentRoute: AdminTournamentRoute,
   ProblemsProblemIdRoute: ProblemsProblemIdRoute,
   ProblemsIndexRoute: ProblemsIndexRoute,
