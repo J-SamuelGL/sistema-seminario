@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
-import { eq } from 'drizzle-orm'
+import { and, eq, lt, sql } from 'drizzle-orm'
 import { db } from '../db/client'
 import { problems, aiQuestions, users } from '../db/schema'
 import { requireCheckedInParticipant } from '../auth/middleware'
@@ -23,6 +23,18 @@ export const askAssistant = createServerFn({ method: 'POST' })
       throw new Error('AI_LIMIT_REACHED')
     }
 
+    // Atomically reserve a question slot before calling Claude, so two
+    // concurrent requests can't both observe aiQuestionsUsed < 2 and both
+    // proceed. The WHERE clause is checked against the current DB row, not
+    // the stale in-memory `user` value, closing the race window.
+    const reserved = await db
+      .update(users)
+      .set({ aiQuestionsUsed: sql`${users.aiQuestionsUsed} + 1` })
+      .where(and(eq(users.id, user.id), lt(users.aiQuestionsUsed, 2)))
+      .returning()
+    const reservedUser = reserved.length > 0 ? reserved[0] : null
+    if (!reservedUser) throw new Error('AI_LIMIT_REACHED')
+
     const problemRows = await db
       .select()
       .from(problems)
@@ -41,10 +53,6 @@ export const askAssistant = createServerFn({ method: 'POST' })
       question: data.question,
       answer,
     })
-    await db
-      .update(users)
-      .set({ aiQuestionsUsed: user.aiQuestionsUsed + 1 })
-      .where(eq(users.id, user.id))
 
-    return { answer, questionsRemaining: 2 - (user.aiQuestionsUsed + 1) }
+    return { answer, questionsRemaining: 2 - reservedUser.aiQuestionsUsed }
   })
