@@ -37,8 +37,10 @@ describe('categorías y corridas', () => {
       titulo: 'Suma',
       descripcion: 'Suma dos números',
       dificultad: 'easy',
-      lenguajesPermitidos: ['python'],
       grupo: 'senior',
+      puntos: 10,
+      parametros: [{ nombre: 'a', tipo: 'int' }],
+      tipoRetorno: 'int',
     })
     const rows = await db.select().from(problemas).where(eq(problemas.id, id))
     expect(rows[0]?.grupo).toBe('senior')
@@ -58,8 +60,10 @@ describe('categorías y corridas', () => {
       titulo: 'P',
       descripcion: 'd',
       dificultad: 'easy',
-      lenguajesPermitidos: ['python'],
       grupo: 'invitado_junior',
+      puntos: 10,
+      parametros: [],
+      tipoRetorno: 'int',
     })
 
     for (let i = 0; i < 2; i++) {

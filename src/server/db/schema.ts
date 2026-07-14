@@ -9,6 +9,7 @@ import {
   mysqlEnum,
   unique,
 } from 'drizzle-orm/mysql-core'
+import type { Parametro, Valor } from '../judge/tipos'
 
 // Tablas centrales de Better Auth
 export const usuarios = mysqlTable('usuario', {
@@ -77,10 +78,37 @@ export const problemas = mysqlTable('problemas', {
   titulo: text('titulo').notNull(),
   descripcion: text('descripcion').notNull(),
   dificultad: text('dificultad').notNull(),
-  lenguajesPermitidos: json('lenguajes_permitidos').$type<string[]>().notNull(),
   orden: int('orden').notNull().default(0),
   grupo: mysqlEnum('grupo', ['invitado_junior', 'senior']).notNull(),
+  puntos: int('puntos').notNull().default(10),
+  parametros: json('parametros').$type<Parametro[]>().notNull(),
+  tipoRetorno: mysqlEnum('tipo_retorno', [
+    'int',
+    'float',
+    'bool',
+    'string',
+    'list<int>',
+    'list<float>',
+    'list<bool>',
+    'list<string>',
+  ]).notNull(),
 })
+
+export const problemaLenguajes = mysqlTable(
+  'problema_lenguajes',
+  {
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    problemaId: varchar('problema_id', { length: 36 })
+      .notNull()
+      .references(() => problemas.id, { onDelete: 'cascade' }),
+    lenguaje: mysqlEnum('lenguaje', ['python', 'javascript', 'java', 'csharp', 'php']).notNull(),
+    nombreFuncion: text('nombre_funcion').notNull(),
+    codigoInicial: text('codigo_inicial').notNull(),
+  },
+  (table) => [unique('problema_lenguajes_unico').on(table.problemaId, table.lenguaje)],
+)
 
 export const casosPrueba = mysqlTable('casos_prueba', {
   id: varchar('id', { length: 36 })
@@ -89,8 +117,9 @@ export const casosPrueba = mysqlTable('casos_prueba', {
   problemaId: varchar('problema_id', { length: 36 })
     .notNull()
     .references(() => problemas.id, { onDelete: 'cascade' }),
-  entrada: text('entrada').notNull(),
-  salidaEsperada: text('salida_esperada').notNull(),
+  argumentos: json('argumentos').$type<Valor[]>().notNull(),
+  salidaEsperada: json('salida_esperada').$type<Valor>().notNull(),
+  visible: boolean('visible').notNull().default(true),
 })
 
 export const envios = mysqlTable('envios', {
