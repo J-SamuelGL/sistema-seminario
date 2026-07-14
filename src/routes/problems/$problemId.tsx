@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { getProblem } from '#/server/functions/problems'
 import { runCode } from '#/server/functions/run'
+import { submitCode } from '#/server/functions/submit'
 import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
+import { SubmitResult } from '#/components/SubmitResult'
 import type { CaseResult } from '#/server/judge/verdict'
 
 export const Route = createFileRoute('/problems/$problemId')({
@@ -20,6 +22,9 @@ function ProblemDetailPage() {
   const [runResults, setRunResults] = useState<CaseResult[] | null>(null)
   const [runError, setRunError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
+  const [submitResult, setSubmitResult] = useState<{ submissionId: string; verdict: string } | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (!problem) {
     return (
@@ -43,6 +48,22 @@ function ProblemDetailPage() {
     }
   }
 
+  async function handleSubmit() {
+    setIsSubmitting(true)
+    try {
+      const result = await submitCode({ data: { problemId: currentProblemId, language, code } })
+      if (result.error || !result.verdict) {
+        setSubmitError(result.error ?? 'No se pudo evaluar el envío.')
+        setSubmitResult(null)
+      } else {
+        setSubmitResult({ submissionId: result.submissionId, verdict: result.verdict })
+        setSubmitError(null)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
       <ProblemDescription title={problem.title} description={problem.description} difficulty={problem.difficulty} />
@@ -60,7 +81,17 @@ function ProblemDetailPage() {
         </button>
         {runError && <p className="mt-4 text-red-600">{runError}</p>}
         {!runError && runResults && <RunResults results={runResults} />}
-        {/* Submit button wired in Task 12 */}
+        <button
+          className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Enviando...' : 'Submit'}
+        </button>
+        {submitError && <p className="mt-4 text-red-600">{submitError}</p>}
+        {!submitError && submitResult && (
+          <SubmitResult submissionId={submitResult.submissionId} verdict={submitResult.verdict} />
+        )}
       </div>
     </div>
   )
