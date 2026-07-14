@@ -8,13 +8,13 @@ export type RegistroEnvio = {
 export type RegistroUsuario = {
   id: string
   nombre: string
-  categoria: 'senior' | 'junior'
+  categoria: 'invitado' | 'junior' | 'senior'
 }
 
 export type FilaClasificacion = {
   usuarioId: string
   nombre: string
-  categoria: 'senior' | 'junior'
+  categoria: 'invitado' | 'junior' | 'senior'
   cantidadResueltos: number
   minutosPenalizacionTotal: number
 }
@@ -73,7 +73,8 @@ export function calcularClasificacion(
 
 export function agruparClasificacionPorCategoria(filas: FilaClasificacion[]) {
   return {
-    senior: filas.filter((f) => f.categoria === 'senior'),
+    invitado: filas.filter((f) => f.categoria === 'invitado'),
     junior: filas.filter((f) => f.categoria === 'junior'),
+    senior: filas.filter((f) => f.categoria === 'senior'),
   }
 }

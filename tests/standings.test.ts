@@ -83,12 +83,14 @@ describe('calcularClasificacion', () => {
 })
 
 describe('agruparClasificacionPorCategoria', () => {
-  it('splits rows into senior and junior lists', () => {
+  it('separa las filas en invitado, junior y senior', () => {
     const agrupado = agruparClasificacionPorCategoria([
       { usuarioId: 'u1', nombre: 'Ana', categoria: 'senior', cantidadResueltos: 1, minutosPenalizacionTotal: 5 },
       { usuarioId: 'u2', nombre: 'Beto', categoria: 'junior', cantidadResueltos: 0, minutosPenalizacionTotal: 0 },
+      { usuarioId: 'u3', nombre: 'Cata', categoria: 'invitado', cantidadResueltos: 0, minutosPenalizacionTotal: 0 },
     ])
     expect(agrupado.senior.map((f) => f.usuarioId)).toEqual(['u1'])
     expect(agrupado.junior.map((f) => f.usuarioId)).toEqual(['u2'])
+    expect(agrupado.invitado.map((f) => f.usuarioId)).toEqual(['u3'])
   })
 })
