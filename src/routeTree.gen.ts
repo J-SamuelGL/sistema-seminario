@@ -13,7 +13,9 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminCheckinRouteImport } from './routes/admin/checkin'
+import { Route as AdminProblemsIndexRouteImport } from './routes/admin/problems/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AdminProblemsProblemIdRouteImport } from './routes/admin/problems/$problemId'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -35,9 +37,19 @@ const AdminCheckinRoute = AdminCheckinRouteImport.update({
   path: '/admin/checkin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProblemsIndexRoute = AdminProblemsIndexRouteImport.update({
+  id: '/admin/problems/',
+  path: '/admin/problems/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProblemsProblemIdRoute = AdminProblemsProblemIdRouteImport.update({
+  id: '/admin/problems/$problemId',
+  path: '/admin/problems/$problemId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -46,14 +58,18 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/admin/problems/': typeof AdminProblemsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/admin/problems': typeof AdminProblemsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,20 +77,38 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/admin/checkin': typeof AdminCheckinRoute
+  '/admin/problems/$problemId': typeof AdminProblemsProblemIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/admin/problems/': typeof AdminProblemsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile' | '/register' | '/admin/checkin' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/profile'
+    | '/register'
+    | '/admin/checkin'
+    | '/admin/problems/$problemId'
+    | '/api/auth/$'
+    | '/admin/problems/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile' | '/register' | '/admin/checkin' | '/api/auth/$'
+  to:
+    | '/'
+    | '/profile'
+    | '/register'
+    | '/admin/checkin'
+    | '/admin/problems/$problemId'
+    | '/api/auth/$'
+    | '/admin/problems'
   id:
     | '__root__'
     | '/'
     | '/profile'
     | '/register'
     | '/admin/checkin'
+    | '/admin/problems/$problemId'
     | '/api/auth/$'
+    | '/admin/problems/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -82,7 +116,9 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   AdminCheckinRoute: typeof AdminCheckinRoute
+  AdminProblemsProblemIdRoute: typeof AdminProblemsProblemIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  AdminProblemsIndexRoute: typeof AdminProblemsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -115,11 +151,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCheckinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/problems/': {
+      id: '/admin/problems/'
+      path: '/admin/problems'
+      fullPath: '/admin/problems/'
+      preLoaderRoute: typeof AdminProblemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/problems/$problemId': {
+      id: '/admin/problems/$problemId'
+      path: '/admin/problems/$problemId'
+      fullPath: '/admin/problems/$problemId'
+      preLoaderRoute: typeof AdminProblemsProblemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -130,7 +180,9 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   AdminCheckinRoute: AdminCheckinRoute,
+  AdminProblemsProblemIdRoute: AdminProblemsProblemIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  AdminProblemsIndexRoute: AdminProblemsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
