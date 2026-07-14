@@ -5,7 +5,7 @@ import { db } from '../db/client'
 import { problemas, preguntasIa, usuarios } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { puedePreguntar } from '../assistant/limit'
-import { responderPreguntaJunior } from '../claude/assistant'
+import { responderPreguntaInvitado } from '../claude/assistant'
 
 export const preguntarAsistente = createServerFn({ method: 'POST' })
   .validator((input: { problemaId: string; pregunta: string }) => input)
@@ -14,7 +14,6 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
     const user = await requerirParticipanteIngresado(request.headers)
 
     if (
-      !user.categoria ||
       !puedePreguntar({
         categoria: user.categoria,
         preguntasIaUsadas: user.preguntasIaUsadas,
@@ -24,13 +23,13 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
     }
 
     // Reserva atómicamente un cupo de pregunta antes de llamar a Claude, para que dos
-    // solicitudes concurrentes no puedan ambas observar preguntasIaUsadas < 2 y ambas
+    // solicitudes concurrentes no puedan ambas observar preguntasIaUsadas < 3 y ambas
     // avanzar. La cláusula WHERE se evalúa contra la fila actual de la BD, no contra
     // el valor `user` en memoria (potencialmente desactualizado), cerrando la ventana de carrera.
     const resultado = await db
       .update(usuarios)
       .set({ preguntasIaUsadas: sql`${usuarios.preguntasIaUsadas} + 1` })
-      .where(and(eq(usuarios.id, user.id), lt(usuarios.preguntasIaUsadas, 2)))
+      .where(and(eq(usuarios.id, user.id), lt(usuarios.preguntasIaUsadas, 3)))
     if (resultado[0].affectedRows === 0) throw new Error('AI_LIMIT_REACHED')
 
     const filasUsuario = await db.select().from(usuarios).where(eq(usuarios.id, user.id))
@@ -44,7 +43,7 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
     const problema = filasProblema.length > 0 ? filasProblema[0] : null
     if (!problema) throw new Error('Problema no encontrado')
 
-    const respuesta = await responderPreguntaJunior({
+    const respuesta = await responderPreguntaInvitado({
       descripcionProblema: problema.descripcion,
       pregunta: data.pregunta,
     })
@@ -56,5 +55,5 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
       respuesta,
     })
 
-    return { respuesta, preguntasRestantes: 2 - usuarioActualizado.preguntasIaUsadas }
+    return { respuesta, preguntasRestantes: 3 - usuarioActualizado.preguntasIaUsadas }
   })

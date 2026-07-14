@@ -12,7 +12,7 @@ export function AssistantModal({
 }) {
   const [pregunta, setPregunta] = useState('')
   const [turnos, setTurnos] = useState<{ pregunta: string; respuesta: string }[]>([])
-  const [restantes, setRestantes] = useState(2 - preguntasUsadas)
+  const [restantes, setRestantes] = useState(3 - preguntasUsadas)
   const [preguntando, setPreguntando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,7 +39,7 @@ export function AssistantModal({
           <button onClick={onClose}>✕</button>
         </div>
         <p className="text-sm text-gray-500">
-          Preguntas restantes: {restantes}/2
+          Preguntas restantes: {restantes}/3
         </p>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         {turnos.map((t, i) => (
@@ -61,7 +61,7 @@ export function AssistantModal({
           disabled={restantes <= 0 || preguntando || !pregunta.trim()}
         >
           {restantes <= 0
-            ? 'Ya usaste tus 2 preguntas'
+            ? 'Ya usaste tus 3 preguntas'
             : preguntando
               ? 'Preguntando...'
               : 'Preguntar'}

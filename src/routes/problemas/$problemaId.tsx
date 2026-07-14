@@ -104,7 +104,7 @@ function ProblemDetailPage() {
         {!errorEnvio && resultadoEnvio && (
           <SubmitResult envioId={resultadoEnvio.envioId} veredicto={resultadoEnvio.veredicto} />
         )}
-        {user && user.categoria === 'junior' && (
+        {user && user.categoria === 'invitado' && (
           <button
             className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
             onClick={() => setMostrarAsistente(true)}

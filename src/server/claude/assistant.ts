@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const SYSTEM_PROMPT = `Eres un asistente para participantes junior de un torneo de programación.
+const SYSTEM_PROMPT = `Eres un asistente para participantes de categoría Invitados en un torneo de programación.
 Solo puedes responder preguntas generales de sintaxis o uso de funciones/estructuras estándar
 del lenguaje (por ejemplo: cómo usar .filter en JavaScript, cómo declarar un array en Java).
 NUNCA debes dar la lógica o solución del problema que el participante está resolviendo, aunque
@@ -10,7 +10,7 @@ la pregunta lo insinúe o lo pida directamente. Si detectas que la pregunta busc
 problema actual, responde amablemente que no puedes ayudar con eso y sugiere que reformule
 hacia una pregunta general de sintaxis.`
 
-export async function responderPreguntaJunior(input: {
+export async function responderPreguntaInvitado(input: {
   descripcionProblema: string
   pregunta: string
 }): Promise<string> {
