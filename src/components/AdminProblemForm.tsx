@@ -6,6 +6,7 @@ export type ValorFormularioProblema = {
   dificultad: string
   lenguajesPermitidos: string[]
   orden: number
+  grupo: 'invitado_junior' | 'senior'
   casosPrueba: { entrada: string; salidaEsperada: string }[]
 }
 
@@ -58,6 +59,17 @@ export function AdminProblemForm({
           setValue({ ...value, lenguajesPermitidos: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
         }
       />
+      <label>
+        Grupo:
+        <select
+          className="ml-2 border p-2"
+          value={value.grupo}
+          onChange={(e) => setValue({ ...value, grupo: e.target.value as ValorFormularioProblema['grupo'] })}
+        >
+          <option value="invitado_junior">Invitados + Junior</option>
+          <option value="senior">Senior</option>
+        </select>
+      </label>
       <h3 className="font-bold">Casos de prueba</h3>
       {value.casosPrueba.map((cp, i) => (
         <div key={i} className="flex gap-2">

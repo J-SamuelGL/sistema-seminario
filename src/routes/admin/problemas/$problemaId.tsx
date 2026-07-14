@@ -33,9 +33,18 @@ function AdminProblemEditPage() {
           dificultad: data.problema.dificultad,
           lenguajesPermitidos: data.problema.lenguajesPermitidos,
           orden: data.problema.orden,
+          grupo: data.problema.grupo,
           casosPrueba: data.casosPrueba.map((cp) => ({ entrada: cp.entrada, salidaEsperada: cp.salidaEsperada })),
         }
-      : { titulo: '', descripcion: '', dificultad: 'easy', lenguajesPermitidos: [], orden: 0, casosPrueba: [] }
+      : {
+          titulo: '',
+          descripcion: '',
+          dificultad: 'easy',
+          lenguajesPermitidos: [],
+          orden: 0,
+          grupo: 'invitado_junior',
+          casosPrueba: [],
+        }
 
   async function handleSubmit(value: ValorFormularioProblema) {
     if (problemaId === 'new') {

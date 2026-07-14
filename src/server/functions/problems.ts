@@ -5,6 +5,7 @@ import { db } from '../db/client'
 import { problemas, casosPrueba } from '../db/schema'
 import { requerirAdmin, requerirParticipanteIngresado } from '../auth/middleware'
 import { validarDatosProblema } from '../problems/validate'
+import { grupoDeCategoria } from '../problems/grupo'
 
 type DatosProblema = {
   titulo: string
@@ -12,23 +13,34 @@ type DatosProblema = {
   dificultad: string
   lenguajesPermitidos: string[]
   orden: number
+  grupo: 'invitado_junior' | 'senior'
   casosPrueba: { entrada: string; salidaEsperada: string }[]
 }
 
 export const listarProblemas = createServerFn({ method: 'GET' }).handler(async () => {
   const request = getRequest()
-  await requerirParticipanteIngresado(request.headers)
-  return db.select().from(problemas).orderBy(problemas.orden)
+  const user = await requerirParticipanteIngresado(request.headers)
+  if (user.rol === 'admin') {
+    return db.select().from(problemas).orderBy(problemas.orden)
+  }
+  const grupo = grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
+  return db.select().from(problemas).where(eq(problemas.grupo, grupo)).orderBy(problemas.orden)
 })
 
 export const obtenerProblema = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requerirParticipanteIngresado(request.headers)
+    const user = await requerirParticipanteIngresado(request.headers)
     const rows = await db.select().from(problemas).where(eq(problemas.id, data))
-    const problema = rows.length > 0 ? rows[0] : null
-    const casos = await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
+    const filaProblema = rows.length > 0 ? rows[0] : null
+    const puedeVerlo =
+      user.rol === 'admin' ||
+      filaProblema?.grupo === grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
+    const problema = filaProblema && puedeVerlo ? filaProblema : null
+    const casos = problema
+      ? await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
+      : []
     return { problema, casosPrueba: casos }
   })
 
@@ -49,6 +61,7 @@ export const crearProblema = createServerFn({ method: 'POST' })
       dificultad: data.dificultad,
       lenguajesPermitidos: data.lenguajesPermitidos,
       orden: data.orden,
+      grupo: data.grupo,
     })
 
     if (data.casosPrueba.length > 0) {
@@ -81,6 +94,7 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
         dificultad: data.dificultad,
         lenguajesPermitidos: data.lenguajesPermitidos,
         orden: data.orden,
+        grupo: data.grupo,
       })
       .where(eq(problemas.id, data.id))
 
