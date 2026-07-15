@@ -62,9 +62,11 @@ function AdminProblemEditPage() {
 
   async function handleSubmit(value: DatosProblemaEnviado) {
     if (problemaId === 'new') {
-      await crearProblema({ data: value })
+      await crearProblema({ data: value as Parameters<typeof crearProblema>[0]['data'] })
     } else {
-      await actualizarProblema({ data: { ...value, id: problemaId } })
+      await actualizarProblema({
+        data: { ...value, id: problemaId } as Parameters<typeof actualizarProblema>[0]['data'],
+      })
     }
     await navigate({ to: '/admin/problemas' })
   }
