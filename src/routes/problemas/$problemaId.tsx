@@ -9,7 +9,8 @@ import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
 import { SubmitResult } from '#/components/SubmitResult'
 import { AssistantModal } from '#/components/AssistantModal'
-import type { ResultadoCaso } from '#/server/judge/verdict'
+import { serializarCanonico } from '#/server/judge/serializar'
+import type { ResultadoCasoPublico } from '#/server/judge/resultadoPublico'
 
 export const Route = createFileRoute('/problemas/$problemaId')({
   loader: async ({ params }) => {
@@ -24,10 +25,10 @@ export const Route = createFileRoute('/problemas/$problemaId')({
 
 function ProblemDetailPage() {
   const { problemaId } = Route.useParams()
-  const { problema, user } = Route.useLoaderData()
-  const [lenguaje, setLenguaje] = useState(problema?.lenguajesPermitidos[0] ?? '')
-  const [codigo, setCodigo] = useState('')
-  const [resultadosEjecucion, setResultadosEjecucion] = useState<ResultadoCaso[] | null>(null)
+  const { problema, casosPrueba, lenguajes, user } = Route.useLoaderData()
+  const [lenguaje, setLenguaje] = useState<string>(lenguajes[0]?.lenguaje ?? '')
+  const [codigo, setCodigo] = useState(lenguajes[0]?.codigoInicial ?? '')
+  const [resultadosEjecucion, setResultadosEjecucion] = useState<ResultadoCasoPublico[] | null>(null)
   const [errorEjecucion, setErrorEjecucion] = useState<string | null>(null)
   const [hint, setHint] = useState<string | null>(null)
   const [ejecutando, setEjecutando] = useState(false)
@@ -46,6 +47,15 @@ function ProblemDetailPage() {
   }
 
   const problemaIdActual = problema.id
+  const ejemplos = casosPrueba
+    .filter((c) => c.visible)
+    .map((c) => ({ argumentos: c.argumentos, salidaEsperadaTexto: serializarCanonico(c.salidaEsperada, problema.tipoRetorno) }))
+
+  function handleLenguajeChange(nuevoLenguaje: string) {
+    setLenguaje(nuevoLenguaje)
+    const config = lenguajes.find((l) => l.lenguaje === nuevoLenguaje)
+    setCodigo(config?.codigoInicial ?? '')
+  }
 
   async function handleRun() {
     setEjecutando(true)
@@ -82,12 +92,12 @@ function ProblemDetailPage() {
 
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
-      <ProblemDescription titulo={problema.titulo} descripcion={problema.descripcion} dificultad={problema.dificultad} />
+      <ProblemDescription titulo={problema.titulo} descripcion={problema.descripcion} dificultad={problema.dificultad} ejemplos={ejemplos} />
       <div>
-        <select className="border p-2" value={lenguaje} onChange={(e) => setLenguaje(e.target.value)}>
-          {problema.lenguajesPermitidos.map((lang) => (
-            <option key={lang} value={lang}>
-              {lang}
+        <select className="border p-2" value={lenguaje} onChange={(e) => handleLenguajeChange(e.target.value)}>
+          {lenguajes.map((l) => (
+            <option key={l.lenguaje} value={l.lenguaje}>
+              {l.lenguaje}
             </option>
           ))}
         </select>
@@ -96,38 +106,21 @@ function ProblemDetailPage() {
           {ejecutando ? 'Ejecutando...' : 'Run'}
         </button>
         {errorEjecucion && <p className="mt-4 text-red-600">{errorEjecucion}</p>}
-        {!errorEjecucion && resultadosEjecucion && (
-          <RunResults results={resultadosEjecucion} hint={hint} />
-        )}
-        <button
-          className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white"
-          onClick={handleSubmit}
-          disabled={enviando}
-        >
+        {!errorEjecucion && resultadosEjecucion && <RunResults results={resultadosEjecucion} hint={hint} />}
+        <button className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white" onClick={handleSubmit} disabled={enviando}>
           {enviando ? 'Enviando...' : 'Submit'}
         </button>
         {errorEnvio && <p className="mt-4 text-red-600">{errorEnvio}</p>}
         {!errorEnvio && resultadoEnvio && (
-          <SubmitResult
-            envioId={resultadoEnvio.envioId}
-            veredicto={resultadoEnvio.veredicto}
-            mostrarFeedback={user?.categoria === 'invitado'}
-          />
+          <SubmitResult envioId={resultadoEnvio.envioId} veredicto={resultadoEnvio.veredicto} mostrarFeedback={user?.categoria === 'invitado'} />
         )}
         {user && user.categoria === 'invitado' && (
-          <button
-            className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
-            onClick={() => setMostrarAsistente(true)}
-          >
+          <button className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white" onClick={() => setMostrarAsistente(true)}>
             Preguntar a Haiku
           </button>
         )}
         {mostrarAsistente && user && (
-          <AssistantModal
-            problemaId={problemaIdActual}
-            preguntasUsadas={user.preguntasIaUsadas}
-            onClose={() => setMostrarAsistente(false)}
-          />
+          <AssistantModal problemaId={problemaIdActual} preguntasUsadas={user.preguntasIaUsadas} onClose={() => setMostrarAsistente(false)} />
         )}
       </div>
     </div>
