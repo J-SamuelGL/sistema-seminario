@@ -11,19 +11,25 @@ export type RegistroUsuario = {
   categoria: 'invitado' | 'junior' | 'senior'
 }
 
+export type RegistroProblema = { id: string; puntos: number }
+
 export type FilaClasificacion = {
   usuarioId: string
   nombre: string
   categoria: 'invitado' | 'junior' | 'senior'
   cantidadResueltos: number
+  puntosTotales: number
   minutosPenalizacionTotal: number
 }
 
 export function calcularClasificacion(
   usuarios: RegistroUsuario[],
   envios: RegistroEnvio[],
+  problemas: RegistroProblema[],
   torneoIniciadoEn: Date,
 ): FilaClasificacion[] {
+  const puntosPorProblema = new Map(problemas.map((p) => [p.id, p.puntos]))
+
   const porUsuario = new Map<string, RegistroEnvio[]>()
   for (const e of envios) {
     if (e.estado === 'pendiente') continue
@@ -42,12 +48,14 @@ export function calcularClasificacion(
     }
 
     let cantidadResueltos = 0
+    let puntosTotales = 0
     let minutosPenalizacionTotal = 0
 
-    for (const [, enviosProblema] of porProblema) {
+    for (const [problemaId, enviosProblema] of porProblema) {
       const indiceAceptado = enviosProblema.findIndex((e) => e.estado === 'aceptado')
       if (indiceAceptado === -1) continue
       cantidadResueltos += 1
+      puntosTotales += puntosPorProblema.get(problemaId) ?? 0
       const envioAceptado = enviosProblema[indiceAceptado]
       const intentosFallidosAntes = indiceAceptado
       const minutosDesdeInicio = Math.floor(
@@ -61,12 +69,13 @@ export function calcularClasificacion(
       nombre: usuario.nombre,
       categoria: usuario.categoria,
       cantidadResueltos,
+      puntosTotales,
       minutosPenalizacionTotal,
     }
   })
 
   return filas.sort((a, b) => {
-    if (b.cantidadResueltos !== a.cantidadResueltos) return b.cantidadResueltos - a.cantidadResueltos
+    if (b.puntosTotales !== a.puntosTotales) return b.puntosTotales - a.puntosTotales
     return a.minutosPenalizacionTotal - b.minutosPenalizacionTotal
   })
 }
