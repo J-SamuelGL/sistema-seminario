@@ -1,8 +1,7 @@
-// NOTA: las versiones de `java`, `csharp` y `php` son valores de referencia SIN
-// verificar contra la instancia real de Piston (no estaba accesible durante la
-// Tarea 5 de este plan). `python` y `javascript` sí están verificados. Antes de
-// confiar en estos valores en producción, confirmarlos contra `GET /api/v2/packages`
-// de la instancia de Piston desplegada.
+// Versiones verificadas contra una instancia real de Piston (`GET /api/v2/packages`):
+// para instalar `javascript`/`csharp` el paquete se llama `node`/`mono` respectivamente
+// (ver scripts/install-piston-languages.sh), pero como alias de ejecución `language:
+// 'javascript'`/`'csharp'` sí son válidos en `POST /api/v2/execute`.
 export const MAPA_LENGUAJES: Record<string, { language: string; version: string }> = {
   python: { language: 'python', version: '3.10.0' },
   javascript: { language: 'javascript', version: '18.15.0' },

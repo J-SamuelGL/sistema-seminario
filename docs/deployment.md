@@ -23,6 +23,7 @@ This document outlines the steps to deploy the Torneo de Programación applicati
 3. In the service's Networking settings:
    - Do **not** expose a public domain
    - Enable private networking only, which provides an internal address like `piston.railway.internal` on port `2000`
+4. Set the environment variable `PISTON_RUN_TIMEOUT=5000` on this service. Piston's default is `3000`ms, but `src/server/piston/client.ts` requests `run_timeout: 5000` on every execution — without this override, Piston rejects every submission with `400 run_timeout cannot exceed the configured limit of 3000`.
 
 ### Step 3: Install Language Runtimes
 
@@ -38,7 +39,7 @@ The `scripts/install-piston-languages.sh` script handles language runtime instal
 
 The script installs Python, JavaScript, Java, C# and PHP runtimes (see `scripts/install-piston-languages.sh` for exact pinned versions).
 
-Note: the Java, C#, and PHP version numbers are unverified reference values (only Python and JavaScript have been confirmed). Check them against `GET /api/v2/packages` on the real Piston instance during this step, before trusting the install to have succeeded with the intended versions.
+Note: all five language/version pairs have been confirmed against a real Piston instance via `GET /api/v2/packages` and `POST /api/v2/execute`. One quirk to be aware of: the *package* names used to install JavaScript and C# support are `node` and `mono` respectively (as used by this script); `javascript`/`csharp` are only valid as execution-time aliases in `POST /api/v2/execute`, not as install-time package names.
 
 ### Step 4: Create the Main App Service
 
