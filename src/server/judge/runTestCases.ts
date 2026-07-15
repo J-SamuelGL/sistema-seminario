@@ -1,5 +1,5 @@
 import { generarPrograma } from './harness'
-import { serializarCanonico } from './serializar'
+import { serializarCanonico, compararSalidas } from './serializar'
 import { ejecutarPiston } from '../piston/client'
 import { determinarVeredicto } from './verdict'
 import type { ResultadoCaso, Veredicto } from './verdict'
@@ -38,7 +38,7 @@ export async function ejecutarCasosPrueba(
       argumentos: casoPrueba.argumentos,
       salidaEsperada: salidaEsperadaTexto,
       salidaObtenida,
-      aprobado: salidaObtenida === salidaEsperadaTexto,
+      aprobado: compararSalidas(salidaObtenida, salidaEsperadaTexto, firma.tipoRetorno),
       salidaError: salida.salidaError,
       tiempoExcedido: salida.tiempoExcedido,
       codigoSalida: salida.codigoSalida,

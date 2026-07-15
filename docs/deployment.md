@@ -38,6 +38,8 @@ The `scripts/install-piston-languages.sh` script handles language runtime instal
 
 The script installs Python, JavaScript, Java, C# and PHP runtimes (see `scripts/install-piston-languages.sh` for exact pinned versions).
 
+Note: the Java, C#, and PHP version numbers are unverified reference values (only Python and JavaScript have been confirmed). Check them against `GET /api/v2/packages` on the real Piston instance during this step, before trusting the install to have succeeded with the intended versions.
+
 ### Step 4: Create the Main App Service
 
 1. Add a third service, connected to this project's GitHub repository

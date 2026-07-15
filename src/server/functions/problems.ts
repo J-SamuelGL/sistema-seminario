@@ -42,9 +42,10 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
       user.rol === 'admin' ||
       filaProblema?.grupo === grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
     const problema = filaProblema && puedeVerlo ? filaProblema : null
-    const casos = problema
+    const casosCompletos = problema
       ? await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
       : []
+    const casos = user.rol === 'admin' ? casosCompletos : casosCompletos.filter((c) => c.visible)
     const lenguajes = problema
       ? await db.select().from(problemaLenguajes).where(eq(problemaLenguajes.problemaId, data))
       : []
