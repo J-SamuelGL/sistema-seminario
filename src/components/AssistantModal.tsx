@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { preguntarAsistente } from '#/server/functions/assistant'
+import { Markdown } from '#/components/Markdown'
 
 export function AssistantModal({
   problemaId,
@@ -32,31 +33,33 @@ export function AssistantModal({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-      <div className="w-96 rounded bg-white p-4">
-        <div className="flex justify-between">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
+      <div className="flex max-h-[85vh] w-96 flex-col rounded bg-white p-4">
+        <div className="flex shrink-0 justify-between">
           <h2 className="font-bold">Preguntar a Haiku</h2>
           <button onClick={onClose}>✕</button>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="shrink-0 text-sm text-gray-500">
           Preguntas restantes: {restantes}/3
         </p>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        {turnos.map((t, i) => (
-          <div key={i} className="mt-2 text-sm">
-            <p className="font-bold">Tú: {t.pregunta}</p>
-            <p>Haiku: {t.respuesta}</p>
-          </div>
-        ))}
+        {error && <p className="mt-2 shrink-0 text-sm text-red-600">{error}</p>}
+        <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
+          {turnos.map((t, i) => (
+            <div key={i} className="mt-2 text-sm first:mt-0">
+              <p className="font-bold">Tú: {t.pregunta}</p>
+              <Markdown>{t.respuesta}</Markdown>
+            </div>
+          ))}
+        </div>
         <textarea
-          className="mt-2 w-full border p-2"
+          className="mt-2 w-full shrink-0 border p-2"
           value={pregunta}
           onChange={(e) => setPregunta(e.target.value)}
           disabled={restantes <= 0}
           placeholder="Ej: ¿cómo uso .filter en JavaScript?"
         />
         <button
-          className="mt-2 w-full rounded bg-green-600 px-4 py-2 text-white disabled:bg-gray-300"
+          className="mt-2 w-full shrink-0 rounded bg-green-600 px-4 py-2 text-white disabled:bg-gray-300"
           onClick={handleAsk}
           disabled={restantes <= 0 || preguntando || !pregunta.trim()}
         >

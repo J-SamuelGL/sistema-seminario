@@ -1,5 +1,6 @@
 
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 * {
   box-sizing: border-box;
@@ -13,5 +14,18 @@ body,
 
 body {
   margin: 0;
+}
+
+/* Código inline dentro de markdown (Markdown.tsx): sin backticks visibles, con
+   fondo tipo "pill" en vez de las comillas que agrega @tailwindcss/typography por defecto. */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+.prose :not(pre) > code {
+  background-color: rgb(0 0 0 / 0.06);
+  border-radius: 0.25rem;
+  padding: 0.15em 0.4em;
 }
 

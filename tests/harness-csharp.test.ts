@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { generarProgramaCsharp } from '../src/server/judge/harness/csharp'
+import { MARCADOR_RESULTADO_JUEZ } from '../src/server/judge/harness/marcador'
 
 describe('generarProgramaCsharp', () => {
   it('envuelve el método del participante en la clase Program', () => {
@@ -13,7 +14,9 @@ describe('generarProgramaCsharp', () => {
     expect(archivo).toBe('main.cs')
     expect(contenido).toContain('class Program {')
     expect(contenido).toContain('ContarVocales("hola")')
-    expect(contenido).toContain('Console.WriteLine(__resultado_juez__);')
+    expect(contenido).toContain(
+      `Console.WriteLine("${MARCADOR_RESULTADO_JUEZ}" + __resultado_juez__);`,
+    )
   })
 
   it('serializa bool en minúscula, no con la capitalización nativa de C#', () => {
@@ -24,7 +27,9 @@ describe('generarProgramaCsharp', () => {
       'bool',
       [1],
     )
-    expect(contenido).toContain('Console.WriteLine(__resultado_juez__ ? "true" : "false");')
+    expect(contenido).toContain(
+      `Console.WriteLine("${MARCADOR_RESULTADO_JUEZ}" + (__resultado_juez__ ? "true" : "false"));`,
+    )
   })
 
   it('serializa list<bool> con formato canónico', () => {

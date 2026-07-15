@@ -7,6 +7,8 @@
   },
   "scripts": {
     "dev": "vite dev --port 3000",
+    "dev:piston": "docker compose up -d piston",
+    "piston:install-languages": "bash scripts/install-piston-languages.sh http://localhost:2000",
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
@@ -18,6 +20,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
     "@monaco-editor/react": "^4.7.0",
+    "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-router": "latest",
@@ -34,10 +37,12 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.16",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/eslint-config": "latest",
     "@tanstack/router-cli": "^1.132.0",
@@ -47,6 +52,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^6.0.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.20.0",

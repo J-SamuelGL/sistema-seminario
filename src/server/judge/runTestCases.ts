@@ -1,11 +1,16 @@
 import { generarPrograma } from './harness'
 import { serializarCanonico, compararSalidas } from './serializar'
+import { separarSalidaConsola } from './consola'
 import { ejecutarPiston } from '../piston/client'
 import { determinarVeredicto } from './verdict'
 import type { ResultadoCaso, Veredicto } from './verdict'
 import type { Parametro, TipoDato, Valor } from './tipos'
 
-export type CasoPrueba = { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }
+export type CasoPrueba = {
+  argumentos: Valor[]
+  salidaEsperada: Valor
+  visible: boolean
+}
 
 export type Firma = {
   nombreFuncion: string
@@ -31,14 +36,24 @@ export async function ejecutarCasosPrueba(
       casoPrueba.argumentos,
     )
     const salida = await ejecutarPiston(lenguaje, archivo, contenido)
-    const salidaObtenida = salida.salidaEstandar.trim()
-    const salidaEsperadaTexto = serializarCanonico(casoPrueba.salidaEsperada, firma.tipoRetorno)
+    const { salidaConsola, salidaResultado } = separarSalidaConsola(
+      salida.salidaEstandar,
+    )
+    const salidaEsperadaTexto = serializarCanonico(
+      casoPrueba.salidaEsperada,
+      firma.tipoRetorno,
+    )
     resultados.push({
       visible: casoPrueba.visible,
       argumentos: casoPrueba.argumentos,
       salidaEsperada: salidaEsperadaTexto,
-      salidaObtenida,
-      aprobado: compararSalidas(salidaObtenida, salidaEsperadaTexto, firma.tipoRetorno),
+      salidaObtenida: salidaResultado,
+      salidaConsola,
+      aprobado: compararSalidas(
+        salidaResultado,
+        salidaEsperadaTexto,
+        firma.tipoRetorno,
+      ),
       salidaError: salida.salidaError,
       tiempoExcedido: salida.tiempoExcedido,
       codigoSalida: salida.codigoSalida,

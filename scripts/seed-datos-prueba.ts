@@ -1,7 +1,13 @@
 import 'dotenv/config'
 import { hashPassword } from 'better-auth/crypto'
 import { db } from '../src/server/db/client'
-import { usuarios, cuentas, problemas, problemaLenguajes, casosPrueba } from '../src/server/db/schema'
+import {
+  usuarios,
+  cuentas,
+  problemas,
+  problemaLenguajes,
+  casosPrueba,
+} from '../src/server/db/schema'
 import { generarContrasenaAleatoria } from '../src/server/auth/password'
 import type { Parametro, TipoDato, Valor } from '../src/server/judge/tipos'
 
@@ -57,7 +63,11 @@ async function crearCuenta(input: {
   return id
 }
 
-type LenguajeSeed = { lenguaje: 'python' | 'javascript' | 'java' | 'csharp' | 'php'; nombreFuncion: string; codigoInicial: string }
+type LenguajeSeed = {
+  lenguaje: 'python' | 'javascript' | 'java' | 'csharp' | 'php'
+  nombreFuncion: string
+  codigoInicial: string
+}
 type CasoSeed = { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }
 
 async function crearProblemaSeed(input: {
@@ -128,6 +138,40 @@ async function main() {
     ingresado: true,
   })
 
+  const CONTRASENA_MASIVA = 'test123'
+
+  for (let i = 1; i <= 5; i++) {
+    await crearCuenta({
+      nombre: `Admin ${i}`,
+      correo: `admin${i}@torneo.local`,
+      contrasena: CONTRASENA_MASIVA,
+      rol: 'admin',
+      categoria: 'senior', // placeholder sin significado real para admins
+      carnet: null,
+      ingresado: true,
+    })
+  }
+
+  function categoriaParticipanteMasivo(
+    i: number,
+  ): 'invitado' | 'junior' | 'senior' {
+    if (i <= 13) return 'invitado'
+    if (i <= 26) return 'junior'
+    return 'senior'
+  }
+
+  for (let i = 1; i <= 40; i++) {
+    await crearCuenta({
+      nombre: `Usuario ${i}`,
+      correo: `usuario${i}@torneo.local`,
+      contrasena: CONTRASENA_MASIVA,
+      rol: 'participante',
+      categoria: categoriaParticipanteMasivo(i),
+      carnet: `carnet-${String(i).padStart(2, '0')}-2026`,
+      ingresado: true,
+    })
+  }
+
   await crearProblemaSeed({
     titulo: 'Suma de dos números',
     descripcion:
@@ -145,12 +189,14 @@ async function main() {
       {
         lenguaje: 'python',
         nombreFuncion: 'suma_dos_numeros',
-        codigoInicial: 'def suma_dos_numeros(a, b):\n    # Escribe tu solución aquí\n    return 0\n',
+        codigoInicial:
+          'def suma_dos_numeros(a, b):\n    # Escribe tu solución aquí\n    return 0\n',
       },
       {
         lenguaje: 'javascript',
         nombreFuncion: 'sumaDosNumeros',
-        codigoInicial: 'function sumaDosNumeros(a, b) {\n  // Escribe tu solución aquí\n  return 0;\n}\n',
+        codigoInicial:
+          'function sumaDosNumeros(a, b) {\n  // Escribe tu solución aquí\n  return 0;\n}\n',
       },
       {
         lenguaje: 'java',
@@ -167,7 +213,8 @@ async function main() {
       {
         lenguaje: 'php',
         nombreFuncion: 'sumaDosNumeros',
-        codigoInicial: 'function sumaDosNumeros($a, $b) {\n    // Escribe tu solución aquí\n    return 0;\n}\n',
+        codigoInicial:
+          'function sumaDosNumeros($a, $b) {\n    // Escribe tu solución aquí\n    return 0;\n}\n',
       },
     ],
     casosPrueba: [
@@ -193,12 +240,14 @@ async function main() {
       {
         lenguaje: 'python',
         nombreFuncion: 'es_primo',
-        codigoInicial: 'def es_primo(n):\n    # Escribe tu solución aquí\n    return False\n',
+        codigoInicial:
+          'def es_primo(n):\n    # Escribe tu solución aquí\n    return False\n',
       },
       {
         lenguaje: 'javascript',
         nombreFuncion: 'esPrimo',
-        codigoInicial: 'function esPrimo(n) {\n  // Escribe tu solución aquí\n  return false;\n}\n',
+        codigoInicial:
+          'function esPrimo(n) {\n  // Escribe tu solución aquí\n  return false;\n}\n',
       },
       {
         lenguaje: 'java',
@@ -209,12 +258,14 @@ async function main() {
       {
         lenguaje: 'csharp',
         nombreFuncion: 'EsPrimo',
-        codigoInicial: '  static bool EsPrimo(int n) {\n    // Escribe tu solución aquí\n    return false;\n  }\n',
+        codigoInicial:
+          '  static bool EsPrimo(int n) {\n    // Escribe tu solución aquí\n    return false;\n  }\n',
       },
       {
         lenguaje: 'php',
         nombreFuncion: 'esPrimo',
-        codigoInicial: 'function esPrimo($n) {\n    // Escribe tu solución aquí\n    return false;\n}\n',
+        codigoInicial:
+          'function esPrimo($n) {\n    // Escribe tu solución aquí\n    return false;\n}\n',
       },
     ],
     casosPrueba: [
@@ -240,12 +291,14 @@ async function main() {
       {
         lenguaje: 'python',
         nombreFuncion: 'maximo_lista',
-        codigoInicial: 'def maximo_lista(numeros):\n    # Escribe tu solución aquí\n    return 0\n',
+        codigoInicial:
+          'def maximo_lista(numeros):\n    # Escribe tu solución aquí\n    return 0\n',
       },
       {
         lenguaje: 'javascript',
         nombreFuncion: 'maximoLista',
-        codigoInicial: 'function maximoLista(numeros) {\n  // Escribe tu solución aquí\n  return 0;\n}\n',
+        codigoInicial:
+          'function maximoLista(numeros) {\n  // Escribe tu solución aquí\n  return 0;\n}\n',
       },
       {
         lenguaje: 'java',
@@ -262,7 +315,8 @@ async function main() {
       {
         lenguaje: 'php',
         nombreFuncion: 'maximoLista',
-        codigoInicial: 'function maximoLista($numeros) {\n    // Escribe tu solución aquí\n    return 0;\n}\n',
+        codigoInicial:
+          'function maximoLista($numeros) {\n    // Escribe tu solución aquí\n    return 0;\n}\n',
       },
     ],
     casosPrueba: [
@@ -274,11 +328,343 @@ async function main() {
     ],
   })
 
+  await crearProblemaSeed({
+    titulo: 'Contar vocales (con error)',
+    descripcion:
+      'Se les da una función que debería contar cuántas vocales tiene un texto, pero tiene un error de ' +
+      'depuración. Deben encontrarlo y corregirlo: compara la letra contra toda la cadena "aeiou" con ' +
+      'igualdad exacta, en vez de verificar si la letra está contenida en esa cadena.',
+    dificultad: 'easy',
+    orden: 4,
+    grupo: 'invitado_junior',
+    puntos: 10,
+    parametros: [{ nombre: 'texto', tipo: 'string' }],
+    tipoRetorno: 'int',
+    lenguajes: [
+      {
+        lenguaje: 'python',
+        nombreFuncion: 'contar_vocales',
+        codigoInicial:
+          "def contar_vocales(texto):\n    contador = 0\n    vocales = \"aeiou\"\n    for letra in texto:\n        if letra == vocales:   # bug: debería ser 'in', no '=='\n            contador += 1\n    return contador\n",
+      },
+      {
+        lenguaje: 'javascript',
+        nombreFuncion: 'contarVocales',
+        codigoInicial:
+          'function contarVocales(texto) {\n  let contador = 0;\n  const vocales = "aeiou";\n  for (const letra of texto) {\n    if (letra === vocales) {   // bug: debería ser vocales.includes(letra)\n      contador++;\n    }\n  }\n  return contador;\n}\n',
+      },
+      {
+        lenguaje: 'java',
+        nombreFuncion: 'contarVocales',
+        codigoInicial:
+          '  public static int contarVocales(String texto) {\n    int contador = 0;\n    String vocales = "aeiou";\n    for (char letra : texto.toCharArray()) {\n      if (String.valueOf(letra).equals(vocales)) {   // bug: debería usar vocales.contains(...)\n        contador++;\n      }\n    }\n    return contador;\n  }\n',
+      },
+      {
+        lenguaje: 'csharp',
+        nombreFuncion: 'ContarVocales',
+        codigoInicial:
+          '  static int ContarVocales(string texto) {\n    int contador = 0;\n    string vocales = "aeiou";\n    foreach (char letra in texto) {\n      if (letra.ToString() == vocales) {   // bug: debería usar vocales.Contains(letra)\n        contador++;\n      }\n    }\n    return contador;\n  }\n',
+      },
+      {
+        lenguaje: 'php',
+        nombreFuncion: 'contarVocales',
+        codigoInicial:
+          'function contarVocales($texto) {\n    $contador = 0;\n    $vocales = "aeiou";\n    for ($i = 0; $i < strlen($texto); $i++) {\n        $letra = $texto[$i];\n        if ($letra == $vocales) {   // bug: debería usar strpos($vocales, $letra)\n            $contador++;\n        }\n    }\n    return $contador;\n}\n',
+      },
+    ],
+    casosPrueba: [
+      { argumentos: ['hola'], salidaEsperada: 2, visible: true },
+      { argumentos: ['mazatenango'], salidaEsperada: 5, visible: true },
+      { argumentos: ['xyz'], salidaEsperada: 0, visible: false },
+      { argumentos: ['programacion'], salidaEsperada: 5, visible: false },
+    ],
+  })
+
+  await crearProblemaSeed({
+    titulo: 'Sumar los dígitos de un número',
+    descripcion:
+      'Escribe una función que reciba un número entero positivo y devuelva la suma de sus dígitos.',
+    dificultad: 'medium', // recalibrado: se sintió más difícil de lo esperado para "fácil"
+    orden: 5,
+    grupo: 'invitado_junior',
+    puntos: 20,
+    parametros: [{ nombre: 'n', tipo: 'int' }],
+    tipoRetorno: 'int',
+    lenguajes: [
+      {
+        lenguaje: 'python',
+        nombreFuncion: 'sumar_digitos',
+        codigoInicial:
+          'def sumar_digitos(n):\n    # Escribe tu solución aquí\n    return 0\n',
+      },
+      {
+        lenguaje: 'javascript',
+        nombreFuncion: 'sumarDigitos',
+        codigoInicial:
+          'function sumarDigitos(n) {\n  // Escribe tu solución aquí\n  return 0;\n}\n',
+      },
+      {
+        lenguaje: 'java',
+        nombreFuncion: 'sumarDigitos',
+        codigoInicial:
+          '  public static int sumarDigitos(int n) {\n    // Escribe tu solución aquí\n    return 0;\n  }\n',
+      },
+      {
+        lenguaje: 'csharp',
+        nombreFuncion: 'SumarDigitos',
+        codigoInicial:
+          '  static int SumarDigitos(int n) {\n    // Escribe tu solución aquí\n    return 0;\n  }\n',
+      },
+      {
+        lenguaje: 'php',
+        nombreFuncion: 'sumarDigitos',
+        codigoInicial:
+          'function sumarDigitos($n) {\n    // Escribe tu solución aquí\n    return 0;\n}\n',
+      },
+    ],
+    casosPrueba: [
+      { argumentos: [123], salidaEsperada: 6, visible: true },
+      { argumentos: [9], salidaEsperada: 9, visible: true },
+      { argumentos: [1000], salidaEsperada: 1, visible: false },
+      { argumentos: [4567], salidaEsperada: 22, visible: false },
+    ],
+  })
+
+  await crearProblemaSeed({
+    titulo: 'Contar mayúsculas en un texto',
+    descripcion:
+      'Escribe una función que reciba un texto y devuelva cuántas letras mayúsculas tiene.',
+    dificultad: 'easy',
+    orden: 6,
+    grupo: 'invitado_junior',
+    puntos: 10,
+    parametros: [{ nombre: 'texto', tipo: 'string' }],
+    tipoRetorno: 'int',
+    lenguajes: [
+      {
+        lenguaje: 'python',
+        nombreFuncion: 'contar_mayusculas',
+        codigoInicial:
+          'def contar_mayusculas(texto):\n    # Escribe tu solución aquí\n    return 0\n',
+      },
+      {
+        lenguaje: 'javascript',
+        nombreFuncion: 'contarMayusculas',
+        codigoInicial:
+          'function contarMayusculas(texto) {\n  // Escribe tu solución aquí\n  return 0;\n}\n',
+      },
+      {
+        lenguaje: 'java',
+        nombreFuncion: 'contarMayusculas',
+        codigoInicial:
+          '  public static int contarMayusculas(String texto) {\n    // Escribe tu solución aquí\n    return 0;\n  }\n',
+      },
+      {
+        lenguaje: 'csharp',
+        nombreFuncion: 'ContarMayusculas',
+        codigoInicial:
+          '  static int ContarMayusculas(string texto) {\n    // Escribe tu solución aquí\n    return 0;\n  }\n',
+      },
+      {
+        lenguaje: 'php',
+        nombreFuncion: 'contarMayusculas',
+        codigoInicial:
+          'function contarMayusculas($texto) {\n    // Escribe tu solución aquí\n    return 0;\n}\n',
+      },
+    ],
+    casosPrueba: [
+      { argumentos: ['Hola Mundo'], salidaEsperada: 2, visible: true },
+      { argumentos: ['mazatenango'], salidaEsperada: 0, visible: true },
+      { argumentos: ['GUATEMALA'], salidaEsperada: 9, visible: false },
+      { argumentos: ['SueA'], salidaEsperada: 2, visible: false },
+    ],
+  })
+
+  await crearProblemaSeed({
+    titulo: 'Duplicar cada número de una lista',
+    descripcion:
+      'Escribe una función que reciba una lista de números y devuelva una nueva lista donde cada número ' +
+      'está multiplicado por 2.',
+    dificultad: 'easy',
+    orden: 7,
+    grupo: 'invitado_junior',
+    puntos: 10,
+    parametros: [{ nombre: 'numeros', tipo: 'list<int>' }],
+    tipoRetorno: 'list<int>',
+    lenguajes: [
+      {
+        lenguaje: 'python',
+        nombreFuncion: 'duplicar_numeros',
+        codigoInicial:
+          'def duplicar_numeros(numeros):\n    # Escribe tu solución aquí\n    return []\n',
+      },
+      {
+        lenguaje: 'javascript',
+        nombreFuncion: 'duplicarNumeros',
+        codigoInicial:
+          'function duplicarNumeros(numeros) {\n  // Escribe tu solución aquí\n  return [];\n}\n',
+      },
+      {
+        lenguaje: 'java',
+        nombreFuncion: 'duplicarNumeros',
+        codigoInicial:
+          '  public static List<Integer> duplicarNumeros(List<Integer> numeros) {\n    // Escribe tu solución aquí\n    return new ArrayList<>();\n  }\n',
+      },
+      {
+        lenguaje: 'csharp',
+        nombreFuncion: 'DuplicarNumeros',
+        codigoInicial:
+          '  static List<int> DuplicarNumeros(List<int> numeros) {\n    // Escribe tu solución aquí\n    return new List<int>();\n  }\n',
+      },
+      {
+        lenguaje: 'php',
+        nombreFuncion: 'duplicarNumeros',
+        codigoInicial:
+          'function duplicarNumeros($numeros) {\n    // Escribe tu solución aquí\n    return [];\n}\n',
+      },
+    ],
+    casosPrueba: [
+      { argumentos: [[1, 2, 3]], salidaEsperada: [2, 4, 6], visible: true },
+      { argumentos: [[5, 0, -2]], salidaEsperada: [10, 0, -4], visible: true },
+      { argumentos: [[]], salidaEsperada: [], visible: false },
+      { argumentos: [[10]], salidaEsperada: [20], visible: false },
+    ],
+  })
+
+  await crearProblemaSeed({
+    titulo: 'Encontrar el mayor número de una lista (con error)',
+    descripcion:
+      'Se les da una función que debería encontrar el número más grande de una lista, pero tiene un error: ' +
+      'inicializa el mayor en 0, lo cual falla si todos los números de la lista son negativos (nunca entra ' +
+      'a la condición, y devuelve 0 incorrectamente). Deben corregir la inicialización.',
+    dificultad: 'medium',
+    orden: 8,
+    grupo: 'invitado_junior',
+    puntos: 20,
+    parametros: [{ nombre: 'numeros', tipo: 'list<int>' }],
+    tipoRetorno: 'int',
+    lenguajes: [
+      {
+        lenguaje: 'python',
+        nombreFuncion: 'encontrar_mayor',
+        codigoInicial:
+          'def encontrar_mayor(numeros):\n    mayor = 0   # bug: falla si todos los números son negativos\n    for n in numeros:\n        if n > mayor:\n            mayor = n\n    return mayor\n',
+      },
+      {
+        lenguaje: 'javascript',
+        nombreFuncion: 'encontrarMayor',
+        codigoInicial:
+          'function encontrarMayor(numeros) {\n  let mayor = 0;   // bug: falla si todos los números son negativos\n  for (const n of numeros) {\n    if (n > mayor) {\n      mayor = n;\n    }\n  }\n  return mayor;\n}\n',
+      },
+      {
+        lenguaje: 'java',
+        nombreFuncion: 'encontrarMayor',
+        codigoInicial:
+          '  public static int encontrarMayor(List<Integer> numeros) {\n    int mayor = 0;   // bug: falla si todos los números son negativos\n    for (int n : numeros) {\n      if (n > mayor) {\n        mayor = n;\n      }\n    }\n    return mayor;\n  }\n',
+      },
+      {
+        lenguaje: 'csharp',
+        nombreFuncion: 'EncontrarMayor',
+        codigoInicial:
+          '  static int EncontrarMayor(List<int> numeros) {\n    int mayor = 0;   // bug: falla si todos los números son negativos\n    foreach (int n in numeros) {\n      if (n > mayor) {\n        mayor = n;\n      }\n    }\n    return mayor;\n  }\n',
+      },
+      {
+        lenguaje: 'php',
+        nombreFuncion: 'encontrarMayor',
+        codigoInicial:
+          'function encontrarMayor($numeros) {\n    $mayor = 0;   // bug: falla si todos los números son negativos\n    foreach ($numeros as $n) {\n        if ($n > $mayor) {\n            $mayor = $n;\n        }\n    }\n    return $mayor;\n}\n',
+      },
+    ],
+    casosPrueba: [
+      { argumentos: [[3, 7, 2, 9, 4]], salidaEsperada: 9, visible: true },
+      { argumentos: [[-5, -2, -8]], salidaEsperada: -2, visible: true },
+      { argumentos: [[1]], salidaEsperada: 1, visible: false },
+      { argumentos: [[10, 10, 5]], salidaEsperada: 10, visible: false },
+    ],
+  })
+
+  await crearProblemaSeed({
+    titulo: 'Verificar si un texto es palíndromo (con error)',
+    descripcion:
+      'Se les da una función que debería verificar si un texto se lee igual al derecho y al revés, pero ' +
+      'tiene un error: no normaliza el texto (no quita espacios ni ignora mayúsculas/minúsculas) antes de ' +
+      'comparar, por lo que falla con frases como "Anita lava la tina" que sí son palíndromos si se ignoran ' +
+      'espacios y capitalización.',
+    dificultad: 'hard',
+    orden: 9,
+    grupo: 'invitado_junior',
+    puntos: 30,
+    parametros: [{ nombre: 'texto', tipo: 'string' }],
+    tipoRetorno: 'bool',
+    lenguajes: [
+      {
+        lenguaje: 'python',
+        nombreFuncion: 'es_palindromo',
+        codigoInicial:
+          'def es_palindromo(texto):\n    invertido = texto[::-1]\n    if texto == invertido:\n        return True\n    return False\n',
+      },
+      {
+        lenguaje: 'javascript',
+        nombreFuncion: 'esPalindromo',
+        codigoInicial:
+          'function esPalindromo(texto) {\n  const invertido = texto.split("").reverse().join("");\n  if (texto === invertido) {\n    return true;\n  }\n  return false;\n}\n',
+      },
+      {
+        lenguaje: 'java',
+        nombreFuncion: 'esPalindromo',
+        codigoInicial:
+          '  public static boolean esPalindromo(String texto) {\n    String invertido = new StringBuilder(texto).reverse().toString();\n    if (texto.equals(invertido)) {\n      return true;\n    }\n    return false;\n  }\n',
+      },
+      {
+        lenguaje: 'csharp',
+        nombreFuncion: 'EsPalindromo',
+        codigoInicial:
+          '  static bool EsPalindromo(string texto) {\n    char[] arreglo = texto.ToCharArray();\n    Array.Reverse(arreglo);\n    string invertido = new string(arreglo);\n    if (texto == invertido) {\n      return true;\n    }\n    return false;\n  }\n',
+      },
+      {
+        lenguaje: 'php',
+        nombreFuncion: 'esPalindromo',
+        codigoInicial:
+          'function esPalindromo($texto) {\n    $invertido = strrev($texto);\n    if ($texto === $invertido) {\n        return true;\n    }\n    return false;\n}\n',
+      },
+    ],
+    casosPrueba: [
+      { argumentos: ['reconocer'], salidaEsperada: true, visible: true },
+      { argumentos: ['hola'], salidaEsperada: false, visible: true },
+      {
+        argumentos: ['Anita lava la tina'],
+        salidaEsperada: true,
+        visible: false,
+      },
+      { argumentos: ['A'], salidaEsperada: true, visible: false },
+    ],
+  })
+
   console.log('\nListo. Credenciales de prueba:\n')
-  console.log(`  Admin        -> correo: admin@torneo.local        contraseña: ${adminContrasena}`)
-  console.log(`  Participante -> correo: participante@torneo.local contraseña: ${participanteContrasena}`)
-  console.log('\n3 problemas creados (Suma de dos números, Es número primo, Máximo de una lista).')
-  console.log('Ambas cuentas ya están marcadas como "ingresadas" (check-in hecho).')
+  console.log(
+    `  Admin        -> correo: admin@torneo.local        contraseña: ${adminContrasena}`,
+  )
+  console.log(
+    `  Participante -> correo: participante@torneo.local contraseña: ${participanteContrasena}`,
+  )
+  console.log(
+    `  Admins masivos       -> admin1..admin5@torneo.local        contraseña: ${CONTRASENA_MASIVA}`,
+  )
+  console.log(
+    `  Participantes masivos -> usuario1..usuario40@torneo.local  contraseña: ${CONTRASENA_MASIVA}`,
+  )
+  console.log(
+    '  (usuario1-13: invitado, usuario14-26: junior, usuario27-40: senior)',
+  )
+  console.log(
+    '\n9 problemas creados (Suma de dos números, Es número primo, Máximo de una lista, Contar vocales ' +
+      '(con error), Sumar los dígitos de un número, Contar mayúsculas en un texto, Duplicar cada número de ' +
+      'una lista, Encontrar el mayor número de una lista (con error), Verificar si un texto es palíndromo ' +
+      '(con error)).',
+  )
+  console.log(
+    'Todas las cuentas ya están marcadas como "ingresadas" (check-in hecho).',
+  )
   console.log(`admin id: ${adminId}`)
   console.log(`participante id: ${participanteId}`)
 

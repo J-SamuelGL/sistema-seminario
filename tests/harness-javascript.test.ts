@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { generarProgramaJavascript } from '../src/server/judge/harness/javascript'
+import { MARCADOR_RESULTADO_JUEZ } from '../src/server/judge/harness/marcador'
 
 describe('generarProgramaJavascript', () => {
   it('embebe argumentos y llama la función', () => {
@@ -12,7 +13,9 @@ describe('generarProgramaJavascript', () => {
     )
     expect(archivo).toBe('main.js')
     expect(contenido).toContain('contarVocales("hola")')
-    expect(contenido).toContain('console.log(String(__resultado_juez__))')
+    expect(contenido).toContain(
+      `console.log('${MARCADOR_RESULTADO_JUEZ}' + String(__resultado_juez__))`,
+    )
   })
 
   it('serializa listas con el formato canónico', () => {
@@ -24,6 +27,8 @@ describe('generarProgramaJavascript', () => {
       [[1, 2, 3]],
     )
     expect(contenido).toContain('f([1, 2, 3])')
-    expect(contenido).toContain("__resultado_juez__.map(function(x) { return String(x); }).join(', ')")
+    expect(contenido).toContain(
+      "__resultado_juez__.map(function(x) { return String(x); }).join(', ')",
+    )
   })
 })

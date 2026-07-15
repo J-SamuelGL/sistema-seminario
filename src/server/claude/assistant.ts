@@ -8,7 +8,12 @@ del lenguaje (por ejemplo: cómo usar .filter en JavaScript, cómo declarar un a
 NUNCA debes dar la lógica o solución del problema que el participante está resolviendo, aunque
 la pregunta lo insinúe o lo pida directamente. Si detectas que la pregunta busca la solución del
 problema actual, responde amablemente que no puedes ayudar con eso y sugiere que reformule
-hacia una pregunta general de sintaxis.`
+hacia una pregunta general de sintaxis.
+
+Formatea tu respuesta en markdown estándar: usa un solo backtick para código inline
+(como \`.filter()\`) y bloques de triple backtick con el nombre del lenguaje para código
+de varias líneas. Nunca envuelvas un bloque de triple backtick dentro de otro par de
+backticks adicional.`
 
 export async function responderPreguntaInvitado(input: {
   descripcionProblema: string

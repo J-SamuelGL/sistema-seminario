@@ -1,5 +1,6 @@
 import type { Parametro, TipoDato, Valor } from '../tipos'
 import { tipoEscalarDeLista } from '../tipos'
+import { MARCADOR_RESULTADO_JUEZ } from './marcador'
 
 function literalPython(valor: unknown, tipo: TipoDato): string {
   const escalar = tipoEscalarDeLista(tipo)
@@ -16,12 +17,13 @@ function lineaImpresion(tipo: TipoDato): string {
   const escalar = tipoEscalarDeLista(tipo)
   if (escalar) {
     if (escalar === 'bool') {
-      return "print('[' + ', '.join('true' if x else 'false' for x in __resultado_juez__) + ']')"
+      return `print('${MARCADOR_RESULTADO_JUEZ}' + '[' + ', '.join('true' if x else 'false' for x in __resultado_juez__) + ']')`
     }
-    return "print('[' + ', '.join(str(x) for x in __resultado_juez__) + ']')"
+    return `print('${MARCADOR_RESULTADO_JUEZ}' + '[' + ', '.join(str(x) for x in __resultado_juez__) + ']')`
   }
-  if (tipo === 'bool') return "print('true' if __resultado_juez__ else 'false')"
-  return 'print(__resultado_juez__)'
+  if (tipo === 'bool')
+    return `print('${MARCADOR_RESULTADO_JUEZ}' + ('true' if __resultado_juez__ else 'false'))`
+  return `print('${MARCADOR_RESULTADO_JUEZ}' + str(__resultado_juez__))`
 }
 
 export function generarProgramaPython(
@@ -31,7 +33,9 @@ export function generarProgramaPython(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalPython(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalPython(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     codigoParticipante,
     '',

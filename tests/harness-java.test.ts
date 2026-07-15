@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { generarProgramaJava } from '../src/server/judge/harness/java'
+import { MARCADOR_RESULTADO_JUEZ } from '../src/server/judge/harness/marcador'
 
 describe('generarProgramaJava', () => {
   it('envuelve el método del participante en la clase Main', () => {
@@ -13,7 +14,9 @@ describe('generarProgramaJava', () => {
     expect(archivo).toBe('Main.java')
     expect(contenido).toContain('public class Main {')
     expect(contenido).toContain('contarVocales("hola")')
-    expect(contenido).toContain('System.out.println(String.valueOf(__resultado_juez__));')
+    expect(contenido).toContain(
+      `System.out.println("${MARCADOR_RESULTADO_JUEZ}" + String.valueOf(__resultado_juez__));`,
+    )
   })
 
   it('usa List.<Tipo>of() para argumentos de lista, tipado explícito', () => {

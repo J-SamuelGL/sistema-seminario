@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { obtenerEnvio } from '#/server/functions/submit'
+import { Markdown } from '#/components/Markdown'
 
 export function SubmitResult({
   envioId,
@@ -35,7 +36,9 @@ export function SubmitResult({
     <div className="mt-4 rounded border p-4">
       <p className="font-bold">Veredicto: {veredicto}</p>
       {mostrarFeedback && (
-        <p className="mt-2 text-sm text-gray-600">{comentario ?? 'Generando feedback...'}</p>
+        <div className="mt-2 text-gray-600">
+          {comentario ? <Markdown>{comentario}</Markdown> : 'Generando feedback...'}
+        </div>
       )}
     </div>
   )

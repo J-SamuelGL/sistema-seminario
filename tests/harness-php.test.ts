@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { generarProgramaPhp } from '../src/server/judge/harness/php'
+import { MARCADOR_RESULTADO_JUEZ } from '../src/server/judge/harness/marcador'
 
 describe('generarProgramaPhp', () => {
   it('antepone la etiqueta <?php aunque el participante no la escriba', () => {
@@ -13,7 +14,9 @@ describe('generarProgramaPhp', () => {
     expect(archivo).toBe('main.php')
     expect(contenido.startsWith('<?php')).toBe(true)
     expect(contenido).toContain("contarVocales('hola')")
-    expect(contenido).toContain('echo $__resultado_juez__;')
+    expect(contenido).toContain(
+      `echo '${MARCADOR_RESULTADO_JUEZ}' . $__resultado_juez__;`,
+    )
   })
 
   it('escapa comillas simples en strings sin depender de interpolación de $', () => {
@@ -35,6 +38,8 @@ describe('generarProgramaPhp', () => {
       'bool',
       [1],
     )
-    expect(contenido).toContain("echo $__resultado_juez__ ? 'true' : 'false';")
+    expect(contenido).toContain(
+      `echo '${MARCADOR_RESULTADO_JUEZ}' . ($__resultado_juez__ ? 'true' : 'false');`,
+    )
   })
 })

@@ -24,6 +24,10 @@ export function construirPromptComentario(input: {
     input.veredicto === 'aceptado'
       ? 'La solución es correcta. Da un comentario breve (2-3 frases) sobre el estilo o eficiencia del código.'
       : 'La solución no pasó. Da una pista breve (2-3 frases) sobre qué pudo haber fallado, sin escribir el código corregido ni la solución completa.',
+    '',
+    'Formatea tu respuesta en markdown estándar: un solo backtick para código inline y',
+    'triple backtick con nombre de lenguaje para bloques de varias líneas, sin anidar un',
+    'backtick adicional alrededor de un bloque ya delimitado con triple backtick.',
   ].join('\n')
 }
 

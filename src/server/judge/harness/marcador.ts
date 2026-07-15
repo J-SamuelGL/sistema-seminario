@@ -1,0 +1,1 @@
+export const MARCADOR_RESULTADO_JUEZ = '##RESULTADO_JUEZ##'

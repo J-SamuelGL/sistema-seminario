@@ -1,5 +1,6 @@
 import type { Parametro, TipoDato, Valor } from '../tipos'
 import { tipoEscalarDeLista } from '../tipos'
+import { MARCADOR_RESULTADO_JUEZ } from './marcador'
 
 function literalJs(valor: unknown, tipo: TipoDato): string {
   const escalar = tipoEscalarDeLista(tipo)
@@ -14,9 +15,9 @@ function literalJs(valor: unknown, tipo: TipoDato): string {
 function lineaImpresion(tipo: TipoDato): string {
   const escalar = tipoEscalarDeLista(tipo)
   if (escalar) {
-    return "console.log('[' + __resultado_juez__.map(function(x) { return String(x); }).join(', ') + ']')"
+    return `console.log('${MARCADOR_RESULTADO_JUEZ}' + '[' + __resultado_juez__.map(function(x) { return String(x); }).join(', ') + ']')`
   }
-  return 'console.log(String(__resultado_juez__))'
+  return `console.log('${MARCADOR_RESULTADO_JUEZ}' + String(__resultado_juez__))`
 }
 
 export function generarProgramaJavascript(
@@ -26,7 +27,9 @@ export function generarProgramaJavascript(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalJs(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalJs(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     codigoParticipante,
     '',

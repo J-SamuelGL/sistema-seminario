@@ -7,12 +7,15 @@ export type ResultadoCasoPublico =
       argumentos: Valor[]
       salidaEsperada: string
       salidaObtenida: string
+      salidaConsola: string
       aprobado: boolean
       salidaError: string
     }
   | { visible: false; aprobado: boolean }
 
-export function ocultarDetalleCasosNoVisibles(resultados: ResultadoCaso[]): ResultadoCasoPublico[] {
+export function ocultarDetalleCasosNoVisibles(
+  resultados: ResultadoCaso[],
+): ResultadoCasoPublico[] {
   return resultados.map((r) =>
     r.visible
       ? {
@@ -20,6 +23,7 @@ export function ocultarDetalleCasosNoVisibles(resultados: ResultadoCaso[]): Resu
           argumentos: r.argumentos,
           salidaEsperada: r.salidaEsperada,
           salidaObtenida: r.salidaObtenida,
+          salidaConsola: r.salidaConsola,
           aprobado: r.aprobado,
           salidaError: r.salidaError,
         }

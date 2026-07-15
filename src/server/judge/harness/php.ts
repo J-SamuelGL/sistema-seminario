@@ -1,5 +1,6 @@
 import type { Parametro, TipoDato, Valor } from '../tipos'
 import { tipoEscalarDeLista } from '../tipos'
+import { MARCADOR_RESULTADO_JUEZ } from './marcador'
 
 function literalPhpString(valor: string): string {
   return "'" + valor.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"
@@ -20,12 +21,13 @@ function lineaImpresion(tipo: TipoDato): string {
   const escalar = tipoEscalarDeLista(tipo)
   if (escalar) {
     if (escalar === 'bool') {
-      return "echo '[' . implode(', ', array_map(function($x) { return $x ? 'true' : 'false'; }, $__resultado_juez__)) . ']';"
+      return `echo '${MARCADOR_RESULTADO_JUEZ}[' . implode(', ', array_map(function($x) { return $x ? 'true' : 'false'; }, $__resultado_juez__)) . ']';`
     }
-    return "echo '[' . implode(', ', array_map('strval', $__resultado_juez__)) . ']';"
+    return `echo '${MARCADOR_RESULTADO_JUEZ}[' . implode(', ', array_map('strval', $__resultado_juez__)) . ']';`
   }
-  if (tipo === 'bool') return "echo $__resultado_juez__ ? 'true' : 'false';"
-  return 'echo $__resultado_juez__;'
+  if (tipo === 'bool')
+    return `echo '${MARCADOR_RESULTADO_JUEZ}' . ($__resultado_juez__ ? 'true' : 'false');`
+  return `echo '${MARCADOR_RESULTADO_JUEZ}' . $__resultado_juez__;`
 }
 
 export function generarProgramaPhp(
@@ -35,7 +37,9 @@ export function generarProgramaPhp(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalPhp(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalPhp(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     '<?php',
     codigoParticipante,

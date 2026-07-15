@@ -1,5 +1,6 @@
 import type { Parametro, TipoDato, TipoEscalar, Valor } from '../tipos'
 import { tipoEscalarDeLista } from '../tipos'
+import { MARCADOR_RESULTADO_JUEZ } from './marcador'
 
 function tipoCsharpEscalar(tipo: TipoEscalar): string {
   return { int: 'int', float: 'double', bool: 'bool', string: 'string' }[tipo]
@@ -22,12 +23,13 @@ function lineaImpresion(tipo: TipoDato): string {
   const escalar = tipoEscalarDeLista(tipo)
   if (escalar) {
     if (escalar === 'bool') {
-      return '    Console.WriteLine("[" + string.Join(", ", __resultado_juez__.ConvertAll(x => x ? "true" : "false")) + "]");'
+      return `    Console.WriteLine("${MARCADOR_RESULTADO_JUEZ}[" + string.Join(", ", __resultado_juez__.ConvertAll(x => x ? "true" : "false")) + "]");`
     }
-    return '    Console.WriteLine("[" + string.Join(", ", __resultado_juez__) + "]");'
+    return `    Console.WriteLine("${MARCADOR_RESULTADO_JUEZ}[" + string.Join(", ", __resultado_juez__) + "]");`
   }
-  if (tipo === 'bool') return '    Console.WriteLine(__resultado_juez__ ? "true" : "false");'
-  return '    Console.WriteLine(__resultado_juez__);'
+  if (tipo === 'bool')
+    return `    Console.WriteLine("${MARCADOR_RESULTADO_JUEZ}" + (__resultado_juez__ ? "true" : "false"));`
+  return `    Console.WriteLine("${MARCADOR_RESULTADO_JUEZ}" + __resultado_juez__);`
 }
 
 export function generarProgramaCsharp(
@@ -37,7 +39,9 @@ export function generarProgramaCsharp(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalCsharp(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalCsharp(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     'using System;',
     'using System.Collections.Generic;',
