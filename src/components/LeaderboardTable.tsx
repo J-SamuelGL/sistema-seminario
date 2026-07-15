@@ -9,6 +9,7 @@ export function LeaderboardTable({ title, rows }: { title: string; rows: Array<F
           <tr>
             <th className="border p-2 text-left">#</th>
             <th className="border p-2 text-left">Nombre</th>
+            <th className="border p-2 text-left">Puntos</th>
             <th className="border p-2 text-left">Resueltos</th>
             <th className="border p-2 text-left">Tiempo</th>
           </tr>
@@ -18,6 +19,7 @@ export function LeaderboardTable({ title, rows }: { title: string; rows: Array<F
             <tr key={row.usuarioId}>
               <td className="border p-2">{i + 1}</td>
               <td className="border p-2">{row.nombre}</td>
+              <td className="border p-2">{row.puntosTotales}</td>
               <td className="border p-2">{row.cantidadResueltos}</td>
               <td className="border p-2">{Math.round(row.minutosPenalizacionTotal)} min</td>
             </tr>

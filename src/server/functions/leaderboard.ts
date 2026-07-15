@@ -1,9 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { usuarios, envios, estadoTorneo } from '../db/schema'
+import { usuarios, envios, estadoTorneo, problemas } from '../db/schema'
 import { calcularClasificacion, agruparClasificacionPorCategoria } from '../standings/calculate'
-import type { RegistroUsuario } from '../standings/calculate'
+import type { RegistroUsuario, RegistroProblema } from '../standings/calculate'
 
 export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(async () => {
   const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
@@ -14,10 +14,13 @@ export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(as
 
   const todosUsuarios = await db.select().from(usuarios)
   const todosEnvios = await db.select().from(envios)
+  const todosProblemas = await db.select().from(problemas)
 
   const usuariosElegibles: Array<RegistroUsuario> = todosUsuarios
     .filter((u) => u.rol === 'participante')
     .map((u) => ({ id: u.id, nombre: u.name, categoria: u.categoria }))
+
+  const problemasConPuntos: Array<RegistroProblema> = todosProblemas.map((p) => ({ id: p.id, puntos: p.puntos }))
 
   const filas = calcularClasificacion(
     usuariosElegibles,
@@ -27,6 +30,7 @@ export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(as
       estado: e.estado,
       creadoEn: e.creadoEn,
     })),
+    problemasConPuntos,
     estado.iniciadoEn,
   )
   const agrupado = agruparClasificacionPorCategoria(filas)
