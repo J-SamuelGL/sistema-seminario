@@ -2,19 +2,23 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problemas, casosPrueba } from '../db/schema'
+import { problemas, casosPrueba, problemaLenguajes } from '../db/schema'
 import { requerirAdmin, requerirParticipanteIngresado } from '../auth/middleware'
 import { validarDatosProblema } from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
+import type { Parametro, TipoDato, Valor } from '../judge/tipos'
 
 type DatosProblema = {
   titulo: string
   descripcion: string
   dificultad: string
-  lenguajesPermitidos: string[]
   orden: number
   grupo: 'invitado_junior' | 'senior'
-  casosPrueba: { entrada: string; salidaEsperada: string }[]
+  puntos: number
+  parametros: Parametro[]
+  tipoRetorno: TipoDato
+  lenguajes: { lenguaje: string; nombreFuncion: string; codigoInicial: string }[]
+  casosPrueba: { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }[]
 }
 
 export const listarProblemas = createServerFn({ method: 'GET' }).handler(async () => {
@@ -41,7 +45,10 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const casos = problema
       ? await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
       : []
-    return { problema, casosPrueba: casos }
+    const lenguajes = problema
+      ? await db.select().from(problemaLenguajes).where(eq(problemaLenguajes.problemaId, data))
+      : []
+    return { problema, casosPrueba: casos, lenguajes }
   })
 
 export const crearProblema = createServerFn({ method: 'POST' })
@@ -59,17 +66,31 @@ export const crearProblema = createServerFn({ method: 'POST' })
       titulo: data.titulo,
       descripcion: data.descripcion,
       dificultad: data.dificultad,
-      lenguajesPermitidos: data.lenguajesPermitidos,
       orden: data.orden,
       grupo: data.grupo,
+      puntos: data.puntos,
+      parametros: data.parametros,
+      tipoRetorno: data.tipoRetorno,
     })
+
+    if (data.lenguajes.length > 0) {
+      await db.insert(problemaLenguajes).values(
+        data.lenguajes.map((l) => ({
+          problemaId: id,
+          lenguaje: l.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php',
+          nombreFuncion: l.nombreFuncion,
+          codigoInicial: l.codigoInicial,
+        })),
+      )
+    }
 
     if (data.casosPrueba.length > 0) {
       await db.insert(casosPrueba).values(
         data.casosPrueba.map((cp) => ({
           problemaId: id,
-          entrada: cp.entrada,
+          argumentos: cp.argumentos,
           salidaEsperada: cp.salidaEsperada,
+          visible: cp.visible,
         })),
       )
     }
@@ -92,19 +113,34 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
         titulo: data.titulo,
         descripcion: data.descripcion,
         dificultad: data.dificultad,
-        lenguajesPermitidos: data.lenguajesPermitidos,
         orden: data.orden,
         grupo: data.grupo,
+        puntos: data.puntos,
+        parametros: data.parametros,
+        tipoRetorno: data.tipoRetorno,
       })
       .where(eq(problemas.id, data.id))
+
+    await db.delete(problemaLenguajes).where(eq(problemaLenguajes.problemaId, data.id))
+    if (data.lenguajes.length > 0) {
+      await db.insert(problemaLenguajes).values(
+        data.lenguajes.map((l) => ({
+          problemaId: data.id,
+          lenguaje: l.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php',
+          nombreFuncion: l.nombreFuncion,
+          codigoInicial: l.codigoInicial,
+        })),
+      )
+    }
 
     await db.delete(casosPrueba).where(eq(casosPrueba.problemaId, data.id))
     if (data.casosPrueba.length > 0) {
       await db.insert(casosPrueba).values(
         data.casosPrueba.map((cp) => ({
           problemaId: data.id,
-          entrada: cp.entrada,
+          argumentos: cp.argumentos,
           salidaEsperada: cp.salidaEsperada,
+          visible: cp.visible,
         })),
       )
     }
