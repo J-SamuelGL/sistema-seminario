@@ -1,24 +1,44 @@
+import { generarPrograma } from './harness'
+import { serializarCanonico } from './serializar'
 import { ejecutarPiston } from '../piston/client'
 import { determinarVeredicto } from './verdict'
 import type { ResultadoCaso, Veredicto } from './verdict'
+import type { Parametro, TipoDato, Valor } from './tipos'
 
-export type CasoPrueba = { entrada: string; salidaEsperada: string }
+export type CasoPrueba = { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }
+
+export type Firma = {
+  nombreFuncion: string
+  parametros: Parametro[]
+  tipoRetorno: TipoDato
+}
 
 export async function ejecutarCasosPrueba(
   lenguaje: string,
   codigo: string,
+  firma: Firma,
   casosPrueba: CasoPrueba[],
 ): Promise<{ resultados: ResultadoCaso[]; veredicto: Veredicto }> {
   const resultados: ResultadoCaso[] = []
 
   for (const casoPrueba of casosPrueba) {
-    const salida = await ejecutarPiston(lenguaje, codigo, casoPrueba.entrada)
+    const { archivo, contenido } = generarPrograma(
+      lenguaje,
+      codigo,
+      firma.nombreFuncion,
+      firma.parametros,
+      firma.tipoRetorno,
+      casoPrueba.argumentos,
+    )
+    const salida = await ejecutarPiston(lenguaje, archivo, contenido)
     const salidaObtenida = salida.salidaEstandar.trim()
+    const salidaEsperadaTexto = serializarCanonico(casoPrueba.salidaEsperada, firma.tipoRetorno)
     resultados.push({
-      entrada: casoPrueba.entrada,
-      salidaEsperada: casoPrueba.salidaEsperada,
+      visible: casoPrueba.visible,
+      argumentos: casoPrueba.argumentos,
+      salidaEsperada: salidaEsperadaTexto,
       salidaObtenida,
-      aprobado: salidaObtenida === casoPrueba.salidaEsperada.trim(),
+      aprobado: salidaObtenida === salidaEsperadaTexto,
       salidaError: salida.salidaError,
       tiempoExcedido: salida.tiempoExcedido,
       codigoSalida: salida.codigoSalida,
