@@ -3,6 +3,9 @@ import Editor from '@monaco-editor/react'
 const MONACO_LANGUAGE: Record<string, string> = {
   python: 'python',
   javascript: 'javascript',
+  java: 'java',
+  csharp: 'csharp',
+  php: 'php',
 }
 
 export function CodeEditor({
