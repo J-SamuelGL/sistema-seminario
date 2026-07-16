@@ -9,50 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PerfilRouteImport } from './routes/perfil'
-import { Route as ClasificacionRouteImport } from './routes/clasificacion'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProblemasIndexRouteImport } from './routes/problemas/index'
-import { Route as ProblemasProblemaIdRouteImport } from './routes/problemas/$problemaId'
 import { Route as AdminTorneoRouteImport } from './routes/admin/torneo'
 import { Route as AdminParticipantesRouteImport } from './routes/admin/participantes'
 import { Route as AdminIngresoRouteImport } from './routes/admin/ingreso'
 import { Route as AdminAdministradoresRouteImport } from './routes/admin/administradores'
+import { Route as AppPerfilRouteImport } from './routes/_app/perfil'
+import { Route as AppClasificacionRouteImport } from './routes/_app/clasificacion'
 import { Route as AdminProblemasIndexRouteImport } from './routes/admin/problemas/index'
 import { Route as AdminEnviosIndexRouteImport } from './routes/admin/envios/index'
+import { Route as AppProblemasIndexRouteImport } from './routes/_app/problemas/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminProblemasProblemaIdRouteImport } from './routes/admin/problemas/$problemaId'
 import { Route as AdminEnviosEnvioIdRouteImport } from './routes/admin/envios/$envioId'
+import { Route as AppProblemasProblemaIdRouteImport } from './routes/_app/problemas/$problemaId'
 
-const PerfilRoute = PerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClasificacionRoute = ClasificacionRouteImport.update({
-  id: '/clasificacion',
-  path: '/clasificacion',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProblemasIndexRoute = ProblemasIndexRouteImport.update({
-  id: '/problemas/',
-  path: '/problemas/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProblemasProblemaIdRoute = ProblemasProblemaIdRouteImport.update({
-  id: '/problemas/$problemaId',
-  path: '/problemas/$problemaId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTorneoRoute = AdminTorneoRouteImport.update({
@@ -75,6 +60,16 @@ const AdminAdministradoresRoute = AdminAdministradoresRouteImport.update({
   path: '/administradores',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppClasificacionRoute = AppClasificacionRouteImport.update({
+  id: '/clasificacion',
+  path: '/clasificacion',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AdminProblemasIndexRoute = AdminProblemasIndexRouteImport.update({
   id: '/problemas/',
   path: '/problemas/',
@@ -84,6 +79,11 @@ const AdminEnviosIndexRoute = AdminEnviosIndexRouteImport.update({
   id: '/envios/',
   path: '/envios/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const AppProblemasIndexRoute = AppProblemasIndexRouteImport.update({
+  id: '/problemas/',
+  path: '/problemas/',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -101,56 +101,62 @@ const AdminEnviosEnvioIdRoute = AdminEnviosEnvioIdRouteImport.update({
   path: '/envios/$envioId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AppProblemasProblemaIdRoute = AppProblemasProblemaIdRouteImport.update({
+  id: '/problemas/$problemaId',
+  path: '/problemas/$problemaId',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
-  '/clasificacion': typeof ClasificacionRoute
-  '/perfil': typeof PerfilRoute
+  '/clasificacion': typeof AppClasificacionRoute
+  '/perfil': typeof AppPerfilRoute
   '/admin/administradores': typeof AdminAdministradoresRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
   '/admin/torneo': typeof AdminTorneoRoute
-  '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
-  '/problemas/': typeof ProblemasIndexRoute
+  '/problemas/$problemaId': typeof AppProblemasProblemaIdRoute
   '/admin/envios/$envioId': typeof AdminEnviosEnvioIdRoute
   '/admin/problemas/$problemaId': typeof AdminProblemasProblemaIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/problemas/': typeof AppProblemasIndexRoute
   '/admin/envios/': typeof AdminEnviosIndexRoute
   '/admin/problemas/': typeof AdminProblemasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
-  '/clasificacion': typeof ClasificacionRoute
-  '/perfil': typeof PerfilRoute
+  '/clasificacion': typeof AppClasificacionRoute
+  '/perfil': typeof AppPerfilRoute
   '/admin/administradores': typeof AdminAdministradoresRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
   '/admin/torneo': typeof AdminTorneoRoute
-  '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
-  '/problemas': typeof ProblemasIndexRoute
+  '/problemas/$problemaId': typeof AppProblemasProblemaIdRoute
   '/admin/envios/$envioId': typeof AdminEnviosEnvioIdRoute
   '/admin/problemas/$problemaId': typeof AdminProblemasProblemaIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/problemas': typeof AppProblemasIndexRoute
   '/admin/envios': typeof AdminEnviosIndexRoute
   '/admin/problemas': typeof AdminProblemasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteRouteWithChildren
   '/admin': typeof AdminRouteRouteWithChildren
-  '/clasificacion': typeof ClasificacionRoute
-  '/perfil': typeof PerfilRoute
+  '/_app/clasificacion': typeof AppClasificacionRoute
+  '/_app/perfil': typeof AppPerfilRoute
   '/admin/administradores': typeof AdminAdministradoresRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
   '/admin/torneo': typeof AdminTorneoRoute
-  '/problemas/$problemaId': typeof ProblemasProblemaIdRoute
-  '/problemas/': typeof ProblemasIndexRoute
+  '/_app/problemas/$problemaId': typeof AppProblemasProblemaIdRoute
   '/admin/envios/$envioId': typeof AdminEnviosEnvioIdRoute
   '/admin/problemas/$problemaId': typeof AdminProblemasProblemaIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_app/problemas/': typeof AppProblemasIndexRoute
   '/admin/envios/': typeof AdminEnviosIndexRoute
   '/admin/problemas/': typeof AdminProblemasIndexRoute
 }
@@ -166,10 +172,10 @@ export interface FileRouteTypes {
     | '/admin/participantes'
     | '/admin/torneo'
     | '/problemas/$problemaId'
-    | '/problemas/'
     | '/admin/envios/$envioId'
     | '/admin/problemas/$problemaId'
     | '/api/auth/$'
+    | '/problemas/'
     | '/admin/envios/'
     | '/admin/problemas/'
   fileRoutesByTo: FileRoutesByTo
@@ -183,57 +189,41 @@ export interface FileRouteTypes {
     | '/admin/participantes'
     | '/admin/torneo'
     | '/problemas/$problemaId'
-    | '/problemas'
     | '/admin/envios/$envioId'
     | '/admin/problemas/$problemaId'
     | '/api/auth/$'
+    | '/problemas'
     | '/admin/envios'
     | '/admin/problemas'
   id:
     | '__root__'
     | '/'
+    | '/_app'
     | '/admin'
-    | '/clasificacion'
-    | '/perfil'
+    | '/_app/clasificacion'
+    | '/_app/perfil'
     | '/admin/administradores'
     | '/admin/ingreso'
     | '/admin/participantes'
     | '/admin/torneo'
-    | '/problemas/$problemaId'
-    | '/problemas/'
+    | '/_app/problemas/$problemaId'
     | '/admin/envios/$envioId'
     | '/admin/problemas/$problemaId'
     | '/api/auth/$'
+    | '/_app/problemas/'
     | '/admin/envios/'
     | '/admin/problemas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRouteRoute: typeof AppRouteRouteWithChildren
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
-  ClasificacionRoute: typeof ClasificacionRoute
-  PerfilRoute: typeof PerfilRoute
-  ProblemasProblemaIdRoute: typeof ProblemasProblemaIdRoute
-  ProblemasIndexRoute: typeof ProblemasIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/perfil': {
-      id: '/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof PerfilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/clasificacion': {
-      id: '/clasificacion'
-      path: '/clasificacion'
-      fullPath: '/clasificacion'
-      preLoaderRoute: typeof ClasificacionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -241,25 +231,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/problemas/': {
-      id: '/problemas/'
-      path: '/problemas'
-      fullPath: '/problemas/'
-      preLoaderRoute: typeof ProblemasIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/problemas/$problemaId': {
-      id: '/problemas/$problemaId'
-      path: '/problemas/$problemaId'
-      fullPath: '/problemas/$problemaId'
-      preLoaderRoute: typeof ProblemasProblemaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/torneo': {
@@ -290,6 +273,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdministradoresRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_app/perfil': {
+      id: '/_app/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/clasificacion': {
+      id: '/_app/clasificacion'
+      path: '/clasificacion'
+      fullPath: '/clasificacion'
+      preLoaderRoute: typeof AppClasificacionRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/admin/problemas/': {
       id: '/admin/problemas/'
       path: '/problemas'
@@ -303,6 +300,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/envios/'
       preLoaderRoute: typeof AdminEnviosIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/_app/problemas/': {
+      id: '/_app/problemas/'
+      path: '/problemas'
+      fullPath: '/problemas/'
+      preLoaderRoute: typeof AppProblemasIndexRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -325,8 +329,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEnviosEnvioIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_app/problemas/$problemaId': {
+      id: '/_app/problemas/$problemaId'
+      path: '/problemas/$problemaId'
+      fullPath: '/problemas/$problemaId'
+      preLoaderRoute: typeof AppProblemasProblemaIdRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
   }
 }
+
+interface AppRouteRouteChildren {
+  AppClasificacionRoute: typeof AppClasificacionRoute
+  AppPerfilRoute: typeof AppPerfilRoute
+  AppProblemasProblemaIdRoute: typeof AppProblemasProblemaIdRoute
+  AppProblemasIndexRoute: typeof AppProblemasIndexRoute
+}
+
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppClasificacionRoute: AppClasificacionRoute,
+  AppPerfilRoute: AppPerfilRoute,
+  AppProblemasProblemaIdRoute: AppProblemasProblemaIdRoute,
+  AppProblemasIndexRoute: AppProblemasIndexRoute,
+}
+
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
 
 interface AdminRouteRouteChildren {
   AdminAdministradoresRoute: typeof AdminAdministradoresRoute
@@ -356,11 +385,8 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRouteRoute: AppRouteRouteWithChildren,
   AdminRouteRoute: AdminRouteRouteWithChildren,
-  ClasificacionRoute: ClasificacionRoute,
-  PerfilRoute: PerfilRoute,
-  ProblemasProblemaIdRoute: ProblemasProblemaIdRoute,
-  ProblemasIndexRoute: ProblemasIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

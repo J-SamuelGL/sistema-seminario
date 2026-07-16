@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { obtenerUsuarioActual } from '#/server/functions/auth'
 import { QrCode } from '#/components/QrCode'
 
-export const Route = createFileRoute('/perfil')({
+export const Route = createFileRoute('/_app/perfil')({
   loader: () => obtenerUsuarioActual(),
   component: ProfilePage,
 })

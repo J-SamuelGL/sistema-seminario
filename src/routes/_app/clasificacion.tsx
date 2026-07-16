@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { clasificacionQueryOptions } from '#/server/queries/clasificacion'
 import { LeaderboardTable } from '#/components/LeaderboardTable'
 
-export const Route = createFileRoute('/clasificacion')({
+export const Route = createFileRoute('/_app/clasificacion')({
   loader: ({ context }) => context.queryClient.ensureQueryData(clasificacionQueryOptions()),
   component: LeaderboardPage,
 })

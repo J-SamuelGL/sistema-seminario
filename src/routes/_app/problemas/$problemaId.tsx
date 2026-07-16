@@ -12,7 +12,7 @@ import { AssistantModal } from '#/components/AssistantModal'
 import { serializarCanonico } from '#/server/judge/serializar'
 import type { ResultadoCasoPublico } from '#/server/judge/resultadoPublico'
 
-export const Route = createFileRoute('/problemas/$problemaId')({
+export const Route = createFileRoute('/_app/problemas/$problemaId')({
   loader: async ({ params }) => {
     const [datosProblema, user] = await Promise.all([
       obtenerProblema({ data: params.problemaId }),

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { listarProblemas } from '#/server/functions/problems'
 
-export const Route = createFileRoute('/problemas/')({
+export const Route = createFileRoute('/_app/problemas/')({
   loader: () => listarProblemas(),
   component: ProblemsListPage,
 })
