@@ -17,7 +17,7 @@ function Home() {
     e.preventDefault()
     setEnviando(true)
     setError(null)
-    const { error: errorLogin } = await authClient.signIn.email({
+    const { data, error: errorLogin } = await authClient.signIn.email({
       email: correo,
       password: contrasena,
     })
@@ -26,7 +26,8 @@ function Home() {
       setError('Correo o contraseña incorrectos.')
       return
     }
-    await navigate({ to: '/perfil' })
+    const esAdmin = (data.user as { rol?: string }).rol === 'admin'
+    await navigate({ to: esAdmin ? '/admin/participantes' : '/perfil' })
   }
 
   return (

@@ -1,9 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { obtenerUsuarioActual } from '#/server/functions/auth'
 import { QrCode } from '#/components/QrCode'
 
 export const Route = createFileRoute('/_app/perfil')({
-  loader: () => obtenerUsuarioActual(),
+  loader: async () => {
+    const user = await obtenerUsuarioActual()
+    if (user.rol === 'admin') {
+      throw redirect({ to: '/admin/participantes' })
+    }
+    return user
+  },
   component: ProfilePage,
 })
 
