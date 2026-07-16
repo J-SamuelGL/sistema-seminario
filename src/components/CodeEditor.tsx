@@ -1,4 +1,4 @@
-import Editor from '@monaco-editor/react'
+import { Editor } from '@monaco-editor/react'
 
 const MONACO_LANGUAGE: Record<string, string> = {
   python: 'python',

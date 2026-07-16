@@ -23,7 +23,7 @@ export function RunResults({
             <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code>{' '}
             — Esperado: <code>{r.salidaEsperada}</code> — Obtenido:{' '}
             <code>{r.salidaObtenida || r.salidaError}</code>
-            {r.salidaConsola && (
+            {i === 0 && r.salidaConsola && (
               <pre className="mt-1 whitespace-pre-wrap rounded bg-gray-50 p-2 text-xs text-gray-700">
                 Consola:
                 {'\n'}

@@ -24,41 +24,42 @@ export async function ejecutarCasosPrueba(
   firma: Firma,
   casosPrueba: CasoPrueba[],
 ): Promise<{ resultados: ResultadoCaso[]; veredicto: Veredicto }> {
-  const resultados: ResultadoCaso[] = []
-
-  for (const casoPrueba of casosPrueba) {
-    const { archivo, contenido } = generarPrograma(
-      lenguaje,
-      codigo,
-      firma.nombreFuncion,
-      firma.parametros,
-      firma.tipoRetorno,
-      casoPrueba.argumentos,
-    )
-    const salida = await ejecutarPiston(lenguaje, archivo, contenido)
-    const { salidaConsola, salidaResultado } = separarSalidaConsola(
-      salida.salidaEstandar,
-    )
-    const salidaEsperadaTexto = serializarCanonico(
-      casoPrueba.salidaEsperada,
-      firma.tipoRetorno,
-    )
-    resultados.push({
-      visible: casoPrueba.visible,
-      argumentos: casoPrueba.argumentos,
-      salidaEsperada: salidaEsperadaTexto,
-      salidaObtenida: salidaResultado,
-      salidaConsola,
-      aprobado: compararSalidas(
-        salidaResultado,
-        salidaEsperadaTexto,
+  const resultados = await Promise.all(
+    casosPrueba.map(async (casoPrueba) => {
+      const { archivo, contenido } = generarPrograma(
+        lenguaje,
+        codigo,
+        firma.nombreFuncion,
+        firma.parametros,
         firma.tipoRetorno,
-      ),
-      salidaError: salida.salidaError,
-      tiempoExcedido: salida.tiempoExcedido,
-      codigoSalida: salida.codigoSalida,
-    })
-  }
+        casoPrueba.argumentos,
+      )
+      const salida = await ejecutarPiston(lenguaje, archivo, contenido)
+      const { salidaConsola, salidaResultado } = separarSalidaConsola(
+        salida.salidaEstandar,
+      )
+      const salidaEsperadaTexto = serializarCanonico(
+        casoPrueba.salidaEsperada,
+        firma.tipoRetorno,
+      )
+      const resultado: ResultadoCaso = {
+        visible: casoPrueba.visible,
+        argumentos: casoPrueba.argumentos,
+        salidaEsperada: salidaEsperadaTexto,
+        salidaObtenida: salidaResultado,
+        salidaConsola,
+        aprobado: compararSalidas(
+          salidaResultado,
+          salidaEsperadaTexto,
+          firma.tipoRetorno,
+        ),
+        salidaError: salida.salidaError,
+        tiempoExcedido: salida.tiempoExcedido,
+        codigoSalida: salida.codigoSalida,
+      }
+      return resultado
+    }),
+  )
 
   return { resultados, veredicto: determinarVeredicto(resultados) }
 }
