@@ -18,6 +18,7 @@ import { Route as AdminTorneoRouteImport } from './routes/admin/torneo'
 import { Route as AdminParticipantesRouteImport } from './routes/admin/participantes'
 import { Route as AdminIngresoRouteImport } from './routes/admin/ingreso'
 import { Route as AdminEnviosRouteImport } from './routes/admin/envios'
+import { Route as AdminAdministradoresRouteImport } from './routes/admin/administradores'
 import { Route as AdminProblemasIndexRouteImport } from './routes/admin/problemas/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminProblemasProblemaIdRouteImport } from './routes/admin/problemas/$problemaId'
@@ -67,6 +68,11 @@ const AdminEnviosRoute = AdminEnviosRouteImport.update({
   path: '/admin/envios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAdministradoresRoute = AdminAdministradoresRouteImport.update({
+  id: '/admin/administradores',
+  path: '/admin/administradores',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminProblemasIndexRoute = AdminProblemasIndexRouteImport.update({
   id: '/admin/problemas/',
   path: '/admin/problemas/',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clasificacion': typeof ClasificacionRoute
   '/perfil': typeof PerfilRoute
+  '/admin/administradores': typeof AdminAdministradoresRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clasificacion': typeof ClasificacionRoute
   '/perfil': typeof PerfilRoute
+  '/admin/administradores': typeof AdminAdministradoresRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/clasificacion': typeof ClasificacionRoute
   '/perfil': typeof PerfilRoute
+  '/admin/administradores': typeof AdminAdministradoresRoute
   '/admin/envios': typeof AdminEnviosRoute
   '/admin/ingreso': typeof AdminIngresoRoute
   '/admin/participantes': typeof AdminParticipantesRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clasificacion'
     | '/perfil'
+    | '/admin/administradores'
     | '/admin/envios'
     | '/admin/ingreso'
     | '/admin/participantes'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clasificacion'
     | '/perfil'
+    | '/admin/administradores'
     | '/admin/envios'
     | '/admin/ingreso'
     | '/admin/participantes'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clasificacion'
     | '/perfil'
+    | '/admin/administradores'
     | '/admin/envios'
     | '/admin/ingreso'
     | '/admin/participantes'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClasificacionRoute: typeof ClasificacionRoute
   PerfilRoute: typeof PerfilRoute
+  AdminAdministradoresRoute: typeof AdminAdministradoresRoute
   AdminEnviosRoute: typeof AdminEnviosRoute
   AdminIngresoRoute: typeof AdminIngresoRoute
   AdminParticipantesRoute: typeof AdminParticipantesRoute
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEnviosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/administradores': {
+      id: '/admin/administradores'
+      path: '/admin/administradores'
+      fullPath: '/admin/administradores'
+      preLoaderRoute: typeof AdminAdministradoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/problemas/': {
       id: '/admin/problemas/'
       path: '/admin/problemas'
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClasificacionRoute: ClasificacionRoute,
   PerfilRoute: PerfilRoute,
+  AdminAdministradoresRoute: AdminAdministradoresRoute,
   AdminEnviosRoute: AdminEnviosRoute,
   AdminIngresoRoute: AdminIngresoRoute,
   AdminParticipantesRoute: AdminParticipantesRoute,
