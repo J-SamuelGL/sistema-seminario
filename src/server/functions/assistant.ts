@@ -7,6 +7,7 @@ import { requerirParticipanteIngresado } from '../auth/middleware'
 import { puedePreguntar } from '../assistant/limit'
 import { responderPreguntaInvitado } from '../claude/assistant'
 import { datosPreguntaAsistenteSchema } from '../assistant/validar'
+import { grupoDeCategoria } from '../problems/grupo'
 
 export const preguntarAsistente = createServerFn({ method: 'POST' })
   .validator(datosPreguntaAsistenteSchema)
@@ -47,8 +48,19 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
     const problema = filasProblema.length > 0 ? filasProblema[0] : null
     if (!problema) throw new Error('Problema no encontrado')
 
+    const problemasDelGrupo = await db
+      .select()
+      .from(problemas)
+      .where(
+        eq(problemas.grupo, grupoDeCategoria(usuarioActualizado.categoria)),
+      )
+      .orderBy(problemas.orden)
+
     const respuesta = await responderPreguntaInvitado({
-      descripcionProblema: problema.descripcion,
+      problemas: problemasDelGrupo.map((p) => ({
+        titulo: p.titulo,
+        descripcion: p.descripcion,
+      })),
       pregunta: data.pregunta,
     })
 
