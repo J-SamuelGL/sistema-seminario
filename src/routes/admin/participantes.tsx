@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { registrarParticipante, reenviarCredenciales } from '#/server/functions/participantes'
+import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  registrarParticipante,
+  reenviarCredenciales,
+  eliminarParticipante,
+} from '#/server/functions/participantes'
 import { participantesQueryOptions } from '#/server/queries/participantes'
+import { puedeEliminarParticipante } from '#/server/participantes/eliminar'
 
 export const Route = createFileRoute('/admin/participantes')({
   loader: ({ context }) => context.queryClient.ensureQueryData(participantesQueryOptions()),
@@ -30,6 +35,16 @@ function AdminParticipantsPage() {
   const [error, setError] = useState<string | null>(null)
   const [registrados, setRegistrados] = useState<ParticipanteRegistrado[]>([])
   const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
+  const queryClient = useQueryClient()
+  const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
+  const eliminar = useMutation({
+    mutationFn: (usuarioId: string) => eliminarParticipante({ data: usuarioId }),
+    onSuccess: () => {
+      setErrorEliminar(null)
+      queryClient.invalidateQueries({ queryKey: participantesQueryOptions().queryKey })
+    },
+    onError: (err) => setErrorEliminar(err instanceof Error ? err.message : String(err)),
+  })
 
   async function handleRegistrar(e: React.FormEvent) {
     e.preventDefault()
@@ -155,20 +170,35 @@ function AdminParticipantsPage() {
             <th className="border p-2 text-left">Categoría</th>
             <th className="border p-2 text-left">Check-in</th>
             <th className="border p-2 text-left">Envíos</th>
+            <th className="border p-2 text-left">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {participantes.map((p) => (
-            <tr key={p.id}>
-              <td className="border p-2">{p.nombre}</td>
-              <td className="border p-2">{p.correo}</td>
-              <td className="border p-2">{p.categoria}</td>
-              <td className="border p-2">{p.ingresadoEn ? '✅' : '—'}</td>
-              <td className="border p-2">{p.cantidadEnvios}</td>
-            </tr>
-          ))}
+          {participantes.map((p) => {
+            const permiso = puedeEliminarParticipante({ rol: 'participante', cantidadEnvios: p.cantidadEnvios })
+            return (
+              <tr key={p.id}>
+                <td className="border p-2">{p.nombre}</td>
+                <td className="border p-2">{p.correo}</td>
+                <td className="border p-2">{p.categoria}</td>
+                <td className="border p-2">{p.ingresadoEn ? '✅' : '—'}</td>
+                <td className="border p-2">{p.cantidadEnvios}</td>
+                <td className="border p-2">
+                  <button
+                    className="text-red-600 underline disabled:text-gray-400 disabled:no-underline"
+                    disabled={!permiso.puede || eliminar.isPending}
+                    title={permiso.puede ? undefined : permiso.motivo}
+                    onClick={() => eliminar.mutate(p.id)}
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
+      {errorEliminar && <p className="text-red-600">{errorEliminar}</p>}
     </div>
   )
 }

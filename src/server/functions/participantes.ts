@@ -3,11 +3,12 @@ import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
 import { hashPassword } from 'better-auth/crypto'
 import { db } from '../db/client'
-import { usuarios, cuentas, envios } from '../db/schema'
+import { usuarios, cuentas, envios, preguntasIa } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { crearCuentaParticipante } from '../participantes/crear'
 import { generarContrasenaAleatoria } from '../auth/password'
 import { enviarCorreoBienvenida } from '../email/brevo'
+import { puedeEliminarParticipante } from '../participantes/eliminar'
 
 type DatosParticipante = {
   nombre: string
@@ -99,3 +100,26 @@ export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(as
 
   return filas.map((f) => ({ ...f, cantidadEnvios: Number(f.cantidadEnvios) }))
 })
+
+export const eliminarParticipante = createServerFn({ method: 'POST' })
+  .validator((usuarioId: string) => usuarioId)
+  .handler(async ({ data }) => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
+
+    const filas = await db.select().from(usuarios).where(eq(usuarios.id, data))
+    const usuario = filas.length > 0 ? filas[0] : null
+    if (!usuario) throw new Error('Participante no encontrado')
+
+    const filasEnvios = await db.select().from(envios).where(eq(envios.usuarioId, data))
+    const permiso = puedeEliminarParticipante({
+      rol: usuario.rol,
+      cantidadEnvios: filasEnvios.length,
+    })
+    if (!permiso.puede) throw new Error(permiso.motivo)
+
+    await db.transaction(async (tx) => {
+      await tx.delete(preguntasIa).where(eq(preguntasIa.usuarioId, data))
+      await tx.delete(usuarios).where(eq(usuarios.id, data))
+    })
+  })
