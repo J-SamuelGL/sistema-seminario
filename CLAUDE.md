@@ -47,8 +47,8 @@ Submitted code is never `eval`'d directly — it's wrapped into a full program a
    `/api/v2/execute`, with a **5000ms `run_timeout`** (Piston's server-side must be configured with
    `PISTON_RUN_TIMEOUT=5000` or greater, or every submission is rejected — see `docs/deployment.md`).
    `src/server/piston/languages.ts` maps our language names to Piston's `language`/`version` pairs; the code
-   comment there documents a real gotcha: the *install-time package name* differs from the *execution-time
-   language alias* for `javascript` (package `node`) and `csharp` (package `mono`).
+   comment there documents a real gotcha: the _install-time package name_ differs from the _execution-time
+   language alias_ for `javascript` (package `node`) and `csharp` (package `mono`).
 3. `src/server/judge/serializar.ts` — serializes expected output to a canonical string per return type and
    compares it against actual stdout (`compararSalidas`); float comparison is tolerant, not exact-string.
 4. `src/server/judge/verdict.ts` (`determinarVeredicto`) — reduces all per-case results to one of `aceptado`,
@@ -64,6 +64,7 @@ Type system for problem I/O lives in `src/server/judge/tipos.ts` (`TipoDato` = s
 the harness generators, and admin-side problem validation (`src/server/problems/validate.ts`).
 
 Two server functions drive submissions and share almost identical grading logic:
+
 - `src/server/functions/run.ts` (`ejecutarCodigo`) — "Run" button, doesn't persist a submission, tracks a
   per-user/per-problem run counter (`corridas` table) to gate periodic Claude hints for `invitado` users
   (`src/server/judge/hintCadence.ts`: every 3rd run).
@@ -75,6 +76,7 @@ Two server functions drive submissions and share almost identical grading logic:
 
 Two independent call sites, both via `@anthropic-ai/sdk` directly (no framework), both `claude-haiku-4-5`,
 both `invitado`-category-only:
+
 - `src/server/claude/assistant.ts` — free-form syntax-help chat widget (`AssistantModal.tsx`), system-prompted
   to refuse revealing problem solutions. Usage is rate-limited per user via `src/server/assistant/limit.ts`
   and `usuario.preguntasIaUsadas`.
@@ -89,6 +91,7 @@ are provisioned by an admin from `/admin/participantes` (see `src/server/partici
 self-registration; credentials are emailed through Brevo (`src/server/email/brevo.ts`) with an admin-UI
 fallback if delivery fails. Authorization is layered, not role-based middleware — each server function calls
 one of `src/server/auth/middleware.ts`'s helpers explicitly:
+
 - `requerirUsuario` — any logged-in user
 - `requerirAdmin` — `usuario.rol === 'admin'`
 - `requerirParticipanteIngresado` — logged in **and** checked in (`usuario.ingresadoEn` set via the QR
@@ -101,7 +104,7 @@ admins, where it's semantically meaningless — use `'senior'` as the placeholde
 
 Single-row `estado_torneo` table (id fixed at 1) gates whether submissions are accepted
 (`src/server/tournament/guard.ts`: `asegurarIniciado`/`asegurarNoIniciado`). Once started, it cannot be
-un-started. `src/server/standings/calculate.ts` computes the leaderboard: points come from the *first accepted*
+un-started. `src/server/standings/calculate.ts` computes the leaderboard: points come from the _first accepted_
 submission per problem per user (later accepted resubmissions don't add points), with a penalty in minutes
 = (minutes since tournament start at time of AC) + 20 × (failed attempts before the AC). Ranking is by total
 points desc, then penalty asc — not by count of problems solved. `agruparClasificacionPorCategoria` splits
@@ -133,4 +136,4 @@ runtimes with `scripts/install-piston-languages.sh <piston-url>` before grading 
 
 `docs/superpowers/specs/` and `docs/superpowers/plans/` hold the original spec/plan pairs for each major
 feature (tournament core, categories/manual registration, multi-language grading engine) — useful background
-for *why* something is shaped the way it is, but the code is authoritative for current behavior.
+for _why_ something is shaped the way it is, but the code is authoritative for current behavior.
