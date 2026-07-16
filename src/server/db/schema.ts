@@ -152,7 +152,9 @@ export const envios = mysqlTable('envios', {
     'error_ejecucion',
     'tiempo_excedido',
   ]),
-  aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id),
+  aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id, {
+    onDelete: 'set null',
+  }),
   aprobadoEn: timestamp('aprobado_en'),
   comentarioClaude: text('comentario_claude'),
   creadoEn: timestamp('creado_en').notNull().defaultNow(),

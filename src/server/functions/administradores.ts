@@ -45,12 +45,21 @@ export const eliminarAdministrador = createServerFn({ method: 'POST' })
   .validator((usuarioId: string) => usuarioId)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requerirAdmin(request.headers)
+    const administradorActual = await requerirAdmin(request.headers)
 
     const filas = await db.select().from(usuarios).where(eq(usuarios.id, data))
     const usuario = filas.length > 0 ? filas[0] : null
     if (!usuario) throw new Error('Administrador no encontrado')
     if (usuario.rol !== 'admin') throw new Error('Esta cuenta no es de administrador')
+
+    if (data === administradorActual.id) {
+      throw new Error('No puedes eliminar tu propia cuenta de administrador')
+    }
+
+    const administradores = await db.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.rol, 'admin'))
+    if (administradores.length <= 1) {
+      throw new Error('No se puede eliminar al último administrador')
+    }
 
     await db.delete(usuarios).where(eq(usuarios.id, data))
   })
