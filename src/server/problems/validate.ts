@@ -33,7 +33,8 @@ const casoPruebaSchema = z.object({
 export const datosProblemaSchema = z.object({
   titulo: textoRequerido('El título es requerido'),
   descripcion: textoRequerido('La descripción es requerida'),
-  dificultad: textoRequerido('La dificultad es requerida'),
+  dificultad: z.enum(['Fácil', 'Intermedio', 'Difícil']),
+  categoriaProblema: z.enum(['debugging', 'normal']),
   orden: z.number().int(),
   grupo: z.enum(['invitado_junior', 'senior']),
   puntos: z.number().int().positive(),

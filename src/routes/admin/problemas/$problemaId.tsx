@@ -75,6 +75,7 @@ function AdminProblemEditPage() {
           titulo: data.problema.titulo,
           descripcion: data.problema.descripcion,
           dificultad: data.problema.dificultad,
+          categoriaProblema: data.problema.categoriaProblema,
           orden: data.problema.orden,
           grupo: data.problema.grupo,
           puntos: data.problema.puntos,
@@ -94,7 +95,8 @@ function AdminProblemEditPage() {
       : {
           titulo: '',
           descripcion: '',
-          dificultad: 'easy',
+          dificultad: 'Fácil',
+          categoriaProblema: 'normal',
           orden: 0,
           grupo: 'invitado_junior',
           puntos: 10,

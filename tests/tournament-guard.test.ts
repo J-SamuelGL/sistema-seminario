@@ -19,4 +19,10 @@ describe('asegurarIniciado', () => {
   it('throws when the tournament has not started', () => {
     expect(() => asegurarIniciado({ iniciadoEn: null })).toThrow('El torneo aún no ha comenzado')
   })
+
+  it('throws when the tournament already concluded', () => {
+    expect(() => asegurarIniciado({ iniciadoEn: new Date(), finalizadoEn: new Date() })).toThrow(
+      'El torneo ya concluyó',
+    )
+  })
 })

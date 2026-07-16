@@ -23,7 +23,7 @@ export const enviarCodigo = createServerFn({ method: 'POST' })
 
       const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
       const estado = filasEstado.length > 0 ? filasEstado[0] : null
-      asegurarIniciado(estado ?? { iniciadoEn: null })
+      asegurarIniciado(estado ?? { iniciadoEn: null, finalizadoEn: null })
 
       const filasProblema = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
       const problema = filasProblema.length > 0 ? filasProblema[0] : null

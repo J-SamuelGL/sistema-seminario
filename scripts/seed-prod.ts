@@ -59,7 +59,8 @@ type CasoSeed = { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }
 async function crearProblemaSeed(input: {
   titulo: string
   descripcion: string
-  dificultad: string
+  dificultad: 'Fácil' | 'Intermedio' | 'Difícil'
+  categoriaProblema: 'debugging' | 'normal'
   orden: number
   grupo: 'invitado_junior' | 'senior'
   puntos: number
@@ -82,6 +83,7 @@ async function crearProblemaSeed(input: {
     titulo: input.titulo,
     descripcion: input.descripcion,
     dificultad: input.dificultad,
+    categoriaProblema: input.categoriaProblema,
     orden: input.orden,
     grupo: input.grupo,
     puntos: input.puntos,
@@ -119,7 +121,8 @@ async function main() {
     titulo: 'Suma de dos números',
     descripcion:
       'Escribe una función que reciba dos números enteros a y b, y devuelva su suma.',
-    dificultad: 'easy',
+    dificultad: 'Fácil',
+    categoriaProblema: 'normal',
     orden: 1,
     grupo: 'invitado_junior',
     puntos: 10,
@@ -173,7 +176,8 @@ async function main() {
     titulo: 'Es número primo',
     descripcion:
       'Escribe una función que reciba un número entero n y devuelva true si n es primo, false en caso contrario.',
-    dificultad: 'medium',
+    dificultad: 'Intermedio',
+    categoriaProblema: 'normal',
     orden: 2,
     grupo: 'invitado_junior',
     puntos: 15,
@@ -224,7 +228,8 @@ async function main() {
     titulo: 'Máximo de una lista',
     descripcion:
       'Escribe una función que reciba una lista de números enteros y devuelva el valor máximo.',
-    dificultad: 'medium',
+    dificultad: 'Intermedio',
+    categoriaProblema: 'normal',
     orden: 3,
     grupo: 'invitado_junior',
     puntos: 20,
@@ -277,7 +282,8 @@ async function main() {
       'Se les da una función que debería contar cuántas vocales tiene un texto, pero tiene un error de ' +
       'depuración. Deben encontrarlo y corregirlo: compara la letra contra toda la cadena "aeiou" con ' +
       'igualdad exacta, en vez de verificar si la letra está contenida en esa cadena.',
-    dificultad: 'easy',
+    dificultad: 'Fácil',
+    categoriaProblema: 'debugging',
     orden: 4,
     grupo: 'invitado_junior',
     puntos: 10,
@@ -327,7 +333,8 @@ async function main() {
     titulo: 'Sumar los dígitos de un número',
     descripcion:
       'Escribe una función que reciba un número entero positivo y devuelva la suma de sus dígitos.',
-    dificultad: 'medium',
+    dificultad: 'Intermedio',
+    categoriaProblema: 'normal',
     orden: 5,
     grupo: 'invitado_junior',
     puntos: 20,
@@ -377,7 +384,8 @@ async function main() {
     titulo: 'Contar mayúsculas en un texto',
     descripcion:
       'Escribe una función que reciba un texto y devuelva cuántas letras mayúsculas tiene.',
-    dificultad: 'easy',
+    dificultad: 'Fácil',
+    categoriaProblema: 'normal',
     orden: 6,
     grupo: 'invitado_junior',
     puntos: 10,
@@ -428,7 +436,8 @@ async function main() {
     descripcion:
       'Escribe una función que reciba una lista de números y devuelva una nueva lista donde cada número ' +
       'está multiplicado por 2.',
-    dificultad: 'easy',
+    dificultad: 'Fácil',
+    categoriaProblema: 'normal',
     orden: 7,
     grupo: 'invitado_junior',
     puntos: 10,
@@ -480,7 +489,8 @@ async function main() {
       'Se les da una función que debería encontrar el número más grande de una lista, pero tiene un error: ' +
       'inicializa el mayor en 0, lo cual falla si todos los números de la lista son negativos (nunca entra ' +
       'a la condición, y devuelve 0 incorrectamente). Deben corregir la inicialización.',
-    dificultad: 'medium',
+    dificultad: 'Intermedio',
+    categoriaProblema: 'debugging',
     orden: 8,
     grupo: 'invitado_junior',
     puntos: 20,
@@ -533,7 +543,8 @@ async function main() {
       'tiene un error: no normaliza el texto (no quita espacios ni ignora mayúsculas/minúsculas) antes de ' +
       'comparar, por lo que falla con frases como "Anita lava la tina" que sí son palíndromos si se ignoran ' +
       'espacios y capitalización.',
-    dificultad: 'hard',
+    dificultad: 'Difícil',
+    categoriaProblema: 'debugging',
     orden: 9,
     grupo: 'invitado_junior',
     puntos: 30,
