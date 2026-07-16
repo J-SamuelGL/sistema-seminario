@@ -55,7 +55,7 @@ export const enviarCodigo = createServerFn({ method: 'POST' })
         )
         const salidaError = resultados.find((r) => r.visible && r.salidaError)?.salidaError ?? ''
 
-        await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
+        await db.update(envios).set({ estado: veredicto, resultados }).where(eq(envios.id, envioId))
 
         if (user.categoria === 'invitado') {
           generarComentarioEnvio({

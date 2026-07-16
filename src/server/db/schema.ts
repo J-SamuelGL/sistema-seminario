@@ -10,6 +10,7 @@ import {
   unique,
 } from 'drizzle-orm/mysql-core'
 import type { Parametro, Valor } from '../judge/tipos'
+import type { ResultadoCaso } from '../judge/verdict'
 
 // Tablas centrales de Better Auth
 export const usuarios = mysqlTable('usuario', {
@@ -143,6 +144,16 @@ export const envios = mysqlTable('envios', {
   ])
     .notNull()
     .default('pendiente'),
+  resultados: json('resultados').$type<ResultadoCaso[]>(),
+  veredictoOriginal: mysqlEnum('veredicto_original', [
+    'pendiente',
+    'aceptado',
+    'respuesta_incorrecta',
+    'error_ejecucion',
+    'tiempo_excedido',
+  ]),
+  aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id),
+  aprobadoEn: timestamp('aprobado_en'),
   comentarioClaude: text('comentario_claude'),
   creadoEn: timestamp('creado_en').notNull().defaultNow(),
 })
