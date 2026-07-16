@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { obtenerProblema, crearProblema, actualizarProblema } from '#/server/functions/problems'
+import { obtenerProblema, crearProblema, actualizarProblema, eliminarProblema } from '#/server/functions/problems'
 import { AdminProblemForm } from '#/components/AdminProblemForm'
 import type { ValorFormularioProblema, DatosProblemaEnviado, TipoDatoFormulario } from '#/components/AdminProblemForm'
 
@@ -71,5 +71,25 @@ function AdminProblemEditPage() {
     await navigate({ to: '/admin/problemas' })
   }
 
-  return <AdminProblemForm initial={initial} onSubmit={handleSubmit} />
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        '¿Eliminar este problema? Se borran también sus casos de prueba y su configuración de lenguajes.',
+      )
+    )
+      return
+    await eliminarProblema({ data: problemaId })
+    await navigate({ to: '/admin/problemas' })
+  }
+
+  return (
+    <div>
+      {problemaId !== 'new' && (
+        <button className="m-4 rounded bg-red-600 px-4 py-2 text-white" onClick={handleDelete}>
+          Eliminar problema
+        </button>
+      )}
+      <AdminProblemForm initial={initial} onSubmit={handleSubmit} />
+    </div>
+  )
 }
