@@ -12,7 +12,8 @@ export function tipoEscalarDeLista(tipo: TipoDato): TipoEscalar | null {
 }
 
 function valorCoincideConEscalar(valor: unknown, tipo: TipoEscalar): boolean {
-  if (tipo === 'int') return typeof valor === 'number' && Number.isInteger(valor)
+  if (tipo === 'int')
+    return typeof valor === 'number' && Number.isInteger(valor)
   if (tipo === 'float') return typeof valor === 'number'
   if (tipo === 'bool') return typeof valor === 'boolean'
   return typeof valor === 'string'
@@ -21,7 +22,10 @@ function valorCoincideConEscalar(valor: unknown, tipo: TipoEscalar): boolean {
 export function valorCoincideConTipo(valor: unknown, tipo: TipoDato): boolean {
   const escalar = tipoEscalarDeLista(tipo)
   if (escalar) {
-    return Array.isArray(valor) && valor.every((v) => valorCoincideConEscalar(v, escalar))
+    return (
+      Array.isArray(valor) &&
+      valor.every((v) => valorCoincideConEscalar(v, escalar))
+    )
   }
   return valorCoincideConEscalar(valor, tipo as TipoEscalar)
 }

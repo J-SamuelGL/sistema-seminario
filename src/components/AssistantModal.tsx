@@ -15,18 +15,24 @@ export function AssistantModal({
   onClose: () => void
 }) {
   const [pregunta, setPregunta] = useState('')
-  const [turnos, setTurnos] = useState<{ pregunta: string; respuesta: string }[]>([])
+  const [turnos, setTurnos] = useState<
+    { pregunta: string; respuesta: string }[]
+  >([])
   const [restantes, setRestantes] = useState(3 - preguntasUsadas)
 
   const preguntar = useMutation({
     mutationFn: (preguntaEnviada: string) =>
       preguntarAsistente({ data: { problemaId, pregunta: preguntaEnviada } }),
     onSuccess: (resultado, preguntaEnviada) => {
-      setTurnos((prev) => [...prev, { pregunta: preguntaEnviada, respuesta: resultado.respuesta }])
+      setTurnos((prev) => [
+        ...prev,
+        { pregunta: preguntaEnviada, respuesta: resultado.respuesta },
+      ])
       setRestantes(resultado.preguntasRestantes)
       setPregunta('')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   function handleAsk() {

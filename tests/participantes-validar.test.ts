@@ -22,7 +22,11 @@ describe('datosParticipanteSchema', () => {
 
   it('rechaza a un junior sin semestre', () => {
     const resultado = datosParticipanteSchema.safeParse(
-      datosBase({ categoria: 'junior', carnet: '22-1234-2020', semestre: null }),
+      datosBase({
+        categoria: 'junior',
+        carnet: '22-1234-2020',
+        semestre: null,
+      }),
     )
     expect(resultado.success).toBe(false)
   })
@@ -60,18 +64,24 @@ describe('datosParticipanteSchema', () => {
   })
 
   it('rechaza un correo inválido', () => {
-    const resultado = datosParticipanteSchema.safeParse(datosBase({ correo: 'no-es-correo' }))
+    const resultado = datosParticipanteSchema.safeParse(
+      datosBase({ correo: 'no-es-correo' }),
+    )
     expect(resultado.success).toBe(false)
   })
 
   it('rechaza un correo más largo que 255 caracteres', () => {
     const correoLargo = `${'a'.repeat(250)}@x.com`
-    const resultado = datosParticipanteSchema.safeParse(datosBase({ correo: correoLargo }))
+    const resultado = datosParticipanteSchema.safeParse(
+      datosBase({ correo: correoLargo }),
+    )
     expect(resultado.success).toBe(false)
   })
 
   it('rechaza un nombre vacío', () => {
-    const resultado = datosParticipanteSchema.safeParse(datosBase({ nombre: '  ' }))
+    const resultado = datosParticipanteSchema.safeParse(
+      datosBase({ nombre: '  ' }),
+    )
     expect(resultado.success).toBe(false)
   })
 })

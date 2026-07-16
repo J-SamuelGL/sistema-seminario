@@ -27,10 +27,12 @@ Better Auth 1.6 (la versión instalada) bloquea el endpoint `/sign-up/email` de 
 ### Task 1: Esquema de base de datos — categorías, carné, credenciales y corridas de "Run"
 
 **Files:**
+
 - Modify: `src/server/db/schema.ts`
 - Test: `tests/db.test.ts`
 
 **Interfaces:**
+
 - Produces: `usuarios.categoria: 'invitado' | 'junior' | 'senior'` (NOT NULL), `usuarios.carnet: string | null`, `cuentas.password: string | null` (columna nueva, campo Drizzle `password` — nombre exigido por Better Auth internamente), tabla `corridas` (`id`, `usuarioId`, `problemaId`, `contador`, único por par usuario+problema), `problemas.grupo: 'invitado_junior' | 'senior'` (NOT NULL).
 
 - [ ] **Step 1: Escribir el test que falla**
@@ -93,13 +95,20 @@ describe('categorías y corridas', () => {
       await db
         .insert(corridas)
         .values({ usuarioId, problemaId, contador: 1 })
-        .onDuplicateKeyUpdate({ set: { contador: sql`${corridas.contador} + 1` } })
+        .onDuplicateKeyUpdate({
+          set: { contador: sql`${corridas.contador} + 1` },
+        })
     }
 
     const rows = await db
       .select()
       .from(corridas)
-      .where(and(eq(corridas.usuarioId, usuarioId), eq(corridas.problemaId, problemaId)))
+      .where(
+        and(
+          eq(corridas.usuarioId, usuarioId),
+          eq(corridas.problemaId, problemaId),
+        ),
+      )
     expect(rows[0]?.contador).toBe(2)
   })
 })
@@ -135,7 +144,9 @@ export const usuarios = mysqlTable('usuario', {
   image: text('imagen'),
   createdAt: timestamp('creado_en').notNull().defaultNow(),
   updatedAt: timestamp('actualizado_en').notNull().defaultNow(),
-  rol: mysqlEnum('rol', ['participante', 'admin']).notNull().default('participante'),
+  rol: mysqlEnum('rol', ['participante', 'admin'])
+    .notNull()
+    .default('participante'),
   categoria: mysqlEnum('categoria', ['invitado', 'junior', 'senior']).notNull(),
   carnet: text('carnet'),
   tokenIngreso: text('token_ingreso')
@@ -187,7 +198,9 @@ export const verificaciones = mysqlTable('verificacion', {
 
 // Tablas de dominio
 export const problemas = mysqlTable('problemas', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   titulo: text('titulo').notNull(),
   descripcion: text('descripcion').notNull(),
   dificultad: text('dificultad').notNull(),
@@ -197,7 +210,9 @@ export const problemas = mysqlTable('problemas', {
 })
 
 export const casosPrueba = mysqlTable('casos_prueba', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   problemaId: text('problema_id')
     .notNull()
     .references(() => problemas.id, { onDelete: 'cascade' }),
@@ -206,7 +221,9 @@ export const casosPrueba = mysqlTable('casos_prueba', {
 })
 
 export const envios = mysqlTable('envios', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   usuarioId: text('usuario_id')
     .notNull()
     .references(() => usuarios.id),
@@ -229,7 +246,9 @@ export const envios = mysqlTable('envios', {
 })
 
 export const preguntasIa = mysqlTable('preguntas_ia', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   usuarioId: text('usuario_id')
     .notNull()
     .references(() => usuarios.id),
@@ -242,7 +261,9 @@ export const preguntasIa = mysqlTable('preguntas_ia', {
 export const corridas = mysqlTable(
   'corridas',
   {
-    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     usuarioId: text('usuario_id')
       .notNull()
       .references(() => usuarios.id, { onDelete: 'cascade' }),
@@ -251,7 +272,12 @@ export const corridas = mysqlTable(
       .references(() => problemas.id, { onDelete: 'cascade' }),
     contador: int('contador').notNull().default(0),
   },
-  (table) => [unique('corridas_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
+  (table) => [
+    unique('corridas_usuario_problema_unico').on(
+      table.usuarioId,
+      table.problemaId,
+    ),
+  ],
 )
 
 export const estadoTorneo = mysqlTable('estado_torneo', {
@@ -284,10 +310,12 @@ git commit -m "feat: agregar categoría invitado, carné, contraseña de cuenta 
 ### Task 2: Generador de contraseña aleatoria
 
 **Files:**
+
 - Create: `src/server/auth/password.ts`
 - Test: `tests/password.test.ts`
 
 **Interfaces:**
+
 - Produces: `generarContrasenaAleatoria(): string` — 12 caracteres alfanuméricos+`-_`, generados con `crypto.randomBytes`.
 
 - [ ] **Step 1: Escribir el test que falla**
@@ -347,6 +375,7 @@ git commit -m "feat: agregar generador de contraseña aleatoria para registro ma
 ### Task 3: Reconfigurar Better Auth (correo + contraseña, sin OAuth) y formulario de login
 
 **Files:**
+
 - Modify: `src/server/auth/auth.ts`
 - Modify: `src/routes/index.tsx`
 - Modify: `.env.example`
@@ -354,6 +383,7 @@ git commit -m "feat: agregar generador de contraseña aleatoria para registro ma
 - Test: `tests/auth-config.test.ts`
 
 **Interfaces:**
+
 - Consumes: nada nuevo (usa `betterAuth` igual que antes).
 - Produces: `auth.options.emailAndPassword = { enabled: true, disableSignUp: true }`; `auth.options.socialProviders` ya no existe; `additionalFields.carnet`.
 
@@ -473,7 +503,8 @@ function Home() {
       <h1 className="text-4xl font-bold">Torneo de Programación</h1>
       <form className="flex w-72 flex-col gap-4" onSubmit={handleLogin}>
         <p className="text-sm text-gray-500">
-          Usa el correo y la contraseña que te llegaron por correo cuando te registraste.
+          Usa el correo y la contraseña que te llegaron por correo cuando te
+          registraste.
         </p>
         <input
           className="border p-2"
@@ -543,10 +574,12 @@ git commit -m "feat: reemplazar login OAuth por correo y contraseña, sin autore
 ### Task 4: Envío de correo de bienvenida (Brevo)
 
 **Files:**
+
 - Create: `src/server/email/brevo.ts`
 - Test: `tests/brevo.test.ts`
 
 **Interfaces:**
+
 - Produces: `construirCorreoBienvenida(input: { nombre: string; correo: string; contrasena: string }): { to: { email: string; name: string }[]; sender: { email: string; name: string }; subject: string; htmlContent: string }` (pura, testeada), `enviarCorreoBienvenida(input: { nombre: string; correo: string; contrasena: string }): Promise<void>` (llamada real a Brevo vía `fetch`, no testeada directamente — mismo criterio que `ejecutarPiston` en `src/server/piston/client.ts`, que tampoco tiene test directo).
 
 - [ ] **Step 1: Escribir el test que falla**
@@ -651,11 +684,13 @@ git commit -m "feat: agregar envío de correo de bienvenida con credenciales ví
 ### Task 5: Registro manual de participantes (creación de cuenta + server functions)
 
 **Files:**
+
 - Create: `src/server/participantes/crear.ts`
 - Create: `src/server/functions/participantes.ts`
 - Test: `tests/crear-participante.test.ts`
 
 **Interfaces:**
+
 - Consumes: `generarContrasenaAleatoria` (Task 2), `hashPassword`/`verifyPassword` de `better-auth/crypto`, `enviarCorreoBienvenida` (Task 4), `requerirAdmin` (existente, `src/server/auth/middleware.ts`).
 - Produces: `crearCuentaParticipante(input: { nombre: string; correo: string; categoria: 'invitado' | 'junior' | 'senior'; carnet: string | null }): Promise<{ id: string; contrasenaGenerada: string }>`; server functions `registrarParticipante` y `reenviarCredenciales`.
 
@@ -681,20 +716,36 @@ describe('crearCuentaParticipante', () => {
       carnet: '22-1234-2020',
     })
 
-    const filasCuenta = await db.select().from(cuentas).where(eq(cuentas.userId, id))
+    const filasCuenta = await db
+      .select()
+      .from(cuentas)
+      .where(eq(cuentas.userId, id))
     const cuenta = filasCuenta.length > 0 ? filasCuenta[0] : null
     expect(cuenta?.providerId).toBe('credential')
     expect(cuenta?.password).toBeTruthy()
     expect(
-      await verifyPassword({ hash: cuenta!.password!, password: contrasenaGenerada }),
+      await verifyPassword({
+        hash: cuenta!.password!,
+        password: contrasenaGenerada,
+      }),
     ).toBe(true)
   })
 
   it('rechaza un correo que ya está registrado', async () => {
     const correo = `dup-${crypto.randomUUID()}@example.com`
-    await crearCuentaParticipante({ nombre: 'Ana', correo, categoria: 'invitado', carnet: null })
+    await crearCuentaParticipante({
+      nombre: 'Ana',
+      correo,
+      categoria: 'invitado',
+      carnet: null,
+    })
     await expect(
-      crearCuentaParticipante({ nombre: 'Ana 2', correo, categoria: 'junior', carnet: null }),
+      crearCuentaParticipante({
+        nombre: 'Ana 2',
+        correo,
+        categoria: 'junior',
+        carnet: null,
+      }),
     ).rejects.toThrow('Ya existe una cuenta con ese correo')
   })
 })
@@ -722,7 +773,10 @@ export async function crearCuentaParticipante(input: {
   categoria: 'invitado' | 'junior' | 'senior'
   carnet: string | null
 }): Promise<{ id: string; contrasenaGenerada: string }> {
-  const existentes = await db.select().from(usuarios).where(eq(usuarios.email, input.correo))
+  const existentes = await db
+    .select()
+    .from(usuarios)
+    .where(eq(usuarios.email, input.correo))
   if (existentes.length > 0) {
     throw new Error('Ya existe una cuenta con ese correo')
   }
@@ -825,7 +879,9 @@ export const reenviarCredenciales = createServerFn({ method: 'POST' })
     await db
       .update(cuentas)
       .set({ password: hash })
-      .where(and(eq(cuentas.userId, data), eq(cuentas.providerId, 'credential')))
+      .where(
+        and(eq(cuentas.userId, data), eq(cuentas.providerId, 'credential')),
+      )
 
     let correoEnviado = true
     try {
@@ -855,9 +911,11 @@ git commit -m "feat: agregar registro manual de participantes con envío de cred
 ### Task 6: Pantalla admin `/admin/participantes`
 
 **Files:**
+
 - Create: `src/routes/admin/participantes.tsx`
 
 **Interfaces:**
+
 - Consumes: `registrarParticipante`, `reenviarCredenciales` (Task 5).
 
 - [ ] **Step 1: Crear la pantalla**
@@ -867,7 +925,10 @@ Crea `src/routes/admin/participantes.tsx`:
 ```tsx
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { registrarParticipante, reenviarCredenciales } from '#/server/functions/participantes'
+import {
+  registrarParticipante,
+  reenviarCredenciales,
+} from '#/server/functions/participantes'
 
 export const Route = createFileRoute('/admin/participantes')({
   component: AdminParticipantsPage,
@@ -923,7 +984,11 @@ function AdminParticipantsPage() {
     setRegistrados(
       registrados.map((p) =>
         p.id === usuarioId
-          ? { ...p, correoEnviado: resultado.correoEnviado, contrasenaGenerada: resultado.contrasenaGenerada }
+          ? {
+              ...p,
+              correoEnviado: resultado.correoEnviado,
+              contrasenaGenerada: resultado.contrasenaGenerada,
+            }
           : p,
       ),
     )
@@ -996,7 +1061,8 @@ function AdminParticipantsPage() {
               <span className="ml-2 text-green-600">✅ correo enviado</span>
             ) : (
               <span className="ml-2 text-yellow-600">
-                ⚠️ no se pudo enviar el correo — contraseña: {p.contrasenaGenerada}
+                ⚠️ no se pudo enviar el correo — contraseña:{' '}
+                {p.contrasenaGenerada}
               </span>
             )}
             <button
@@ -1027,6 +1093,7 @@ git commit -m "feat: agregar pantalla de admin para registrar participantes"
 ### Task 7: Límite y acceso al asistente de IA solo para Invitados
 
 **Files:**
+
 - Modify: `src/server/assistant/limit.ts`
 - Modify: `tests/assistant-limit.test.ts`
 - Modify: `src/server/claude/assistant.ts`
@@ -1035,6 +1102,7 @@ git commit -m "feat: agregar pantalla de admin para registrar participantes"
 - Modify: `src/routes/problemas/$problemaId.tsx`
 
 **Interfaces:**
+
 - Produces: `puedePreguntar(user: { categoria: string; preguntasIaUsadas: number }): boolean` — ahora `categoria === 'invitado' && preguntasIaUsadas < 3`.
 
 - [ ] **Step 1: Actualizar el test para reflejar el nuevo límite y categoría**
@@ -1047,23 +1115,33 @@ import { puedePreguntar } from '../src/server/assistant/limit'
 
 describe('puedePreguntar', () => {
   it('permite a un invitado con 0 preguntas usadas', () => {
-    expect(puedePreguntar({ categoria: 'invitado', preguntasIaUsadas: 0 })).toBe(true)
+    expect(
+      puedePreguntar({ categoria: 'invitado', preguntasIaUsadas: 0 }),
+    ).toBe(true)
   })
 
   it('permite a un invitado con 2 preguntas usadas', () => {
-    expect(puedePreguntar({ categoria: 'invitado', preguntasIaUsadas: 2 })).toBe(true)
+    expect(
+      puedePreguntar({ categoria: 'invitado', preguntasIaUsadas: 2 }),
+    ).toBe(true)
   })
 
   it('bloquea a un invitado con 3 preguntas usadas', () => {
-    expect(puedePreguntar({ categoria: 'invitado', preguntasIaUsadas: 3 })).toBe(false)
+    expect(
+      puedePreguntar({ categoria: 'invitado', preguntasIaUsadas: 3 }),
+    ).toBe(false)
   })
 
   it('bloquea a un junior sin importar las preguntas usadas', () => {
-    expect(puedePreguntar({ categoria: 'junior', preguntasIaUsadas: 0 })).toBe(false)
+    expect(puedePreguntar({ categoria: 'junior', preguntasIaUsadas: 0 })).toBe(
+      false,
+    )
   })
 
   it('bloquea a un senior sin importar las preguntas usadas', () => {
-    expect(puedePreguntar({ categoria: 'senior', preguntasIaUsadas: 0 })).toBe(false)
+    expect(puedePreguntar({ categoria: 'senior', preguntasIaUsadas: 0 })).toBe(
+      false,
+    )
   })
 })
 ```
@@ -1167,7 +1245,10 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
       .where(and(eq(usuarios.id, user.id), lt(usuarios.preguntasIaUsadas, 3)))
     if (resultado[0].affectedRows === 0) throw new Error('AI_LIMIT_REACHED')
 
-    const filasUsuario = await db.select().from(usuarios).where(eq(usuarios.id, user.id))
+    const filasUsuario = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.id, user.id))
     const usuarioActualizado = filasUsuario.length > 0 ? filasUsuario[0] : null
     if (!usuarioActualizado) throw new Error('AI_LIMIT_REACHED')
 
@@ -1190,7 +1271,10 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
       respuesta,
     })
 
-    return { respuesta, preguntasRestantes: 3 - usuarioActualizado.preguntasIaUsadas }
+    return {
+      respuesta,
+      preguntasRestantes: 3 - usuarioActualizado.preguntasIaUsadas,
+    }
   })
 ```
 
@@ -1212,7 +1296,9 @@ export function AssistantModal({
   onClose: () => void
 }) {
   const [pregunta, setPregunta] = useState('')
-  const [turnos, setTurnos] = useState<{ pregunta: string; respuesta: string }[]>([])
+  const [turnos, setTurnos] = useState<
+    { pregunta: string; respuesta: string }[]
+  >([])
   const [restantes, setRestantes] = useState(3 - preguntasUsadas)
   const [preguntando, setPreguntando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1220,7 +1306,9 @@ export function AssistantModal({
   async function handleAsk() {
     setPreguntando(true)
     try {
-      const resultado = await preguntarAsistente({ data: { problemaId, pregunta } })
+      const resultado = await preguntarAsistente({
+        data: { problemaId, pregunta },
+      })
       setTurnos([...turnos, { pregunta, respuesta: resultado.respuesta }])
       setRestantes(resultado.preguntasRestantes)
       setPregunta('')
@@ -1304,6 +1392,7 @@ git commit -m "feat: limitar el asistente de IA a la categoría Invitados (3 pre
 ### Task 8: Grupo de problemas (Invitados+Junior comparten, Senior aparte) y filtrado
 
 **Files:**
+
 - Create: `src/server/problems/grupo.ts`
 - Test: `tests/problems-grupo.test.ts`
 - Modify: `src/server/problems/validate.ts`
@@ -1313,6 +1402,7 @@ git commit -m "feat: limitar el asistente de IA a la categoría Invitados (3 pre
 - Modify: `src/routes/admin/problemas/$problemaId.tsx`
 
 **Interfaces:**
+
 - Produces: `grupoDeCategoria(categoria: 'invitado' | 'junior' | 'senior'): 'invitado_junior' | 'senior'`.
 
 - [ ] **Step 1: Escribir el test que falla (agrupamiento)**
@@ -1362,16 +1452,16 @@ Expected: PASS
 Agrega a `tests/problems-validate.test.ts`:
 
 ```typescript
-  it('reporta cuando falta un grupo válido', () => {
-    const errores = validarDatosProblema({
-      titulo: 'Two Sum',
-      descripcion: 'desc',
-      dificultad: 'easy',
-      lenguajesPermitidos: ['python'],
-      grupo: '' as never,
-    })
-    expect(errores).toContain('Debe indicar el grupo (invitado_junior o senior)')
+it('reporta cuando falta un grupo válido', () => {
+  const errores = validarDatosProblema({
+    titulo: 'Two Sum',
+    descripcion: 'desc',
+    dificultad: 'easy',
+    lenguajesPermitidos: ['python'],
+    grupo: '' as never,
   })
+  expect(errores).toContain('Debe indicar el grupo (invitado_junior o senior)')
+})
 ```
 
 Y actualiza el primer test (`'passes for a fully filled problem'`) agregando `grupo: 'invitado_junior'` al objeto de entrada.
@@ -1396,7 +1486,8 @@ export function validarDatosProblema(input: {
   const errores: string[] = []
   if (!input.titulo.trim()) errores.push('El título es requerido')
   if (!input.descripcion.trim()) errores.push('La descripción es requerida')
-  if (input.lenguajesPermitidos.length === 0) errores.push('Debe permitir al menos un lenguaje')
+  if (input.lenguajesPermitidos.length === 0)
+    errores.push('Debe permitir al menos un lenguaje')
   if (input.grupo !== 'invitado_junior' && input.grupo !== 'senior')
     errores.push('Debe indicar el grupo (invitado_junior o senior)')
   return errores
@@ -1418,7 +1509,10 @@ import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { problemas, casosPrueba } from '../db/schema'
-import { requerirAdmin, requerirParticipanteIngresado } from '../auth/middleware'
+import {
+  requerirAdmin,
+  requerirParticipanteIngresado,
+} from '../auth/middleware'
 import { validarDatosProblema } from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
 
@@ -1432,15 +1526,21 @@ type DatosProblema = {
   casosPrueba: { entrada: string; salidaEsperada: string }[]
 }
 
-export const listarProblemas = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  const user = await requerirParticipanteIngresado(request.headers)
-  if (user.rol === 'admin') {
-    return db.select().from(problemas).orderBy(problemas.orden)
-  }
-  const grupo = grupoDeCategoria(user.categoria)
-  return db.select().from(problemas).where(eq(problemas.grupo, grupo)).orderBy(problemas.orden)
-})
+export const listarProblemas = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    const user = await requerirParticipanteIngresado(request.headers)
+    if (user.rol === 'admin') {
+      return db.select().from(problemas).orderBy(problemas.orden)
+    }
+    const grupo = grupoDeCategoria(user.categoria)
+    return db
+      .select()
+      .from(problemas)
+      .where(eq(problemas.grupo, grupo))
+      .orderBy(problemas.orden)
+  },
+)
 
 export const obtenerProblema = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
@@ -1450,10 +1550,14 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const rows = await db.select().from(problemas).where(eq(problemas.id, data))
     const filaProblema = rows.length > 0 ? rows[0] : null
     const puedeVerlo =
-      user.rol === 'admin' || filaProblema?.grupo === grupoDeCategoria(user.categoria)
+      user.rol === 'admin' ||
+      filaProblema?.grupo === grupoDeCategoria(user.categoria)
     const problema = filaProblema && puedeVerlo ? filaProblema : null
     const casos = problema
-      ? await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
+      ? await db
+          .select()
+          .from(casosPrueba)
+          .where(eq(casosPrueba.problemaId, data))
       : []
     return { problema, casosPrueba: casos }
   })
@@ -1561,7 +1665,11 @@ export function AdminProblemForm({
 }) {
   const [value, setValue] = useState(initial)
 
-  function actualizarCasoPrueba(index: number, campo: 'entrada' | 'salidaEsperada', texto: string) {
+  function actualizarCasoPrueba(
+    index: number,
+    campo: 'entrada' | 'salidaEsperada',
+    texto: string,
+  ) {
     const next = value.casosPrueba.slice()
     next[index] = { ...next[index], [campo]: texto }
     setValue({ ...value, casosPrueba: next })
@@ -1598,7 +1706,13 @@ export function AdminProblemForm({
         placeholder="Lenguajes permitidos, separados por coma"
         value={value.lenguajesPermitidos.join(',')}
         onChange={(e) =>
-          setValue({ ...value, lenguajesPermitidos: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
+          setValue({
+            ...value,
+            lenguajesPermitidos: e.target.value
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean),
+          })
         }
       />
       <label>
@@ -1606,7 +1720,12 @@ export function AdminProblemForm({
         <select
           className="ml-2 border p-2"
           value={value.grupo}
-          onChange={(e) => setValue({ ...value, grupo: e.target.value as ValorFormularioProblema['grupo'] })}
+          onChange={(e) =>
+            setValue({
+              ...value,
+              grupo: e.target.value as ValorFormularioProblema['grupo'],
+            })
+          }
         >
           <option value="invitado_junior">Invitados + Junior</option>
           <option value="senior">Senior</option>
@@ -1625,18 +1744,31 @@ export function AdminProblemForm({
             className="border p-2"
             placeholder="Output esperado"
             value={cp.salidaEsperada}
-            onChange={(e) => actualizarCasoPrueba(i, 'salidaEsperada', e.target.value)}
+            onChange={(e) =>
+              actualizarCasoPrueba(i, 'salidaEsperada', e.target.value)
+            }
           />
         </div>
       ))}
       <button
         type="button"
         className="rounded bg-gray-200 px-4 py-2"
-        onClick={() => setValue({ ...value, casosPrueba: [...value.casosPrueba, { entrada: '', salidaEsperada: '' }] })}
+        onClick={() =>
+          setValue({
+            ...value,
+            casosPrueba: [
+              ...value.casosPrueba,
+              { entrada: '', salidaEsperada: '' },
+            ],
+          })
+        }
       >
         + Agregar caso de prueba
       </button>
-      <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">
+      <button
+        type="submit"
+        className="rounded bg-blue-600 px-4 py-2 text-white"
+      >
         Guardar
       </button>
     </form>
@@ -1649,26 +1781,29 @@ export function AdminProblemForm({
 En `src/routes/admin/problemas/$problemaId.tsx`, agrega `grupo` a ambas ramas del objeto `initial`:
 
 ```tsx
-  const initial: ValorFormularioProblema =
-    data && data.problema
-      ? {
-          titulo: data.problema.titulo,
-          descripcion: data.problema.descripcion,
-          dificultad: data.problema.dificultad,
-          lenguajesPermitidos: data.problema.lenguajesPermitidos,
-          orden: data.problema.orden,
-          grupo: data.problema.grupo,
-          casosPrueba: data.casosPrueba.map((cp) => ({ entrada: cp.entrada, salidaEsperada: cp.salidaEsperada })),
-        }
-      : {
-          titulo: '',
-          descripcion: '',
-          dificultad: 'easy',
-          lenguajesPermitidos: [],
-          orden: 0,
-          grupo: 'invitado_junior',
-          casosPrueba: [],
-        }
+const initial: ValorFormularioProblema =
+  data && data.problema
+    ? {
+        titulo: data.problema.titulo,
+        descripcion: data.problema.descripcion,
+        dificultad: data.problema.dificultad,
+        lenguajesPermitidos: data.problema.lenguajesPermitidos,
+        orden: data.problema.orden,
+        grupo: data.problema.grupo,
+        casosPrueba: data.casosPrueba.map((cp) => ({
+          entrada: cp.entrada,
+          salidaEsperada: cp.salidaEsperada,
+        })),
+      }
+    : {
+        titulo: '',
+        descripcion: '',
+        dificultad: 'easy',
+        lenguajesPermitidos: [],
+        orden: 0,
+        grupo: 'invitado_junior',
+        casosPrueba: [],
+      }
 ```
 
 - [ ] **Step 12: Ejecutar toda la suite de tests**
@@ -1688,6 +1823,7 @@ git commit -m "feat: agrupar problemas por invitado_junior/senior y filtrar por 
 ### Task 9: Cadencia de hints en Run y feedback exclusivo de Invitados en Submit
 
 **Files:**
+
 - Create: `src/server/judge/hintCadence.ts`
 - Test: `tests/hint-cadence.test.ts`
 - Modify: `src/server/functions/run.ts`
@@ -1697,6 +1833,7 @@ git commit -m "feat: agrupar problemas por invitado_junior/senior y filtrar por 
 - Modify: `src/components/SubmitResult.tsx`
 
 **Interfaces:**
+
 - Consumes: `generarComentarioEnvio` (existente, `src/server/claude/feedback.ts`), tabla `corridas` (Task 1).
 - Produces: `debeMostrarHint(contador: number): boolean`; `ejecutarCodigo` ahora devuelve `{ resultados, error, hint }`; `SubmitResult` ahora recibe una prop `mostrarFeedback: boolean`.
 
@@ -1763,15 +1900,24 @@ import { generarComentarioEnvio } from '../claude/feedback'
 import type { ResultadoCaso } from '../judge/verdict'
 
 export const ejecutarCodigo = createServerFn({ method: 'POST' })
-  .validator((input: { problemaId: string; lenguaje: string; codigo: string }) => input)
+  .validator(
+    (input: { problemaId: string; lenguaje: string; codigo: string }) => input,
+  )
   .handler(
     async ({
       data,
-    }): Promise<{ resultados: ResultadoCaso[]; error: string | null; hint: string | null }> => {
+    }): Promise<{
+      resultados: ResultadoCaso[]
+      error: string | null
+      hint: string | null
+    }> => {
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
 
-      const rows = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
+      const rows = await db
+        .select()
+        .from(problemas)
+        .where(eq(problemas.id, data.problemaId))
       const problema = rows.length > 0 ? rows[0] : null
       if (!problema) throw new Error('Problema no encontrado')
       const casos = await db
@@ -1783,23 +1929,39 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
         const { resultados, veredicto } = await ejecutarCasosPrueba(
           data.lenguaje,
           data.codigo,
-          casos.map((c) => ({ entrada: c.entrada, salidaEsperada: c.salidaEsperada })),
+          casos.map((c) => ({
+            entrada: c.entrada,
+            salidaEsperada: c.salidaEsperada,
+          })),
         )
 
         let hint: string | null = null
         if (user.categoria === 'invitado') {
           await db
             .insert(corridas)
-            .values({ usuarioId: user.id, problemaId: data.problemaId, contador: 1 })
-            .onDuplicateKeyUpdate({ set: { contador: sql`${corridas.contador} + 1` } })
+            .values({
+              usuarioId: user.id,
+              problemaId: data.problemaId,
+              contador: 1,
+            })
+            .onDuplicateKeyUpdate({
+              set: { contador: sql`${corridas.contador} + 1` },
+            })
           const filasCorrida = await db
             .select()
             .from(corridas)
-            .where(and(eq(corridas.usuarioId, user.id), eq(corridas.problemaId, data.problemaId)))
-          const contador = filasCorrida.length > 0 ? filasCorrida[0].contador : 1
+            .where(
+              and(
+                eq(corridas.usuarioId, user.id),
+                eq(corridas.problemaId, data.problemaId),
+              ),
+            )
+          const contador =
+            filasCorrida.length > 0 ? filasCorrida[0].contador : 1
 
           if (debeMostrarHint(contador)) {
-            const salidaError = resultados.find((r) => r.salidaError)?.salidaError ?? ''
+            const salidaError =
+              resultados.find((r) => r.salidaError)?.salidaError ?? ''
             hint = await generarComentarioEnvio({
               tituloProblema: problema.titulo,
               descripcionProblema: problema.descripcion,
@@ -1841,14 +2003,20 @@ export function RunResults({
     <div className="mt-4">
       <ul className="flex flex-col gap-2">
         {results.map((r, i) => (
-          <li key={i} className={r.aprobado ? 'text-green-600' : 'text-red-600'}>
-            {r.aprobado ? '✅' : '❌'} Input: <code>{r.entrada}</code> — Esperado: <code>{r.salidaEsperada}</code> —
-            Obtenido: <code>{r.salidaObtenida || r.salidaError}</code>
+          <li
+            key={i}
+            className={r.aprobado ? 'text-green-600' : 'text-red-600'}
+          >
+            {r.aprobado ? '✅' : '❌'} Input: <code>{r.entrada}</code> —
+            Esperado: <code>{r.salidaEsperada}</code> — Obtenido:{' '}
+            <code>{r.salidaObtenida || r.salidaError}</code>
           </li>
         ))}
       </ul>
       {hint && (
-        <p className="mt-2 rounded bg-purple-50 p-2 text-sm text-purple-800">💡 {hint}</p>
+        <p className="mt-2 rounded bg-purple-50 p-2 text-sm text-purple-800">
+          💡 {hint}
+        </p>
       )}
     </div>
   )
@@ -1866,19 +2034,23 @@ En `src/routes/problemas/$problemaId.tsx`:
 El bloque `handleRun` completo debe quedar así:
 
 ```tsx
-  async function handleRun() {
-    setEjecutando(true)
-    try {
-      const { resultados, error, hint: nuevoHint } = await ejecutarCodigo({
-        data: { problemaId: problemaIdActual, lenguaje, codigo },
-      })
-      setResultadosEjecucion(resultados)
-      setErrorEjecucion(error)
-      setHint(nuevoHint)
-    } finally {
-      setEjecutando(false)
-    }
+async function handleRun() {
+  setEjecutando(true)
+  try {
+    const {
+      resultados,
+      error,
+      hint: nuevoHint,
+    } = await ejecutarCodigo({
+      data: { problemaId: problemaIdActual, lenguaje, codigo },
+    })
+    setResultadosEjecucion(resultados)
+    setErrorEjecucion(error)
+    setHint(nuevoHint)
+  } finally {
+    setEjecutando(false)
   }
+}
 ```
 
 - [ ] **Step 8: Restringir el feedback de Claude en Submit a la categoría Invitados**
@@ -1886,43 +2058,49 @@ El bloque `handleRun` completo debe quedar así:
 En `src/server/functions/submit.ts`, envuelve la llamada existente a `generarComentarioEnvio` (dentro del bloque `try` de `enviarCodigo`) en una condición de categoría. Reemplaza:
 
 ```typescript
-      await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
+await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
 
-      generarComentarioEnvio({
-        tituloProblema: problema.titulo,
-        descripcionProblema: problema.descripcion,
-        codigo: data.codigo,
-        veredicto,
-        salidaError,
-      })
-        .then((comentario) =>
-          db.update(envios).set({ comentarioClaude: comentario }).where(eq(envios.id, envioId)),
-        )
-        .catch((err: unknown) => console.error('Comentario de Claude falló', err))
+generarComentarioEnvio({
+  tituloProblema: problema.titulo,
+  descripcionProblema: problema.descripcion,
+  codigo: data.codigo,
+  veredicto,
+  salidaError,
+})
+  .then((comentario) =>
+    db
+      .update(envios)
+      .set({ comentarioClaude: comentario })
+      .where(eq(envios.id, envioId)),
+  )
+  .catch((err: unknown) => console.error('Comentario de Claude falló', err))
 
-      return { envioId, veredicto, error: null }
+return { envioId, veredicto, error: null }
 ```
 
 por:
 
 ```typescript
-      await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
+await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
 
-      if (user.categoria === 'invitado') {
-        generarComentarioEnvio({
-          tituloProblema: problema.titulo,
-          descripcionProblema: problema.descripcion,
-          codigo: data.codigo,
-          veredicto,
-          salidaError,
-        })
-          .then((comentario) =>
-            db.update(envios).set({ comentarioClaude: comentario }).where(eq(envios.id, envioId)),
-          )
-          .catch((err: unknown) => console.error('Comentario de Claude falló', err))
-      }
+if (user.categoria === 'invitado') {
+  generarComentarioEnvio({
+    tituloProblema: problema.titulo,
+    descripcionProblema: problema.descripcion,
+    codigo: data.codigo,
+    veredicto,
+    salidaError,
+  })
+    .then((comentario) =>
+      db
+        .update(envios)
+        .set({ comentarioClaude: comentario })
+        .where(eq(envios.id, envioId)),
+    )
+    .catch((err: unknown) => console.error('Comentario de Claude falló', err))
+}
 
-      return { envioId, veredicto, error: null }
+return { envioId, veredicto, error: null }
 ```
 
 (La variable `user` ya existe en ese handler — es el resultado de `await requerirParticipanteIngresado(request.headers)` al inicio de la función.)
@@ -1957,7 +2135,9 @@ export function SubmitResult({
             clearInterval(interval)
           }
         })
-        .catch((err: unknown) => console.error('No se pudo consultar el envío', err))
+        .catch((err: unknown) =>
+          console.error('No se pudo consultar el envío', err),
+        )
     }, 2000)
     return () => {
       cancelado = true
@@ -1969,7 +2149,9 @@ export function SubmitResult({
     <div className="mt-4 rounded border p-4">
       <p className="font-bold">Veredicto: {veredicto}</p>
       {mostrarFeedback && (
-        <p className="mt-2 text-sm text-gray-600">{comentario ?? 'Generando feedback...'}</p>
+        <p className="mt-2 text-sm text-gray-600">
+          {comentario ?? 'Generando feedback...'}
+        </p>
       )}
     </div>
   )
@@ -1979,17 +2161,20 @@ export function SubmitResult({
 En `src/routes/problemas/$problemaId.tsx`, cambia:
 
 ```tsx
-          <SubmitResult envioId={resultadoEnvio.envioId} veredicto={resultadoEnvio.veredicto} />
+<SubmitResult
+  envioId={resultadoEnvio.envioId}
+  veredicto={resultadoEnvio.veredicto}
+/>
 ```
 
 por:
 
 ```tsx
-          <SubmitResult
-            envioId={resultadoEnvio.envioId}
-            veredicto={resultadoEnvio.veredicto}
-            mostrarFeedback={user?.categoria === 'invitado'}
-          />
+<SubmitResult
+  envioId={resultadoEnvio.envioId}
+  veredicto={resultadoEnvio.veredicto}
+  mostrarFeedback={user?.categoria === 'invitado'}
+/>
 ```
 
 - [ ] **Step 10: Ejecutar toda la suite de tests**
@@ -2009,12 +2194,14 @@ git commit -m "feat: agregar hints de Haiku cada 3 corridas en Run y limitar el 
 ### Task 10: Leaderboard de 3 categorías
 
 **Files:**
+
 - Modify: `src/server/standings/calculate.ts`
 - Modify: `tests/standings.test.ts`
 - Modify: `src/server/functions/leaderboard.ts`
 - Modify: `src/routes/clasificacion.tsx`
 
 **Interfaces:**
+
 - Produces: `RegistroUsuario.categoria` y `FilaClasificacion.categoria` ahora `'invitado' | 'junior' | 'senior'`; `agruparClasificacionPorCategoria` devuelve `{ invitado, junior, senior }`.
 
 - [ ] **Step 1: Actualizar los tests existentes de standings**
@@ -2025,9 +2212,27 @@ En `tests/standings.test.ts`, reemplaza el `describe('agruparClasificacionPorCat
 describe('agruparClasificacionPorCategoria', () => {
   it('separa las filas en invitado, junior y senior', () => {
     const agrupado = agruparClasificacionPorCategoria([
-      { usuarioId: 'u1', nombre: 'Ana', categoria: 'senior', cantidadResueltos: 1, minutosPenalizacionTotal: 5 },
-      { usuarioId: 'u2', nombre: 'Beto', categoria: 'junior', cantidadResueltos: 0, minutosPenalizacionTotal: 0 },
-      { usuarioId: 'u3', nombre: 'Cata', categoria: 'invitado', cantidadResueltos: 0, minutosPenalizacionTotal: 0 },
+      {
+        usuarioId: 'u1',
+        nombre: 'Ana',
+        categoria: 'senior',
+        cantidadResueltos: 1,
+        minutosPenalizacionTotal: 5,
+      },
+      {
+        usuarioId: 'u2',
+        nombre: 'Beto',
+        categoria: 'junior',
+        cantidadResueltos: 0,
+        minutosPenalizacionTotal: 0,
+      },
+      {
+        usuarioId: 'u3',
+        nombre: 'Cata',
+        categoria: 'invitado',
+        cantidadResueltos: 0,
+        minutosPenalizacionTotal: 0,
+      },
     ])
     expect(agrupado.senior.map((f) => f.usuarioId)).toEqual(['u1'])
     expect(agrupado.junior.map((f) => f.usuarioId)).toEqual(['u2'])
@@ -2089,36 +2294,44 @@ import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { usuarios, envios, estadoTorneo } from '../db/schema'
-import { calcularClasificacion, agruparClasificacionPorCategoria } from '../standings/calculate'
+import {
+  calcularClasificacion,
+  agruparClasificacionPorCategoria,
+} from '../standings/calculate'
 import type { RegistroUsuario } from '../standings/calculate'
 
-export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(async () => {
-  const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
-  const estado = filasEstado.length > 0 ? filasEstado[0] : null
-  if (!estado?.iniciadoEn) {
-    return { iniciado: false as const, invitado: [], junior: [], senior: [] }
-  }
+export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const filasEstado = await db
+      .select()
+      .from(estadoTorneo)
+      .where(eq(estadoTorneo.id, 1))
+    const estado = filasEstado.length > 0 ? filasEstado[0] : null
+    if (!estado?.iniciadoEn) {
+      return { iniciado: false as const, invitado: [], junior: [], senior: [] }
+    }
 
-  const todosUsuarios = await db.select().from(usuarios)
-  const todosEnvios = await db.select().from(envios)
+    const todosUsuarios = await db.select().from(usuarios)
+    const todosEnvios = await db.select().from(envios)
 
-  const usuariosElegibles: Array<RegistroUsuario> = todosUsuarios
-    .filter((u) => u.rol === 'participante')
-    .map((u) => ({ id: u.id, nombre: u.name, categoria: u.categoria }))
+    const usuariosElegibles: Array<RegistroUsuario> = todosUsuarios
+      .filter((u) => u.rol === 'participante')
+      .map((u) => ({ id: u.id, nombre: u.name, categoria: u.categoria }))
 
-  const filas = calcularClasificacion(
-    usuariosElegibles,
-    todosEnvios.map((e) => ({
-      usuarioId: e.usuarioId,
-      problemaId: e.problemaId,
-      estado: e.estado,
-      creadoEn: e.creadoEn,
-    })),
-    estado.iniciadoEn,
-  )
-  const agrupado = agruparClasificacionPorCategoria(filas)
-  return { iniciado: true as const, ...agrupado }
-})
+    const filas = calcularClasificacion(
+      usuariosElegibles,
+      todosEnvios.map((e) => ({
+        usuarioId: e.usuarioId,
+        problemaId: e.problemaId,
+        estado: e.estado,
+        creadoEn: e.creadoEn,
+      })),
+      estado.iniciadoEn,
+    )
+    const agrupado = agruparClasificacionPorCategoria(filas)
+    return { iniciado: true as const, ...agrupado }
+  },
+)
 ```
 
 (Antes, `todosUsuarios` se filtraba por `categoria !== null` porque `categoria` era opcional; ahora es NOT NULL, así que el filtro relevante es excluir cuentas `admin` de la clasificación.)
@@ -2128,13 +2341,13 @@ export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(as
 Reemplaza el `return` del componente `LeaderboardPage`:
 
 ```tsx
-  return (
-    <div className="grid grid-cols-3 gap-8 p-8">
-      <LeaderboardTable title="Invitados" rows={data.invitado} />
-      <LeaderboardTable title="Junior" rows={data.junior} />
-      <LeaderboardTable title="Senior" rows={data.senior} />
-    </div>
-  )
+return (
+  <div className="grid grid-cols-3 gap-8 p-8">
+    <LeaderboardTable title="Invitados" rows={data.invitado} />
+    <LeaderboardTable title="Junior" rows={data.junior} />
+    <LeaderboardTable title="Senior" rows={data.senior} />
+  </div>
+)
 ```
 
 - [ ] **Step 7: Ejecutar toda la suite de tests**
@@ -2154,12 +2367,14 @@ git commit -m "feat: agregar la categoría Invitados al leaderboard (3 tablas)"
 ### Task 11: Eliminar la autoselección de categoría
 
 **Files:**
+
 - Delete: `src/routes/registro.tsx`
 - Delete: `src/server/auth/category.ts`
 - Delete: `tests/category.test.ts`
 - Modify: `src/server/functions/auth.ts`
 
 **Interfaces:**
+
 - Ninguna (solo elimina código muerto).
 
 - [ ] **Step 1: Confirmar que nada más referencia estos archivos**
@@ -2182,10 +2397,12 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { requerirUsuario } from '../auth/middleware'
 
-export const obtenerUsuarioActual = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  return requerirUsuario(request.headers)
-})
+export const obtenerUsuarioActual = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    return requerirUsuario(request.headers)
+  },
+)
 ```
 
 - [ ] **Step 4: Regenerar el árbol de rutas de TanStack Router**

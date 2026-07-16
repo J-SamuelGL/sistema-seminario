@@ -27,10 +27,12 @@
 ## Task 1: Project Scaffolding
 
 **Files:**
+
 - Create: entire project via CLI (`src/routes/__root.tsx`, `src/routes/index.tsx`, `src/router.tsx`, `vite.config.ts`, `package.json`, `tailwind.config.ts`)
 - Create: `vitest.config.ts`
 
 **Interfaces:**
+
 - Produces: a running TanStack Start dev server, Tailwind wired up, `npm test` running Vitest.
 
 - [ ] **Step 1: Scaffold the app**
@@ -101,6 +103,7 @@ git commit -m "chore: scaffold TanStack Start app with Tailwind and Vitest"
 ## Task 2: Database Schema & Connection
 
 **Files:**
+
 - Create: `src/server/db/schema.ts`
 - Create: `src/server/db/client.ts`
 - Create: `drizzle.config.ts`
@@ -108,6 +111,7 @@ git commit -m "chore: scaffold TanStack Start app with Tailwind and Vitest"
 - Test: `tests/db.test.ts`
 
 **Interfaces:**
+
 - Produces: Drizzle table objects `users, sessions, accounts, verifications, problems, testCases, submissions, aiQuestions, tournamentState` (exported from `src/server/db/schema.ts`), and `db` client (exported from `src/server/db/client.ts`).
 - Consumes: nothing (foundation layer).
 
@@ -219,7 +223,9 @@ export const verifications = pgTable('verification', {
 
 // Domain tables
 export const problems = pgTable('problems', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
   description: text('description').notNull(),
   difficulty: text('difficulty').notNull(),
@@ -228,7 +234,9 @@ export const problems = pgTable('problems', {
 })
 
 export const testCases = pgTable('test_cases', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   problemId: text('problem_id')
     .notNull()
     .references(() => problems.id, { onDelete: 'cascade' }),
@@ -237,7 +245,9 @@ export const testCases = pgTable('test_cases', {
 })
 
 export const submissions = pgTable('submissions', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => users.id),
@@ -252,7 +262,9 @@ export const submissions = pgTable('submissions', {
 })
 
 export const aiQuestions = pgTable('ai_questions', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => users.id),
@@ -314,10 +326,7 @@ import { eq } from 'drizzle-orm'
 
 describe('database connection', () => {
   it('can insert and read tournament_state', async () => {
-    await db
-      .insert(tournamentState)
-      .values({ id: 1 })
-      .onConflictDoNothing()
+    await db.insert(tournamentState).values({ id: 1 }).onConflictDoNothing()
     const rows = await db
       .select()
       .from(tournamentState)
@@ -344,10 +353,12 @@ git commit -m "feat: add Drizzle schema and Postgres connection"
 ## Task 3: Standings Calculation (pure logic)
 
 **Files:**
+
 - Create: `src/server/standings/calculate.ts`
 - Test: `tests/standings.test.ts`
 
 **Interfaces:**
+
 - Produces: `calculateStandings(users, submissions, tournamentStartedAt): StandingRow[]` and `groupStandingsByCategory(rows): { senior: StandingRow[]; junior: StandingRow[] }`, used by Task 13 (Leaderboard).
 - Consumes: nothing (pure function, no DB/network).
 
@@ -357,7 +368,10 @@ Create `tests/standings.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import { calculateStandings, groupStandingsByCategory } from '../src/server/standings/calculate'
+import {
+  calculateStandings,
+  groupStandingsByCategory,
+} from '../src/server/standings/calculate'
 
 const start = new Date('2026-07-13T10:00:00Z')
 
@@ -369,7 +383,13 @@ describe('calculateStandings', () => {
       start,
     )
     expect(rows).toEqual([
-      { userId: 'u1', name: 'Ana', category: 'senior', solvedCount: 0, totalPenaltyMinutes: 0 },
+      {
+        userId: 'u1',
+        name: 'Ana',
+        category: 'senior',
+        solvedCount: 0,
+        totalPenaltyMinutes: 0,
+      },
     ])
   })
 
@@ -394,9 +414,24 @@ describe('calculateStandings', () => {
     const rows = calculateStandings(
       [{ id: 'u1', name: 'Ana', category: 'senior' }],
       [
-        { userId: 'u1', problemId: 'p1', status: 'wrong_answer', createdAt: new Date('2026-07-13T10:02:00Z') },
-        { userId: 'u1', problemId: 'p1', status: 'wrong_answer', createdAt: new Date('2026-07-13T10:05:00Z') },
-        { userId: 'u1', problemId: 'p1', status: 'accepted', createdAt: new Date('2026-07-13T10:10:00Z') },
+        {
+          userId: 'u1',
+          problemId: 'p1',
+          status: 'wrong_answer',
+          createdAt: new Date('2026-07-13T10:02:00Z'),
+        },
+        {
+          userId: 'u1',
+          problemId: 'p1',
+          status: 'wrong_answer',
+          createdAt: new Date('2026-07-13T10:05:00Z'),
+        },
+        {
+          userId: 'u1',
+          problemId: 'p1',
+          status: 'accepted',
+          createdAt: new Date('2026-07-13T10:10:00Z'),
+        },
       ],
       start,
     )
@@ -407,7 +442,14 @@ describe('calculateStandings', () => {
   it('does not count a problem with no accepted submission as solved', () => {
     const rows = calculateStandings(
       [{ id: 'u1', name: 'Ana', category: 'senior' }],
-      [{ userId: 'u1', problemId: 'p1', status: 'wrong_answer', createdAt: new Date('2026-07-13T10:05:00Z') }],
+      [
+        {
+          userId: 'u1',
+          problemId: 'p1',
+          status: 'wrong_answer',
+          createdAt: new Date('2026-07-13T10:05:00Z'),
+        },
+      ],
       start,
     )
     expect(rows[0].solvedCount).toBe(0)
@@ -421,9 +463,24 @@ describe('calculateStandings', () => {
         { id: 'u2', name: 'Beto', category: 'senior' },
       ],
       [
-        { userId: 'u1', problemId: 'p1', status: 'accepted', createdAt: new Date('2026-07-13T10:30:00Z') },
-        { userId: 'u2', problemId: 'p1', status: 'accepted', createdAt: new Date('2026-07-13T10:05:00Z') },
-        { userId: 'u2', problemId: 'p2', status: 'accepted', createdAt: new Date('2026-07-13T10:20:00Z') },
+        {
+          userId: 'u1',
+          problemId: 'p1',
+          status: 'accepted',
+          createdAt: new Date('2026-07-13T10:30:00Z'),
+        },
+        {
+          userId: 'u2',
+          problemId: 'p1',
+          status: 'accepted',
+          createdAt: new Date('2026-07-13T10:05:00Z'),
+        },
+        {
+          userId: 'u2',
+          problemId: 'p2',
+          status: 'accepted',
+          createdAt: new Date('2026-07-13T10:20:00Z'),
+        },
       ],
       start,
     )
@@ -433,7 +490,14 @@ describe('calculateStandings', () => {
   it('ignores pending submissions', () => {
     const rows = calculateStandings(
       [{ id: 'u1', name: 'Ana', category: 'junior' }],
-      [{ userId: 'u1', problemId: 'p1', status: 'pending', createdAt: new Date('2026-07-13T10:05:00Z') }],
+      [
+        {
+          userId: 'u1',
+          problemId: 'p1',
+          status: 'pending',
+          createdAt: new Date('2026-07-13T10:05:00Z'),
+        },
+      ],
       start,
     )
     expect(rows[0].solvedCount).toBe(0)
@@ -443,8 +507,20 @@ describe('calculateStandings', () => {
 describe('groupStandingsByCategory', () => {
   it('splits rows into senior and junior lists', () => {
     const grouped = groupStandingsByCategory([
-      { userId: 'u1', name: 'Ana', category: 'senior', solvedCount: 1, totalPenaltyMinutes: 5 },
-      { userId: 'u2', name: 'Beto', category: 'junior', solvedCount: 0, totalPenaltyMinutes: 0 },
+      {
+        userId: 'u1',
+        name: 'Ana',
+        category: 'senior',
+        solvedCount: 1,
+        totalPenaltyMinutes: 5,
+      },
+      {
+        userId: 'u2',
+        name: 'Beto',
+        category: 'junior',
+        solvedCount: 0,
+        totalPenaltyMinutes: 0,
+      },
     ])
     expect(grouped.senior.map((r) => r.userId)).toEqual(['u1'])
     expect(grouped.junior.map((r) => r.userId)).toEqual(['u2'])
@@ -496,9 +572,9 @@ export function calculateStandings(
   }
 
   const rows = users.map((user): StandingRow => {
-    const subs = (byUser.get(user.id) ?? []).slice().sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-    )
+    const subs = (byUser.get(user.id) ?? [])
+      .slice()
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
     const byProblem = new Map<string, SubmissionRecord[]>()
     for (const s of subs) {
       if (!byProblem.has(s.problemId)) byProblem.set(s.problemId, [])
@@ -509,13 +585,17 @@ export function calculateStandings(
     let totalPenaltyMinutes = 0
 
     for (const [, problemSubs] of byProblem) {
-      const acceptedIndex = problemSubs.findIndex((s) => s.status === 'accepted')
+      const acceptedIndex = problemSubs.findIndex(
+        (s) => s.status === 'accepted',
+      )
       if (acceptedIndex === -1) continue
       solvedCount += 1
       const acceptedSubmission = problemSubs[acceptedIndex]
       const failedAttemptsBefore = acceptedIndex
       const minutesSinceStart =
-        (acceptedSubmission.createdAt.getTime() - tournamentStartedAt.getTime()) / 60000
+        (acceptedSubmission.createdAt.getTime() -
+          tournamentStartedAt.getTime()) /
+        60000
       totalPenaltyMinutes += minutesSinceStart + failedAttemptsBefore * 20
     }
 
@@ -559,11 +639,13 @@ git commit -m "feat: add pure standings calculation with ICPC-style penalty"
 ## Task 4: Piston Client Wrapper
 
 **Files:**
+
 - Create: `src/server/piston/languages.ts`
 - Create: `src/server/piston/client.ts`
 - Test: `tests/piston-client.test.ts`
 
 **Interfaces:**
+
 - Produces: `pistonExecute(language, code, stdin): Promise<PistonResult>` where `PistonResult = { stdout, stderr, exitCode, timedOut }`. Used by Task 5 (judge).
 - Consumes: `process.env.PISTON_URL`, global `fetch`.
 
@@ -583,13 +665,20 @@ describe('pistonExecute', () => {
   it('sends the mapped language/version and parses stdout', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ run: { stdout: 'hi\n', stderr: '', code: 0, signal: null } }),
+      json: async () => ({
+        run: { stdout: 'hi\n', stderr: '', code: 0, signal: null },
+      }),
     })
     vi.stubGlobal('fetch', fetchMock)
 
     const result = await pistonExecute('python', 'print("hi")', '')
 
-    expect(result).toEqual({ stdout: 'hi\n', stderr: '', exitCode: 0, timedOut: false })
+    expect(result).toEqual({
+      stdout: 'hi\n',
+      stderr: '',
+      exitCode: 0,
+      timedOut: false,
+    })
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toContain('/api/v2/execute')
     const body = JSON.parse(options.body)
@@ -602,7 +691,9 @@ describe('pistonExecute', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ run: { stdout: '', stderr: '', code: 1, signal: 'SIGKILL' } }),
+        json: async () => ({
+          run: { stdout: '', stderr: '', code: 1, signal: 'SIGKILL' },
+        }),
       }),
     )
     const result = await pistonExecute('python', 'while True: pass', '')
@@ -610,7 +701,9 @@ describe('pistonExecute', () => {
   })
 
   it('throws for an unsupported language', async () => {
-    await expect(pistonExecute('cobol', 'x', '')).rejects.toThrow('Unsupported language: cobol')
+    await expect(pistonExecute('cobol', 'x', '')).rejects.toThrow(
+      'Unsupported language: cobol',
+    )
   })
 })
 ```
@@ -625,7 +718,10 @@ Expected: FAIL with "Cannot find module '../src/server/piston/client'".
 Create `src/server/piston/languages.ts`:
 
 ```ts
-export const LANGUAGE_MAP: Record<string, { language: string; version: string }> = {
+export const LANGUAGE_MAP: Record<
+  string,
+  { language: string; version: string }
+> = {
   python: { language: 'python', version: '3.10.0' },
   javascript: { language: 'javascript', version: '18.15.0' },
 }
@@ -700,11 +796,13 @@ git commit -m "feat: add Piston execution client"
 ## Task 5: Judge Logic (test case runner + verdict)
 
 **Files:**
+
 - Create: `src/server/judge/verdict.ts`
 - Create: `src/server/judge/runTestCases.ts`
 - Test: `tests/judge.test.ts`
 
 **Interfaces:**
+
 - Consumes: `pistonExecute` from Task 4.
 - Produces: `runTestCases(language, code, testCases): Promise<{ results: CaseResult[]; verdict: Verdict }>`, used by Task 10 (Run) and Task 12 (Submit).
 
@@ -725,28 +823,56 @@ import { pistonExecute } from '../src/server/piston/client'
 describe('determineVerdict', () => {
   it('returns accepted when all cases pass', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '2', passed: true, stderr: '', timedOut: false },
+      {
+        input: '1',
+        expectedOutput: '2',
+        actualOutput: '2',
+        passed: true,
+        stderr: '',
+        timedOut: false,
+      },
     ])
     expect(verdict).toBe('accepted')
   })
 
   it('returns wrong_answer when a case fails without error', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '3', passed: false, stderr: '', timedOut: false },
+      {
+        input: '1',
+        expectedOutput: '2',
+        actualOutput: '3',
+        passed: false,
+        stderr: '',
+        timedOut: false,
+      },
     ])
     expect(verdict).toBe('wrong_answer')
   })
 
   it('returns runtime_error when stderr is present', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '', passed: false, stderr: 'Traceback', timedOut: false },
+      {
+        input: '1',
+        expectedOutput: '2',
+        actualOutput: '',
+        passed: false,
+        stderr: 'Traceback',
+        timedOut: false,
+      },
     ])
     expect(verdict).toBe('runtime_error')
   })
 
   it('returns timeout when a case timed out, taking priority over other failures', () => {
     const verdict = determineVerdict([
-      { input: '1', expectedOutput: '2', actualOutput: '', passed: false, stderr: 'Traceback', timedOut: true },
+      {
+        input: '1',
+        expectedOutput: '2',
+        actualOutput: '',
+        passed: false,
+        stderr: 'Traceback',
+        timedOut: true,
+      },
     ])
     expect(verdict).toBe('timeout')
   })
@@ -754,12 +880,14 @@ describe('determineVerdict', () => {
 
 describe('runTestCases', () => {
   it('runs each test case through Piston and aggregates the verdict', async () => {
-    vi.mocked(pistonExecute).mockImplementation(async (_lang, _code, stdin) => ({
-      stdout: stdin === '1 2' ? '3' : '999',
-      stderr: '',
-      exitCode: 0,
-      timedOut: false,
-    }))
+    vi.mocked(pistonExecute).mockImplementation(
+      async (_lang, _code, stdin) => ({
+        stdout: stdin === '1 2' ? '3' : '999',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      }),
+    )
 
     const { results, verdict } = await runTestCases('python', 'code', [
       { input: '1 2', expectedOutput: '3' },
@@ -852,6 +980,7 @@ git commit -m "feat: add judge test-case runner and verdict logic"
 ## Task 6: Authentication (Better Auth, Google/GitHub OAuth, category selection)
 
 **Files:**
+
 - Create: `src/server/auth/auth.ts`
 - Create: `src/server/auth/middleware.ts`
 - Create: `src/server/auth/category.ts`
@@ -861,6 +990,7 @@ git commit -m "feat: add judge test-case runner and verdict logic"
 - Test: `tests/category.test.ts`
 
 **Interfaces:**
+
 - Produces: `auth` (Better Auth instance), `requireUser(headers)`, `requireAdmin(headers)`, `requireCheckedInParticipant(headers)` — used by every server function in later tasks. `setCategory` server function.
 - Consumes: `users, sessions, accounts, verifications` from Task 2's schema.
 
@@ -916,11 +1046,12 @@ export const auth = betterAuth({
   },
 })
 
-export type SessionUser = Awaited<ReturnType<typeof auth.api.getSession>> extends infer S
-  ? S extends { user: infer U }
-    ? U
+export type SessionUser =
+  Awaited<ReturnType<typeof auth.api.getSession>> extends infer S
+    ? S extends { user: infer U }
+      ? U
+      : never
     : never
-  : never
 ```
 
 - [ ] **Step 4: Mount the auth HTTP handler**
@@ -982,7 +1113,9 @@ describe('assertCategoryNotSet', () => {
   })
 
   it('throws when category is already set', () => {
-    expect(() => assertCategoryNotSet({ category: 'junior' })).toThrow('Category already set')
+    expect(() => assertCategoryNotSet({ category: 'junior' })).toThrow(
+      'Category already set',
+    )
   })
 })
 ```
@@ -1062,10 +1195,16 @@ function RegisterPage() {
     <div className="flex flex-col items-center gap-4 p-8">
       <h1 className="text-2xl font-bold">Elige tu categoría</h1>
       <div className="flex gap-4">
-        <button className="rounded bg-blue-600 px-6 py-3 text-white" onClick={() => choose('senior')}>
+        <button
+          className="rounded bg-blue-600 px-6 py-3 text-white"
+          onClick={() => choose('senior')}
+        >
           Senior
         </button>
-        <button className="rounded bg-green-600 px-6 py-3 text-white" onClick={() => choose('junior')}>
+        <button
+          className="rounded bg-green-600 px-6 py-3 text-white"
+          onClick={() => choose('junior')}
+        >
           Junior
         </button>
       </div>
@@ -1090,6 +1229,7 @@ git commit -m "feat: add Google/GitHub OAuth via Better Auth and category select
 ## Task 7: QR Check-in
 
 **Files:**
+
 - Create: `src/server/checkin/result.ts`
 - Create: `src/server/functions/checkin.ts`
 - Create: `src/components/QrCode.tsx`
@@ -1099,6 +1239,7 @@ git commit -m "feat: add Google/GitHub OAuth via Better Auth and category select
 - Test: `tests/checkin.test.ts`
 
 **Interfaces:**
+
 - Consumes: `requireAdmin` from Task 6, `users` schema from Task 2.
 - Produces: `checkinByToken` server function used only by the admin check-in page.
 
@@ -1123,7 +1264,9 @@ describe('buildCheckinResult', () => {
   })
 
   it('returns already_checked_in for a user who already checked in', () => {
-    expect(buildCheckinResult({ name: 'Ana', checkedInAt: new Date() })).toEqual({
+    expect(
+      buildCheckinResult({ name: 'Ana', checkedInAt: new Date() }),
+    ).toEqual({
       status: 'already_checked_in',
       userName: 'Ana',
     })
@@ -1150,7 +1293,8 @@ export function buildCheckinResult(
   user: { name: string; checkedInAt: Date | null } | null,
 ): CheckinResult {
   if (!user) return { status: 'not_found' }
-  if (user.checkedInAt) return { status: 'already_checked_in', userName: user.name }
+  if (user.checkedInAt)
+    return { status: 'already_checked_in', userName: user.name }
   return { status: 'checked_in', userName: user.name }
 }
 ```
@@ -1186,10 +1330,16 @@ export const checkinByToken = createServerFn({ method: 'POST' })
     const request = getWebRequest()
     await requireAdmin(request.headers)
 
-    const [user] = await db.select().from(users).where(eq(users.checkinToken, data))
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.checkinToken, data))
     const result = buildCheckinResult(user ?? null)
     if (result.status === 'checked_in' && user) {
-      await db.update(users).set({ checkedInAt: new Date() }).where(eq(users.id, user.id))
+      await db
+        .update(users)
+        .set({ checkedInAt: new Date() })
+        .where(eq(users.id, user.id))
     }
     return result
   })
@@ -1211,7 +1361,9 @@ export function QrCode({ value }: { value: string }) {
   }, [value])
 
   if (!dataUrl) return <div>Generando QR...</div>
-  return <img src={dataUrl} alt="Tu código de check-in" width={256} height={256} />
+  return (
+    <img src={dataUrl} alt="Tu código de check-in" width={256} height={256} />
+  )
 }
 ```
 
@@ -1236,7 +1388,11 @@ function ProfilePage() {
       <h1 className="text-xl font-bold">Hola, {user.name}</h1>
       <p>Muestra este código al llegar al evento para hacer check-in:</p>
       <QrCode value={user.checkinToken} />
-      <p>{user.checkedInAt ? 'Ya hiciste check-in ✅' : 'Aún no has hecho check-in'}</p>
+      <p>
+        {user.checkedInAt
+          ? 'Ya hiciste check-in ✅'
+          : 'Aún no has hecho check-in'}
+      </p>
     </div>
   )
 }
@@ -1302,11 +1458,17 @@ function CheckinPage() {
     <div className="flex flex-col items-center gap-4 p-8">
       <h1 className="text-xl font-bold">Check-in</h1>
       <QrScanner onScan={handleScan} />
-      {lastResult?.status === 'checked_in' && <p className="text-green-600">✅ {lastResult.userName} presente</p>}
-      {lastResult?.status === 'already_checked_in' && (
-        <p className="text-yellow-600">⚠️ {lastResult.userName} ya había hecho check-in</p>
+      {lastResult?.status === 'checked_in' && (
+        <p className="text-green-600">✅ {lastResult.userName} presente</p>
       )}
-      {lastResult?.status === 'not_found' && <p className="text-red-600">❌ Código no reconocido</p>}
+      {lastResult?.status === 'already_checked_in' && (
+        <p className="text-yellow-600">
+          ⚠️ {lastResult.userName} ya había hecho check-in
+        </p>
+      )}
+      {lastResult?.status === 'not_found' && (
+        <p className="text-red-600">❌ Código no reconocido</p>
+      )}
     </div>
   )
 }
@@ -1328,6 +1490,7 @@ git commit -m "feat: add QR-based check-in flow"
 ## Task 8: Admin Problem CRUD
 
 **Files:**
+
 - Create: `src/server/problems/validate.ts`
 - Create: `src/server/functions/problems.ts`
 - Create: `src/components/AdminProblemForm.tsx`
@@ -1336,6 +1499,7 @@ git commit -m "feat: add QR-based check-in flow"
 - Test: `tests/problems-validate.test.ts`
 
 **Interfaces:**
+
 - Consumes: `requireAdmin`, `requireCheckedInParticipant` from Task 6; `problems, testCases` schema from Task 2.
 - Produces: `listProblems`, `getProblem`, `createProblem`, `updateProblem`, `deleteProblem` server functions — `getProblem`/`listProblems` are consumed by Task 9 (problem UI).
 
@@ -1392,7 +1556,8 @@ export function validateProblemInput(input: {
   const errors: string[] = []
   if (!input.title.trim()) errors.push('El título es requerido')
   if (!input.description.trim()) errors.push('La descripción es requerida')
-  if (input.allowedLanguages.length === 0) errors.push('Debe permitir al menos un lenguaje')
+  if (input.allowedLanguages.length === 0)
+    errors.push('Debe permitir al menos un lenguaje')
   return errors
 }
 ```
@@ -1424,19 +1589,27 @@ type ProblemInput = {
   testCases: { input: string; expectedOutput: string }[]
 }
 
-export const listProblems = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getWebRequest()
-  await requireCheckedInParticipant(request.headers)
-  return db.select().from(problems).orderBy(problems.sortOrder)
-})
+export const listProblems = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getWebRequest()
+    await requireCheckedInParticipant(request.headers)
+    return db.select().from(problems).orderBy(problems.sortOrder)
+  },
+)
 
 export const getProblem = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
   .handler(async ({ data }) => {
     const request = getWebRequest()
     await requireCheckedInParticipant(request.headers)
-    const [problem] = await db.select().from(problems).where(eq(problems.id, data))
-    const cases = await db.select().from(testCases).where(eq(testCases.problemId, data))
+    const [problem] = await db
+      .select()
+      .from(problems)
+      .where(eq(problems.id, data))
+    const cases = await db
+      .select()
+      .from(testCases)
+      .where(eq(testCases.problemId, data))
     return { problem, testCases: cases }
   })
 
@@ -1539,7 +1712,11 @@ export function AdminProblemForm({
 }) {
   const [value, setValue] = useState(initial)
 
-  function updateTestCase(index: number, field: 'input' | 'expectedOutput', text: string) {
+  function updateTestCase(
+    index: number,
+    field: 'input' | 'expectedOutput',
+    text: string,
+  ) {
     const next = value.testCases.slice()
     next[index] = { ...next[index], [field]: text }
     setValue({ ...value, testCases: next })
@@ -1576,7 +1753,13 @@ export function AdminProblemForm({
         placeholder="Lenguajes permitidos, separados por coma"
         value={value.allowedLanguages.join(',')}
         onChange={(e) =>
-          setValue({ ...value, allowedLanguages: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
+          setValue({
+            ...value,
+            allowedLanguages: e.target.value
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean),
+          })
         }
       />
       <h3 className="font-bold">Casos de prueba</h3>
@@ -1592,18 +1775,28 @@ export function AdminProblemForm({
             className="border p-2"
             placeholder="Output esperado"
             value={tc.expectedOutput}
-            onChange={(e) => updateTestCase(i, 'expectedOutput', e.target.value)}
+            onChange={(e) =>
+              updateTestCase(i, 'expectedOutput', e.target.value)
+            }
           />
         </div>
       ))}
       <button
         type="button"
         className="rounded bg-gray-200 px-4 py-2"
-        onClick={() => setValue({ ...value, testCases: [...value.testCases, { input: '', expectedOutput: '' }] })}
+        onClick={() =>
+          setValue({
+            ...value,
+            testCases: [...value.testCases, { input: '', expectedOutput: '' }],
+          })
+        }
       >
         + Agregar caso de prueba
       </button>
-      <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">
+      <button
+        type="submit"
+        className="rounded bg-blue-600 px-4 py-2 text-white"
+      >
         Guardar
       </button>
     </form>
@@ -1629,7 +1822,11 @@ function AdminProblemsList() {
   return (
     <div className="p-8">
       <h1 className="text-xl font-bold">Problemas</h1>
-      <Link to="/admin/problems/$problemId" params={{ problemId: 'new' }} className="text-blue-600">
+      <Link
+        to="/admin/problems/$problemId"
+        params={{ problemId: 'new' }}
+        className="text-blue-600"
+      >
         + Nuevo problema
       </Link>
       <ul>
@@ -1650,8 +1847,15 @@ Create `src/routes/admin/problems/$problemId.tsx`:
 
 ```tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { getProblem, createProblem, updateProblem } from '~/server/functions/problems'
-import { AdminProblemForm, type ProblemFormValue } from '~/components/AdminProblemForm'
+import {
+  getProblem,
+  createProblem,
+  updateProblem,
+} from '~/server/functions/problems'
+import {
+  AdminProblemForm,
+  type ProblemFormValue,
+} from '~/components/AdminProblemForm'
 
 export const Route = createFileRoute('/admin/problems/$problemId')({
   loader: async ({ params }) => {
@@ -1673,9 +1877,19 @@ function AdminProblemEditPage() {
         difficulty: data.problem.difficulty,
         allowedLanguages: data.problem.allowedLanguages,
         sortOrder: data.problem.sortOrder,
-        testCases: data.testCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput })),
+        testCases: data.testCases.map((tc) => ({
+          input: tc.input,
+          expectedOutput: tc.expectedOutput,
+        })),
       }
-    : { title: '', description: '', difficulty: 'easy', allowedLanguages: [], sortOrder: 0, testCases: [] }
+    : {
+        title: '',
+        description: '',
+        difficulty: 'easy',
+        allowedLanguages: [],
+        sortOrder: 0,
+        testCases: [],
+      }
 
   async function handleSubmit(value: ProblemFormValue) {
     if (problemId === 'new') {
@@ -1706,12 +1920,14 @@ git commit -m "feat: add admin problem CRUD"
 ## Task 9: Problem List and Detail Page (editor UI)
 
 **Files:**
+
 - Create: `src/components/CodeEditor.tsx`
 - Create: `src/components/ProblemDescription.tsx`
 - Create: `src/routes/problems/index.tsx`
 - Create: `src/routes/problems/$problemId.tsx`
 
 **Interfaces:**
+
 - Consumes: `listProblems`, `getProblem` from Task 8; `requireCheckedInParticipant` from Task 6.
 - Produces: the `$problemId.tsx` route's local state (`code`, `language`) is where Task 10 (Run) and Task 12 (Submit) wire their buttons.
 
@@ -1798,12 +2014,17 @@ function ProblemsListPage() {
     <div className="p-8">
       <h1 className="text-xl font-bold">Problemas</h1>
       <p className="text-sm text-gray-500">
-        Puedes resolverlos en cualquier orden y regresar a cualquiera en cualquier momento.
+        Puedes resolverlos en cualquier orden y regresar a cualquiera en
+        cualquier momento.
       </p>
       <ul className="mt-4 flex flex-col gap-2">
         {problems.map((p) => (
           <li key={p.id}>
-            <Link to="/problems/$problemId" params={{ problemId: p.id }} className="text-blue-600">
+            <Link
+              to="/problems/$problemId"
+              params={{ problemId: p.id }}
+              className="text-blue-600"
+            >
               {p.title} — {p.difficulty}
             </Link>
           </li>
@@ -1837,9 +2058,17 @@ function ProblemDetailPage() {
 
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
-      <ProblemDescription title={problem.title} description={problem.description} difficulty={problem.difficulty} />
+      <ProblemDescription
+        title={problem.title}
+        description={problem.description}
+        difficulty={problem.difficulty}
+      />
       <div>
-        <select className="border p-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
+        <select
+          className="border p-2"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        >
           {problem.allowedLanguages.map((lang) => (
             <option key={lang} value={lang}>
               {lang}
@@ -1870,11 +2099,13 @@ git commit -m "feat: add problem list and split-panel problem detail page"
 ## Task 10: Run Flow
 
 **Files:**
+
 - Create: `src/server/functions/run.ts`
 - Create: `src/components/RunResults.tsx`
 - Modify: `src/routes/problems/$problemId.tsx`
 
 **Interfaces:**
+
 - Consumes: `runTestCases` from Task 5; `getProblem`-shaped test case data.
 - Produces: `runCode` server function.
 
@@ -1892,14 +2123,22 @@ import { requireCheckedInParticipant } from '../auth/middleware'
 import { runTestCases } from '../judge/runTestCases'
 
 export const runCode = createServerFn({ method: 'POST' })
-  .validator((input: { problemId: string; language: string; code: string }) => input)
+  .validator(
+    (input: { problemId: string; language: string; code: string }) => input,
+  )
   .handler(async ({ data }) => {
     const request = getWebRequest()
     await requireCheckedInParticipant(request.headers)
 
-    const [problem] = await db.select().from(problems).where(eq(problems.id, data.problemId))
+    const [problem] = await db
+      .select()
+      .from(problems)
+      .where(eq(problems.id, data.problemId))
     if (!problem) throw new Error('Problem not found')
-    const cases = await db.select().from(testCases).where(eq(testCases.problemId, data.problemId))
+    const cases = await db
+      .select()
+      .from(testCases)
+      .where(eq(testCases.problemId, data.problemId))
 
     const { results } = await runTestCases(
       data.language,
@@ -1922,8 +2161,9 @@ export function RunResults({ results }: { results: CaseResult[] }) {
     <ul className="mt-4 flex flex-col gap-2">
       {results.map((r, i) => (
         <li key={i} className={r.passed ? 'text-green-600' : 'text-red-600'}>
-          {r.passed ? '✅' : '❌'} Input: <code>{r.input}</code> — Esperado: <code>{r.expectedOutput}</code> —
-          Obtenido: <code>{r.actualOutput || r.stderr}</code>
+          {r.passed ? '✅' : '❌'} Input: <code>{r.input}</code> — Esperado:{' '}
+          <code>{r.expectedOutput}</code> — Obtenido:{' '}
+          <code>{r.actualOutput || r.stderr}</code>
         </li>
       ))}
     </ul>
@@ -1960,7 +2200,9 @@ function ProblemDetailPage() {
   async function handleRun() {
     setIsRunning(true)
     try {
-      const { results } = await runCode({ data: { problemId: problem.id, language, code } })
+      const { results } = await runCode({
+        data: { problemId: problem.id, language, code },
+      })
       setRunResults(results)
     } finally {
       setIsRunning(false)
@@ -1969,9 +2211,17 @@ function ProblemDetailPage() {
 
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
-      <ProblemDescription title={problem.title} description={problem.description} difficulty={problem.difficulty} />
+      <ProblemDescription
+        title={problem.title}
+        description={problem.description}
+        difficulty={problem.difficulty}
+      />
       <div>
-        <select className="border p-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
+        <select
+          className="border p-2"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        >
           {problem.allowedLanguages.map((lang) => (
             <option key={lang} value={lang}>
               {lang}
@@ -1979,7 +2229,11 @@ function ProblemDetailPage() {
           ))}
         </select>
         <CodeEditor language={language} value={code} onChange={setCode} />
-        <button className="mt-2 rounded bg-gray-700 px-4 py-2 text-white" onClick={handleRun} disabled={isRunning}>
+        <button
+          className="mt-2 rounded bg-gray-700 px-4 py-2 text-white"
+          onClick={handleRun}
+          disabled={isRunning}
+        >
           {isRunning ? 'Ejecutando...' : 'Run'}
         </button>
         {runResults && <RunResults results={runResults} />}
@@ -2006,10 +2260,12 @@ git commit -m "feat: add Run flow wired to Piston"
 ## Task 11: Claude Submission Feedback Module
 
 **Files:**
+
 - Create: `src/server/claude/feedback.ts`
 - Test: `tests/claude-feedback.test.ts`
 
 **Interfaces:**
+
 - Produces: `buildFeedbackPrompt(input): string` (pure, tested directly) and `generateSubmissionFeedback(input): Promise<string>`, used by Task 12 (Submit).
 - Consumes: `process.env.ANTHROPIC_API_KEY`.
 
@@ -2073,7 +2329,7 @@ Expected: FAIL with "Cannot find module '../src/server/claude/feedback'".
 
 Create `src/server/claude/feedback.ts`:
 
-```ts
+````ts
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -2118,7 +2374,7 @@ export async function generateSubmissionFeedback(input: {
   const block = message.content[0]
   return block.type === 'text' ? block.text : ''
 }
-```
+````
 
 - [ ] **Step 5: Run tests to verify they pass**
 
@@ -2137,11 +2393,13 @@ git commit -m "feat: add Claude submission feedback module"
 ## Task 12: Submit Flow
 
 **Files:**
+
 - Create: `src/server/functions/submit.ts`
 - Create: `src/components/SubmitResult.tsx`
 - Modify: `src/routes/problems/$problemId.tsx`
 
 **Interfaces:**
+
 - Consumes: `runTestCases` from Task 5, `generateSubmissionFeedback` from Task 11, `submissions` schema from Task 2.
 - Produces: `submitCode` and `getSubmission` server functions.
 
@@ -2160,14 +2418,22 @@ import { runTestCases } from '../judge/runTestCases'
 import { generateSubmissionFeedback } from '../claude/feedback'
 
 export const submitCode = createServerFn({ method: 'POST' })
-  .validator((input: { problemId: string; language: string; code: string }) => input)
+  .validator(
+    (input: { problemId: string; language: string; code: string }) => input,
+  )
   .handler(async ({ data }) => {
     const request = getWebRequest()
     const user = await requireCheckedInParticipant(request.headers)
 
-    const [problem] = await db.select().from(problems).where(eq(problems.id, data.problemId))
+    const [problem] = await db
+      .select()
+      .from(problems)
+      .where(eq(problems.id, data.problemId))
     if (!problem) throw new Error('Problem not found')
-    const cases = await db.select().from(testCases).where(eq(testCases.problemId, data.problemId))
+    const cases = await db
+      .select()
+      .from(testCases)
+      .where(eq(testCases.problemId, data.problemId))
 
     const [submission] = await db
       .insert(submissions)
@@ -2187,7 +2453,10 @@ export const submitCode = createServerFn({ method: 'POST' })
     )
     const stderr = results.find((r) => r.stderr)?.stderr ?? ''
 
-    await db.update(submissions).set({ status: verdict }).where(eq(submissions.id, submission.id))
+    await db
+      .update(submissions)
+      .set({ status: verdict })
+      .where(eq(submissions.id, submission.id))
 
     generateSubmissionFeedback({
       problemTitle: problem.title,
@@ -2197,7 +2466,10 @@ export const submitCode = createServerFn({ method: 'POST' })
       stderr,
     })
       .then((feedback) =>
-        db.update(submissions).set({ claudeFeedback: feedback }).where(eq(submissions.id, submission.id)),
+        db
+          .update(submissions)
+          .set({ claudeFeedback: feedback })
+          .where(eq(submissions.id, submission.id)),
       )
       .catch((err) => console.error('Claude feedback failed', err))
 
@@ -2209,7 +2481,10 @@ export const getSubmission = createServerFn({ method: 'GET' })
   .handler(async ({ data }) => {
     const request = getWebRequest()
     await requireCheckedInParticipant(request.headers)
-    const [submission] = await db.select().from(submissions).where(eq(submissions.id, data))
+    const [submission] = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, data))
     return submission ?? null
   })
 ```
@@ -2222,7 +2497,13 @@ Create `src/components/SubmitResult.tsx`:
 import { useEffect, useState } from 'react'
 import { getSubmission } from '~/server/functions/submit'
 
-export function SubmitResult({ submissionId, verdict }: { submissionId: string; verdict: string }) {
+export function SubmitResult({
+  submissionId,
+  verdict,
+}: {
+  submissionId: string
+  verdict: string
+}) {
   const [feedback, setFeedback] = useState<string | null>(null)
 
   useEffect(() => {
@@ -2243,7 +2524,9 @@ export function SubmitResult({ submissionId, verdict }: { submissionId: string; 
   return (
     <div className="mt-4 rounded border p-4">
       <p className="font-bold">Veredicto: {verdict}</p>
-      <p className="mt-2 text-sm text-gray-600">{feedback ?? 'Generando feedback...'}</p>
+      <p className="mt-2 text-sm text-gray-600">
+        {feedback ?? 'Generando feedback...'}
+      </p>
     </div>
   )
 }
@@ -2258,13 +2541,18 @@ import { submitCode } from '~/server/functions/submit'
 import { SubmitResult } from '~/components/SubmitResult'
 
 // inside ProblemDetailPage, alongside the existing state:
-const [submitResult, setSubmitResult] = useState<{ submissionId: string; verdict: string } | null>(null)
+const [submitResult, setSubmitResult] = useState<{
+  submissionId: string
+  verdict: string
+} | null>(null)
 const [isSubmitting, setIsSubmitting] = useState(false)
 
 async function handleSubmit() {
   setIsSubmitting(true)
   try {
-    const result = await submitCode({ data: { problemId: problem.id, language, code } })
+    const result = await submitCode({
+      data: { problemId: problem.id, language, code },
+    })
     setSubmitResult(result)
   } finally {
     setIsSubmitting(false)
@@ -2272,10 +2560,21 @@ async function handleSubmit() {
 }
 
 // in the JSX, after the Run button and RunResults:
-<button className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white" onClick={handleSubmit} disabled={isSubmitting}>
+;<button
+  className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white"
+  onClick={handleSubmit}
+  disabled={isSubmitting}
+>
   {isSubmitting ? 'Enviando...' : 'Submit'}
 </button>
-{submitResult && <SubmitResult submissionId={submitResult.submissionId} verdict={submitResult.verdict} />}
+{
+  submitResult && (
+    <SubmitResult
+      submissionId={submitResult.submissionId}
+      verdict={submitResult.verdict}
+    />
+  )
+}
 ```
 
 - [ ] **Step 4: Manual verification**
@@ -2294,11 +2593,13 @@ git commit -m "feat: add Submit flow with async Claude feedback"
 ## Task 13: Leaderboard
 
 **Files:**
+
 - Create: `src/server/functions/leaderboard.ts`
 - Create: `src/components/LeaderboardTable.tsx`
 - Create: `src/routes/leaderboard.tsx`
 
 **Interfaces:**
+
 - Consumes: `calculateStandings`, `groupStandingsByCategory` from Task 3; `tournamentState`, `users`, `submissions` schema from Task 2.
 - Produces: `getStandings` server function.
 
@@ -2311,30 +2612,41 @@ import { createServerFn } from '@tanstack/react-start'
 import { eq, isNotNull } from 'drizzle-orm'
 import { db } from '../db/client'
 import { users, submissions, tournamentState } from '../db/schema'
-import { calculateStandings, groupStandingsByCategory } from '../standings/calculate'
+import {
+  calculateStandings,
+  groupStandingsByCategory,
+} from '../standings/calculate'
 
-export const getStandings = createServerFn({ method: 'GET' }).handler(async () => {
-  const [state] = await db.select().from(tournamentState).where(eq(tournamentState.id, 1))
-  if (!state?.startedAt) {
-    return { started: false as const, senior: [], junior: [] }
-  }
+export const getStandings = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const [state] = await db
+      .select()
+      .from(tournamentState)
+      .where(eq(tournamentState.id, 1))
+    if (!state?.startedAt) {
+      return { started: false as const, senior: [], junior: [] }
+    }
 
-  const allUsers = await db.select().from(users).where(isNotNull(users.category))
-  const allSubmissions = await db.select().from(submissions)
+    const allUsers = await db
+      .select()
+      .from(users)
+      .where(isNotNull(users.category))
+    const allSubmissions = await db.select().from(submissions)
 
-  const rows = calculateStandings(
-    allUsers.map((u) => ({ id: u.id, name: u.name, category: u.category! })),
-    allSubmissions.map((s) => ({
-      userId: s.userId,
-      problemId: s.problemId,
-      status: s.status,
-      createdAt: s.createdAt,
-    })),
-    state.startedAt,
-  )
-  const grouped = groupStandingsByCategory(rows)
-  return { started: true as const, ...grouped }
-})
+    const rows = calculateStandings(
+      allUsers.map((u) => ({ id: u.id, name: u.name, category: u.category! })),
+      allSubmissions.map((s) => ({
+        userId: s.userId,
+        problemId: s.problemId,
+        status: s.status,
+        createdAt: s.createdAt,
+      })),
+      state.startedAt,
+    )
+    const grouped = groupStandingsByCategory(rows)
+    return { started: true as const, ...grouped }
+  },
+)
 ```
 
 - [ ] **Step 2: Build the table component**
@@ -2344,7 +2656,13 @@ Create `src/components/LeaderboardTable.tsx`:
 ```tsx
 import type { StandingRow } from '~/server/standings/calculate'
 
-export function LeaderboardTable({ title, rows }: { title: string; rows: StandingRow[] }) {
+export function LeaderboardTable({
+  title,
+  rows,
+}: {
+  title: string
+  rows: StandingRow[]
+}) {
   return (
     <div>
       <h2 className="text-lg font-bold">{title}</h2>
@@ -2363,7 +2681,9 @@ export function LeaderboardTable({ title, rows }: { title: string; rows: Standin
               <td className="border p-2">{i + 1}</td>
               <td className="border p-2">{row.name}</td>
               <td className="border p-2">{row.solvedCount}</td>
-              <td className="border p-2">{Math.round(row.totalPenaltyMinutes)} min</td>
+              <td className="border p-2">
+                {Math.round(row.totalPenaltyMinutes)} min
+              </td>
             </tr>
           ))}
         </tbody>
@@ -2399,7 +2719,8 @@ function LeaderboardPage() {
     return () => clearInterval(interval)
   }, [])
 
-  if (!data.started) return <p className="p-8">El torneo aún no ha comenzado.</p>
+  if (!data.started)
+    return <p className="p-8">El torneo aún no ha comenzado.</p>
 
   return (
     <div className="grid grid-cols-2 gap-8 p-8">
@@ -2426,6 +2747,7 @@ git commit -m "feat: add live leaderboard split by category"
 ## Task 14: Junior AI Assistant
 
 **Files:**
+
 - Create: `src/server/assistant/limit.ts`
 - Create: `src/server/claude/assistant.ts`
 - Create: `src/server/functions/assistant.ts`
@@ -2434,6 +2756,7 @@ git commit -m "feat: add live leaderboard split by category"
 - Test: `tests/assistant-limit.test.ts`
 
 **Interfaces:**
+
 - Consumes: `requireCheckedInParticipant` from Task 6; `aiQuestions`, `users` schema from Task 2.
 - Produces: `askAssistant` server function.
 
@@ -2447,19 +2770,27 @@ import { canAskQuestion } from '../src/server/assistant/limit'
 
 describe('canAskQuestion', () => {
   it('allows a junior participant with 0 questions used', () => {
-    expect(canAskQuestion({ category: 'junior', aiQuestionsUsed: 0 })).toBe(true)
+    expect(canAskQuestion({ category: 'junior', aiQuestionsUsed: 0 })).toBe(
+      true,
+    )
   })
 
   it('allows a junior participant with 1 question used', () => {
-    expect(canAskQuestion({ category: 'junior', aiQuestionsUsed: 1 })).toBe(true)
+    expect(canAskQuestion({ category: 'junior', aiQuestionsUsed: 1 })).toBe(
+      true,
+    )
   })
 
   it('blocks a junior participant with 2 questions used', () => {
-    expect(canAskQuestion({ category: 'junior', aiQuestionsUsed: 2 })).toBe(false)
+    expect(canAskQuestion({ category: 'junior', aiQuestionsUsed: 2 })).toBe(
+      false,
+    )
   })
 
   it('blocks a senior participant regardless of questions used', () => {
-    expect(canAskQuestion({ category: 'senior', aiQuestionsUsed: 0 })).toBe(false)
+    expect(canAskQuestion({ category: 'senior', aiQuestionsUsed: 0 })).toBe(
+      false,
+    )
   })
 })
 ```
@@ -2474,7 +2805,10 @@ Expected: FAIL with "Cannot find module '../src/server/assistant/limit'".
 Create `src/server/assistant/limit.ts`:
 
 ```ts
-export function canAskQuestion(user: { category: string; aiQuestionsUsed: number }): boolean {
+export function canAskQuestion(user: {
+  category: string
+  aiQuestionsUsed: number
+}): boolean {
   return user.category === 'junior' && user.aiQuestionsUsed < 2
 }
 ```
@@ -2541,11 +2875,20 @@ export const askAssistant = createServerFn({ method: 'POST' })
     const request = getWebRequest()
     const user = await requireCheckedInParticipant(request.headers)
 
-    if (!user.category || !canAskQuestion({ category: user.category, aiQuestionsUsed: user.aiQuestionsUsed })) {
+    if (
+      !user.category ||
+      !canAskQuestion({
+        category: user.category,
+        aiQuestionsUsed: user.aiQuestionsUsed,
+      })
+    ) {
       throw new Error('AI_LIMIT_REACHED')
     }
 
-    const [problem] = await db.select().from(problems).where(eq(problems.id, data.problemId))
+    const [problem] = await db
+      .select()
+      .from(problems)
+      .where(eq(problems.id, data.problemId))
     if (!problem) throw new Error('Problem not found')
 
     const answer = await answerJuniorQuestion({
@@ -2609,7 +2952,9 @@ export function AssistantModal({
           <h2 className="font-bold">Preguntar a Haiku</h2>
           <button onClick={onClose}>✕</button>
         </div>
-        <p className="text-sm text-gray-500">Preguntas restantes: {remaining}/2</p>
+        <p className="text-sm text-gray-500">
+          Preguntas restantes: {remaining}/2
+        </p>
         {turns.map((t, i) => (
           <div key={i} className="mt-2 text-sm">
             <p className="font-bold">Tú: {t.question}</p>
@@ -2628,7 +2973,11 @@ export function AssistantModal({
           onClick={handleAsk}
           disabled={remaining <= 0 || isAsking || !question.trim()}
         >
-          {remaining <= 0 ? 'Ya usaste tus 2 preguntas' : isAsking ? 'Preguntando...' : 'Preguntar'}
+          {remaining <= 0
+            ? 'Ya usaste tus 2 preguntas'
+            : isAsking
+              ? 'Preguntando...'
+              : 'Preguntar'}
         </button>
       </div>
     </div>
@@ -2649,14 +2998,25 @@ const [showAssistant, setShowAssistant] = useState(false)
 const user = Route.useLoaderData().user // loader combines getProblem + getMe results, see below
 
 // in JSX, only for junior:
-{user.category === 'junior' && (
-  <button className="mt-2 rounded bg-purple-600 px-4 py-2 text-white" onClick={() => setShowAssistant(true)}>
-    Preguntar a Haiku
-  </button>
-)}
-{showAssistant && (
-  <AssistantModal problemId={problem.id} questionsUsed={user.aiQuestionsUsed} onClose={() => setShowAssistant(false)} />
-)}
+{
+  user.category === 'junior' && (
+    <button
+      className="mt-2 rounded bg-purple-600 px-4 py-2 text-white"
+      onClick={() => setShowAssistant(true)}
+    >
+      Preguntar a Haiku
+    </button>
+  )
+}
+{
+  showAssistant && (
+    <AssistantModal
+      problemId={problem.id}
+      questionsUsed={user.aiQuestionsUsed}
+      onClose={() => setShowAssistant(false)}
+    />
+  )
+}
 ```
 
 Update the route's `loader` to fetch both pieces of data together:
@@ -2684,12 +3044,14 @@ git commit -m "feat: add junior-only Haiku syntax assistant with 2-question limi
 ## Task 15: Tournament Start Control
 
 **Files:**
+
 - Create: `src/server/tournament/guard.ts`
 - Create: `src/server/functions/tournament.ts`
 - Create: `src/routes/admin/tournament.tsx`
 - Test: `tests/tournament-guard.test.ts`
 
 **Interfaces:**
+
 - Consumes: `requireAdmin` from Task 6; `tournamentState` schema from Task 2. Also read by Task 13's `getStandings`, already built against `tournamentState.startedAt`.
 - Produces: `startTournament`, `getTournamentState` server functions.
 
@@ -2707,7 +3069,9 @@ describe('assertNotStarted', () => {
   })
 
   it('throws when the tournament already started', () => {
-    expect(() => assertNotStarted({ startedAt: new Date() })).toThrow('El torneo ya comenzó')
+    expect(() => assertNotStarted({ startedAt: new Date() })).toThrow(
+      'El torneo ya comenzó',
+    )
   })
 })
 ```
@@ -2747,26 +3111,36 @@ import { tournamentState } from '../db/schema'
 import { requireAdmin } from '../auth/middleware'
 import { assertNotStarted } from '../tournament/guard'
 
-export const getTournamentState = createServerFn({ method: 'GET' }).handler(async () => {
-  const [state] = await db.select().from(tournamentState).where(eq(tournamentState.id, 1))
-  return state ?? { id: 1, startedAt: null }
-})
+export const getTournamentState = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const [state] = await db
+      .select()
+      .from(tournamentState)
+      .where(eq(tournamentState.id, 1))
+    return state ?? { id: 1, startedAt: null }
+  },
+)
 
-export const startTournament = createServerFn({ method: 'POST' }).handler(async () => {
-  const request = getWebRequest()
-  await requireAdmin(request.headers)
+export const startTournament = createServerFn({ method: 'POST' }).handler(
+  async () => {
+    const request = getWebRequest()
+    await requireAdmin(request.headers)
 
-  const [existing] = await db.select().from(tournamentState).where(eq(tournamentState.id, 1))
-  assertNotStarted(existing ?? { startedAt: null })
+    const [existing] = await db
+      .select()
+      .from(tournamentState)
+      .where(eq(tournamentState.id, 1))
+    assertNotStarted(existing ?? { startedAt: null })
 
-  const startedAt = new Date()
-  await db
-    .insert(tournamentState)
-    .values({ id: 1, startedAt })
-    .onConflictDoUpdate({ target: tournamentState.id, set: { startedAt } })
+    const startedAt = new Date()
+    await db
+      .insert(tournamentState)
+      .values({ id: 1, startedAt })
+      .onConflictDoUpdate({ target: tournamentState.id, set: { startedAt } })
 
-  return { startedAt }
-})
+    return { startedAt }
+  },
+)
 ```
 
 - [ ] **Step 6: Build the admin control route**
@@ -2776,7 +3150,10 @@ Create `src/routes/admin/tournament.tsx`:
 ```tsx
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { getTournamentState, startTournament } from '~/server/functions/tournament'
+import {
+  getTournamentState,
+  startTournament,
+} from '~/server/functions/tournament'
 
 export const Route = createFileRoute('/admin/tournament')({
   loader: () => getTournamentState(),
@@ -2796,9 +3173,14 @@ function TournamentControlPage() {
     <div className="p-8">
       <h1 className="text-xl font-bold">Control del torneo</h1>
       {state.startedAt ? (
-        <p>Torneo iniciado a las {new Date(state.startedAt).toLocaleTimeString()}</p>
+        <p>
+          Torneo iniciado a las {new Date(state.startedAt).toLocaleTimeString()}
+        </p>
       ) : (
-        <button className="rounded bg-red-600 px-4 py-2 text-white" onClick={handleStart}>
+        <button
+          className="rounded bg-red-600 px-4 py-2 text-white"
+          onClick={handleStart}
+        >
           Iniciar torneo
         </button>
       )}
@@ -2823,11 +3205,13 @@ git commit -m "feat: add tournament start control for admin"
 ## Task 16: Deployment to Railway
 
 **Files:**
+
 - Create: `.env.example` updates (already created in Task 2; confirm all vars listed)
 - Create: `scripts/install-piston-languages.sh`
 - Document: Railway service setup (no application code — infra configuration)
 
 **Interfaces:**
+
 - Consumes: every server module's `process.env.*` reads defined in prior tasks.
 - Produces: a live deployment reachable at a Railway-provided URL.
 
@@ -2893,10 +3277,12 @@ git commit -m "chore: add Piston language install script and Railway deployment 
 ## Task 17: Admin Live Submissions Feed
 
 **Files:**
+
 - Create: `src/server/functions/admin-submissions.ts`
 - Create: `src/routes/admin/submissions.tsx`
 
 **Interfaces:**
+
 - Consumes: `requireAdmin` from Task 6; `submissions, users, problems` schema from Task 2.
 - Produces: `listAllSubmissions` server function.
 
@@ -2912,25 +3298,27 @@ import { db } from '../db/client'
 import { submissions, users, problems } from '../db/schema'
 import { requireAdmin } from '../auth/middleware'
 
-export const listAllSubmissions = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getWebRequest()
-  await requireAdmin(request.headers)
+export const listAllSubmissions = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getWebRequest()
+    await requireAdmin(request.headers)
 
-  return db
-    .select({
-      id: submissions.id,
-      userName: users.name,
-      problemTitle: problems.title,
-      language: submissions.language,
-      status: submissions.status,
-      createdAt: submissions.createdAt,
-    })
-    .from(submissions)
-    .innerJoin(users, eq(submissions.userId, users.id))
-    .innerJoin(problems, eq(submissions.problemId, problems.id))
-    .orderBy(desc(submissions.createdAt))
-    .limit(100)
-})
+    return db
+      .select({
+        id: submissions.id,
+        userName: users.name,
+        problemTitle: problems.title,
+        language: submissions.language,
+        status: submissions.status,
+        createdAt: submissions.createdAt,
+      })
+      .from(submissions)
+      .innerJoin(users, eq(submissions.userId, users.id))
+      .innerJoin(problems, eq(submissions.problemId, problems.id))
+      .orderBy(desc(submissions.createdAt))
+      .limit(100)
+  },
+)
 ```
 
 - [ ] **Step 2: Build the admin route with polling**
@@ -2974,7 +3362,9 @@ function AdminSubmissionsPage() {
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
-              <td className="border p-2">{new Date(row.createdAt).toLocaleTimeString()}</td>
+              <td className="border p-2">
+                {new Date(row.createdAt).toLocaleTimeString()}
+              </td>
               <td className="border p-2">{row.userName}</td>
               <td className="border p-2">{row.problemTitle}</td>
               <td className="border p-2">{row.language}</td>
@@ -2998,4 +3388,3 @@ Log in as admin, visit `/admin/submissions`, submit a solution from another (par
 git add -A
 git commit -m "feat: add admin live submissions feed"
 ```
-

@@ -3,20 +3,35 @@ import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { problemas, casosPrueba, problemaLenguajes } from '../db/schema'
-import { requerirAdmin, requerirParticipanteIngresado } from '../auth/middleware'
-import { validarDatosProblema, datosProblemaSchema, datosProblemaConIdSchema } from '../problems/validate'
+import {
+  requerirAdmin,
+  requerirParticipanteIngresado,
+} from '../auth/middleware'
+import {
+  validarDatosProblema,
+  datosProblemaSchema,
+  datosProblemaConIdSchema,
+} from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
 import { idSchema } from '../validacion/comun'
 
-export const listarProblemas = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  const user = await requerirParticipanteIngresado(request.headers)
-  if (user.rol === 'admin') {
-    return db.select().from(problemas).orderBy(problemas.orden)
-  }
-  const grupo = grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
-  return db.select().from(problemas).where(eq(problemas.grupo, grupo)).orderBy(problemas.orden)
-})
+export const listarProblemas = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    const user = await requerirParticipanteIngresado(request.headers)
+    if (user.rol === 'admin') {
+      return db.select().from(problemas).orderBy(problemas.orden)
+    }
+    const grupo = grupoDeCategoria(
+      user.categoria as 'invitado' | 'junior' | 'senior',
+    )
+    return db
+      .select()
+      .from(problemas)
+      .where(eq(problemas.grupo, grupo))
+      .orderBy(problemas.orden)
+  },
+)
 
 export const obtenerProblema = createServerFn({ method: 'GET' })
   .validator(idSchema)
@@ -27,14 +42,24 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const filaProblema = rows.length > 0 ? rows[0] : null
     const puedeVerlo =
       user.rol === 'admin' ||
-      filaProblema?.grupo === grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
+      filaProblema?.grupo ===
+        grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
     const problema = filaProblema && puedeVerlo ? filaProblema : null
     const casosCompletos = problema
-      ? await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
+      ? await db
+          .select()
+          .from(casosPrueba)
+          .where(eq(casosPrueba.problemaId, data))
       : []
-    const casos = user.rol === 'admin' ? casosCompletos : casosCompletos.filter((c) => c.visible)
+    const casos =
+      user.rol === 'admin'
+        ? casosCompletos
+        : casosCompletos.filter((c) => c.visible)
     const lenguajes = problema
-      ? await db.select().from(problemaLenguajes).where(eq(problemaLenguajes.problemaId, data))
+      ? await db
+          .select()
+          .from(problemaLenguajes)
+          .where(eq(problemaLenguajes.problemaId, data))
       : []
     return { problema, casosPrueba: casos, lenguajes }
   })
@@ -111,7 +136,9 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
       })
       .where(eq(problemas.id, data.id))
 
-    await db.delete(problemaLenguajes).where(eq(problemaLenguajes.problemaId, data.id))
+    await db
+      .delete(problemaLenguajes)
+      .where(eq(problemaLenguajes.problemaId, data.id))
     if (data.lenguajes.length > 0) {
       await db.insert(problemaLenguajes).values(
         data.lenguajes.map((l) => ({

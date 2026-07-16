@@ -1,16 +1,28 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { crearProblema, actualizarProblema, eliminarProblema } from '#/server/functions/problems'
-import { problemaQueryOptions, problemasQueryOptions } from '#/server/queries/problemas'
+import {
+  crearProblema,
+  actualizarProblema,
+  eliminarProblema,
+} from '#/server/functions/problems'
+import {
+  problemaQueryOptions,
+  problemasQueryOptions,
+} from '#/server/queries/problemas'
 import { AdminProblemForm } from '#/components/AdminProblemForm'
 import { Spinner } from '#/components/Spinner'
-import type { ValorFormularioProblema, DatosProblemaEnviado, TipoDatoFormulario } from '#/components/AdminProblemForm'
+import type {
+  ValorFormularioProblema,
+  DatosProblemaEnviado,
+} from '#/components/AdminProblemForm'
 
 export const Route = createFileRoute('/admin/problemas/$problemaId')({
   loader: ({ context, params }) => {
     if (params.problemaId === 'new') return
-    return context.queryClient.ensureQueryData(problemaQueryOptions(params.problemaId))
+    return context.queryClient.ensureQueryData(
+      problemaQueryOptions(params.problemaId),
+    )
   },
   component: AdminProblemEditPage,
 })
@@ -26,28 +38,36 @@ function AdminProblemEditPage() {
 
   const invalidarProblemas = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: problemasQueryOptions().queryKey }),
-      queryClient.invalidateQueries({ queryKey: problemaQueryOptions(problemaId).queryKey }),
+      queryClient.invalidateQueries({
+        queryKey: problemasQueryOptions().queryKey,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: problemaQueryOptions(problemaId).queryKey,
+      }),
     ])
 
   const crear = useMutation({
-    mutationFn: (value: Parameters<typeof crearProblema>[0]['data']) => crearProblema({ data: value }),
+    mutationFn: (value: Parameters<typeof crearProblema>[0]['data']) =>
+      crearProblema({ data: value }),
     onSuccess: async () => {
       await invalidarProblemas()
       await navigate({ to: '/admin/problemas' })
       toast.success('Problema creado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const actualizar = useMutation({
-    mutationFn: (value: Parameters<typeof actualizarProblema>[0]['data']) => actualizarProblema({ data: value }),
+    mutationFn: (value: Parameters<typeof actualizarProblema>[0]['data']) =>
+      actualizarProblema({ data: value }),
     onSuccess: async () => {
       await invalidarProblemas()
       await navigate({ to: '/admin/problemas' })
       toast.success('Problema actualizado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const eliminar = useMutation({
@@ -57,14 +77,17 @@ function AdminProblemEditPage() {
       await navigate({ to: '/admin/problemas' })
       toast.success('Problema eliminado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   if (problemaId !== 'new' && !data?.problema) {
     return (
       <div className="p-8">
         <h1 className="text-xl font-bold">Problema no encontrado</h1>
-        <p className="text-red-600">No existe un problema con el id "{problemaId}".</p>
+        <p className="text-red-600">
+          No existe un problema con el id "{problemaId}".
+        </p>
       </div>
     )
   }
@@ -79,15 +102,17 @@ function AdminProblemEditPage() {
           orden: data.problema.orden,
           grupo: data.problema.grupo,
           puntos: data.problema.puntos,
-          parametros: data.problema.parametros as ValorFormularioProblema['parametros'],
-          tipoRetorno: data.problema.tipoRetorno as TipoDatoFormulario,
+          parametros: data.problema.parametros,
+          tipoRetorno: data.problema.tipoRetorno,
           lenguajes: data.lenguajes.map((l) => ({
             lenguaje: l.lenguaje,
             nombreFuncion: l.nombreFuncion,
             codigoInicial: l.codigoInicial,
           })),
           casosPrueba: data.casosPrueba.map((cp) => ({
-            argumentosTexto: (cp.argumentos as unknown[]).map((a) => JSON.stringify(a)),
+            argumentosTexto: (cp.argumentos as unknown[]).map((a) =>
+              JSON.stringify(a),
+            ),
             salidaEsperadaTexto: JSON.stringify(cp.salidaEsperada),
             visible: cp.visible,
           })),
@@ -110,7 +135,9 @@ function AdminProblemEditPage() {
     if (problemaId === 'new') {
       crear.mutate(value as Parameters<typeof crearProblema>[0]['data'])
     } else {
-      actualizar.mutate({ ...value, id: problemaId } as Parameters<typeof actualizarProblema>[0]['data'])
+      actualizar.mutate({ ...value, id: problemaId } as Parameters<
+        typeof actualizarProblema
+      >[0]['data'])
     }
   }
 
@@ -141,7 +168,11 @@ function AdminProblemEditPage() {
           )}
         </button>
       )}
-      <AdminProblemForm initial={initial} onSubmit={handleSubmit} isPending={crear.isPending || actualizar.isPending} />
+      <AdminProblemForm
+        initial={initial}
+        onSubmit={handleSubmit}
+        isPending={crear.isPending || actualizar.isPending}
+      />
     </div>
   )
 }

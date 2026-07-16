@@ -33,7 +33,10 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
       .where(and(eq(usuarios.id, user.id), lt(usuarios.preguntasIaUsadas, 3)))
     if (resultado[0].affectedRows === 0) throw new Error('AI_LIMIT_REACHED')
 
-    const filasUsuario = await db.select().from(usuarios).where(eq(usuarios.id, user.id))
+    const filasUsuario = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.id, user.id))
     const usuarioActualizado = filasUsuario.length > 0 ? filasUsuario[0] : null
     if (!usuarioActualizado) throw new Error('AI_LIMIT_REACHED')
 
@@ -56,5 +59,8 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
       respuesta,
     })
 
-    return { respuesta, preguntasRestantes: 3 - usuarioActualizado.preguntasIaUsadas }
+    return {
+      respuesta,
+      preguntasRestantes: 3 - usuarioActualizado.preguntasIaUsadas,
+    }
   })

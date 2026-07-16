@@ -21,7 +21,9 @@ export const usuarios = mysqlTable('usuario', {
   image: text('imagen'),
   createdAt: timestamp('creado_en').notNull().defaultNow(),
   updatedAt: timestamp('actualizado_en').notNull().defaultNow(),
-  rol: mysqlEnum('rol', ['participante', 'admin']).notNull().default('participante'),
+  rol: mysqlEnum('rol', ['participante', 'admin'])
+    .notNull()
+    .default('participante'),
   categoria: mysqlEnum('categoria', ['invitado', 'junior', 'senior']).notNull(),
   carnet: text('carnet'),
   semestre: mysqlEnum('semestre', [
@@ -90,8 +92,14 @@ export const problemas = mysqlTable('problemas', {
     .$defaultFn(() => crypto.randomUUID()),
   titulo: text('titulo').notNull(),
   descripcion: text('descripcion').notNull(),
-  dificultad: mysqlEnum('dificultad', ['Fácil', 'Intermedio', 'Difícil']).notNull(),
-  categoriaProblema: mysqlEnum('categoria_problema', ['debugging', 'normal']).notNull().default('normal'),
+  dificultad: mysqlEnum('dificultad', [
+    'Fácil',
+    'Intermedio',
+    'Difícil',
+  ]).notNull(),
+  categoriaProblema: mysqlEnum('categoria_problema', ['debugging', 'normal'])
+    .notNull()
+    .default('normal'),
   orden: int('orden').notNull().default(0),
   grupo: mysqlEnum('grupo', ['invitado_junior', 'senior']).notNull(),
   puntos: int('puntos').notNull().default(10),
@@ -117,11 +125,19 @@ export const problemaLenguajes = mysqlTable(
     problemaId: varchar('problema_id', { length: 36 })
       .notNull()
       .references(() => problemas.id, { onDelete: 'cascade' }),
-    lenguaje: mysqlEnum('lenguaje', ['python', 'javascript', 'java', 'csharp', 'php']).notNull(),
+    lenguaje: mysqlEnum('lenguaje', [
+      'python',
+      'javascript',
+      'java',
+      'csharp',
+      'php',
+    ]).notNull(),
     nombreFuncion: text('nombre_funcion').notNull(),
     codigoInicial: text('codigo_inicial').notNull(),
   },
-  (table) => [unique('problema_lenguajes_unico').on(table.problemaId, table.lenguaje)],
+  (table) => [
+    unique('problema_lenguajes_unico').on(table.problemaId, table.lenguaje),
+  ],
 )
 
 export const casosPrueba = mysqlTable('casos_prueba', {
@@ -159,17 +175,29 @@ export const envios = mysqlTable(
     ])
       .notNull()
       .default('pendiente'),
-    estadoProgreso: mysqlEnum('estado_progreso', ['pendiente', 'completado', 'aprobado_manual'])
+    estadoProgreso: mysqlEnum('estado_progreso', [
+      'pendiente',
+      'completado',
+      'aprobado_manual',
+    ])
       .notNull()
       .default('pendiente'),
     resultados: json('resultados').$type<ResultadoCaso[]>(),
-    aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id, {
-      onDelete: 'set null',
-    }),
+    aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(
+      () => usuarios.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
     aprobadoEn: timestamp('aprobado_en'),
     creadoEn: timestamp('creado_en').notNull().defaultNow(),
   },
-  (table) => [unique('envios_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
+  (table) => [
+    unique('envios_usuario_problema_unico').on(
+      table.usuarioId,
+      table.problemaId,
+    ),
+  ],
 )
 
 export const preguntasIa = mysqlTable('preguntas_ia', {
@@ -179,7 +207,9 @@ export const preguntasIa = mysqlTable('preguntas_ia', {
   usuarioId: varchar('usuario_id', { length: 36 })
     .notNull()
     .references(() => usuarios.id),
-  problemaId: varchar('problema_id', { length: 36 }).references(() => problemas.id),
+  problemaId: varchar('problema_id', { length: 36 }).references(
+    () => problemas.id,
+  ),
   pregunta: text('pregunta').notNull(),
   respuesta: text('respuesta').notNull(),
   creadoEn: timestamp('creado_en').notNull().defaultNow(),
@@ -210,7 +240,12 @@ export const corridas = mysqlTable(
     ultimosResultados: json('ultimos_resultados').$type<ResultadoCaso[]>(),
     ultimaEjecucionEn: timestamp('ultima_ejecucion_en'),
   },
-  (table) => [unique('corridas_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
+  (table) => [
+    unique('corridas_usuario_problema_unico').on(
+      table.usuarioId,
+      table.problemaId,
+    ),
+  ],
 )
 
 export const estadoTorneo = mysqlTable('estado_torneo', {

@@ -1,5 +1,8 @@
 import { queryOptions } from '@tanstack/react-query'
-import { obtenerUsuarioActual, obtenerUsuarioActualOpcional } from '../functions/auth'
+import {
+  obtenerUsuarioActual,
+  obtenerUsuarioActualOpcional,
+} from '../functions/auth'
 
 export function usuarioActualOpcionalQueryOptions() {
   return queryOptions({

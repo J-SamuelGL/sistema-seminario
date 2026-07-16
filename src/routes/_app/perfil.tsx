@@ -5,7 +5,9 @@ import { QrCode } from '#/components/QrCode'
 
 export const Route = createFileRoute('/_app/perfil')({
   loader: async ({ context }) => {
-    const user = await context.queryClient.ensureQueryData(usuarioActualQueryOptions())
+    const user = await context.queryClient.ensureQueryData(
+      usuarioActualQueryOptions(),
+    )
     if (user.rol === 'admin') {
       throw redirect({ to: '/admin/participantes' })
     }

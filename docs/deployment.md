@@ -39,7 +39,7 @@ The `scripts/install-piston-languages.sh` script handles language runtime instal
 
 The script installs Python, JavaScript, Java, C# and PHP runtimes (see `scripts/install-piston-languages.sh` for exact pinned versions).
 
-Note: all five language/version pairs have been confirmed against a real Piston instance via `GET /api/v2/packages` and `POST /api/v2/execute`. One quirk to be aware of: the *package* names used to install JavaScript and C# support are `node` and `mono` respectively (as used by this script); `javascript`/`csharp` are only valid as execution-time aliases in `POST /api/v2/execute`, not as install-time package names.
+Note: all five language/version pairs have been confirmed against a real Piston instance via `GET /api/v2/packages` and `POST /api/v2/execute`. One quirk to be aware of: the _package_ names used to install JavaScript and C# support are `node` and `mono` respectively (as used by this script); `javascript`/`csharp` are only valid as execution-time aliases in `POST /api/v2/execute`, not as install-time package names.
 
 ### Step 4: Create the Main App Service
 
@@ -83,6 +83,7 @@ Set the following environment variables on the app service:
    - Verify Claude feedback appears within a few seconds
 
 These checks confirm:
+
 - Database connectivity and migration success
 - Brevo transactional email delivery
 - Email+password authentication

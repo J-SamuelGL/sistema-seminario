@@ -16,7 +16,9 @@ import type { LenguajeProgramacion } from '#/server/envios/validar'
 export const Route = createFileRoute('/_app/problemas/$problemaId')({
   loader: ({ context, params }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(problemaQueryOptions(params.problemaId)),
+      context.queryClient.ensureQueryData(
+        problemaQueryOptions(params.problemaId),
+      ),
       context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
     ]),
   component: ProblemDetailPage,
@@ -24,30 +26,44 @@ export const Route = createFileRoute('/_app/problemas/$problemaId')({
 
 function ProblemDetailPage() {
   const { problemaId } = Route.useParams()
-  const { data: datosProblema } = useSuspenseQuery(problemaQueryOptions(problemaId))
+  const { data: datosProblema } = useSuspenseQuery(
+    problemaQueryOptions(problemaId),
+  )
   const { data: user } = useSuspenseQuery(usuarioActualOpcionalQueryOptions())
   const { problema, casosPrueba, lenguajes } = datosProblema
-  const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(lenguajes[0]?.lenguaje ?? 'python')
+  const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
+    lenguajes[0]?.lenguaje ?? 'python',
+  )
   const [codigo, setCodigo] = useState(lenguajes[0]?.codigoInicial ?? '')
   const [mostrarAsistente, setMostrarAsistente] = useState(false)
 
   const ejecutar = useMutation({
-    mutationFn: () => ejecutarCodigo({ data: { problemaId, lenguaje, codigo } }),
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    mutationFn: () =>
+      ejecutarCodigo({ data: { problemaId, lenguaje, codigo } }),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   if (!problema) {
     return (
       <div className="p-8">
         <h1 className="text-xl font-bold">Problema no encontrado</h1>
-        <p className="text-red-600">No existe un problema con el id "{problemaId}".</p>
+        <p className="text-red-600">
+          No existe un problema con el id "{problemaId}".
+        </p>
       </div>
     )
   }
 
   const ejemplos = casosPrueba
     .filter((c) => c.visible)
-    .map((c) => ({ argumentos: c.argumentos, salidaEsperadaTexto: serializarCanonico(c.salidaEsperada, problema.tipoRetorno) }))
+    .map((c) => ({
+      argumentos: c.argumentos,
+      salidaEsperadaTexto: serializarCanonico(
+        c.salidaEsperada,
+        problema.tipoRetorno,
+      ),
+    }))
 
   function handleLenguajeChange(nuevoLenguaje: LenguajeProgramacion) {
     setLenguaje(nuevoLenguaje)
@@ -56,17 +72,26 @@ function ProblemDetailPage() {
   }
 
   const errorEjecucion = ejecutar.data?.error ?? null
-  const resultadosEjecucion = !errorEjecucion ? (ejecutar.data?.resultados ?? null) : null
+  const resultadosEjecucion = !errorEjecucion
+    ? (ejecutar.data?.resultados ?? null)
+    : null
   const hint = ejecutar.data?.hint ?? null
 
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
-      <ProblemDescription titulo={problema.titulo} descripcion={problema.descripcion} dificultad={problema.dificultad} ejemplos={ejemplos} />
+      <ProblemDescription
+        titulo={problema.titulo}
+        descripcion={problema.descripcion}
+        dificultad={problema.dificultad}
+        ejemplos={ejemplos}
+      />
       <div>
         <select
           className="border p-2"
           value={lenguaje}
-          onChange={(e) => handleLenguajeChange(e.target.value as LenguajeProgramacion)}
+          onChange={(e) =>
+            handleLenguajeChange(e.target.value as LenguajeProgramacion)
+          }
         >
           {lenguajes.map((l) => (
             <option key={l.lenguaje} value={l.lenguaje}>
@@ -88,15 +113,26 @@ function ProblemDetailPage() {
             'Run'
           )}
         </button>
-        {errorEjecucion && <p className="mt-4 text-red-600">{errorEjecucion}</p>}
-        {!errorEjecucion && resultadosEjecucion && <RunResults results={resultadosEjecucion} hint={hint} />}
+        {errorEjecucion && (
+          <p className="mt-4 text-red-600">{errorEjecucion}</p>
+        )}
+        {!errorEjecucion && resultadosEjecucion && (
+          <RunResults results={resultadosEjecucion} hint={hint} />
+        )}
         {user && user.categoria === 'invitado' && (
-          <button className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white" onClick={() => setMostrarAsistente(true)}>
+          <button
+            className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
+            onClick={() => setMostrarAsistente(true)}
+          >
             Preguntar a Haiku
           </button>
         )}
         {mostrarAsistente && user && (
-          <AssistantModal problemaId={problemaId} preguntasUsadas={user.preguntasIaUsadas} onClose={() => setMostrarAsistente(false)} />
+          <AssistantModal
+            problemaId={problemaId}
+            preguntasUsadas={user.preguntasIaUsadas}
+            onClose={() => setMostrarAsistente(false)}
+          />
         )}
       </div>
     </div>

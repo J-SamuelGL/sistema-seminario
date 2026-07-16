@@ -7,7 +7,9 @@ describe('construirResultadoIngreso', () => {
   })
 
   it('returns checked_in for a user checking in for the first time', () => {
-    expect(construirResultadoIngreso({ name: 'Ana', ingresadoEn: null })).toEqual({
+    expect(
+      construirResultadoIngreso({ name: 'Ana', ingresadoEn: null }),
+    ).toEqual({
       status: 'ingresado',
       nombreUsuario: 'Ana',
     })

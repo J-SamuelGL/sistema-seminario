@@ -1,6 +1,12 @@
 import type { FilaClasificacion } from '#/server/standings/calculate'
 
-export function LeaderboardTable({ title, rows }: { title: string; rows: Array<FilaClasificacion> }) {
+export function LeaderboardTable({
+  title,
+  rows,
+}: {
+  title: string
+  rows: Array<FilaClasificacion>
+}) {
   return (
     <div>
       <h2 className="text-lg font-bold">{title}</h2>
@@ -21,7 +27,9 @@ export function LeaderboardTable({ title, rows }: { title: string; rows: Array<F
               <td className="border p-2">{row.nombre}</td>
               <td className="border p-2">{row.puntosTotales}</td>
               <td className="border p-2">{row.cantidadResueltos}</td>
-              <td className="border p-2">{Math.round(row.minutosPenalizacionTotal)} min</td>
+              <td className="border p-2">
+                {Math.round(row.minutosPenalizacionTotal)} min
+              </td>
             </tr>
           ))}
         </tbody>

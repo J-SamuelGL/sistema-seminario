@@ -13,7 +13,10 @@ export async function crearCuentaParticipante(input: {
   semestre?: Semestre | null
   rol?: 'participante' | 'admin'
 }): Promise<{ id: string; contrasenaGenerada: string }> {
-  const existentes = await db.select().from(usuarios).where(eq(usuarios.email, input.correo))
+  const existentes = await db
+    .select()
+    .from(usuarios)
+    .where(eq(usuarios.email, input.correo))
   if (existentes.length > 0) {
     throw new Error('Ya existe una cuenta con ese correo')
   }

@@ -2,7 +2,18 @@ import { z } from 'zod'
 import { emailSchema, textoRequerido, TEXT_MAX } from '../validacion/comun'
 
 export const categoriaSchema = z.enum(['invitado', 'junior', 'senior'])
-export const semestreSchema = z.enum(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
+export const semestreSchema = z.enum([
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
+])
 
 export type Categoria = z.infer<typeof categoriaSchema>
 export type Semestre = z.infer<typeof semestreSchema>

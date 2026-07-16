@@ -38,6 +38,7 @@ dependía de las columnas viejas. El nuevo panel `/admin/respuestas` se construy
 posteriores.
 
 **Files:**
+
 - Modify: `src/server/db/schema.ts`
 - Delete: `src/server/envios/aprobacion.ts`
 - Delete: `tests/envios-aprobacion.test.ts`
@@ -51,11 +52,12 @@ posteriores.
 - Modify: `src/components/NavbarAdmin.tsx`
 
 **Interfaces:**
+
 - Produces: `envios` (mysqlTable) con columnas `id, usuarioId, problemaId, codigo, lenguaje, estado,
-  estadoProgreso ('pendiente'|'completado'|'aprobado_manual'), resultados, aprobadoPorId, aprobadoEn,
-  creadoEn`, y restricción única `envios_usuario_problema_unico` sobre `(usuarioId, problemaId)`.
+estadoProgreso ('pendiente'|'completado'|'aprobado_manual'), resultados, aprobadoPorId, aprobadoEn,
+creadoEn`, y restricción única `envios_usuario_problema_unico` sobre `(usuarioId, problemaId)`.
   `corridas` con columnas nuevas `ultimoCodigo, ultimoLenguaje, ultimoVeredicto, ultimosResultados,
-  ultimaEjecucionEn` (todas nullable).
+ultimaEjecucionEn` (todas nullable).
 
 - [ ] **Step 1: Modificar la tabla `envios` en el esquema**
 
@@ -85,17 +87,29 @@ export const envios = mysqlTable(
     ])
       .notNull()
       .default('pendiente'),
-    estadoProgreso: mysqlEnum('estado_progreso', ['pendiente', 'completado', 'aprobado_manual'])
+    estadoProgreso: mysqlEnum('estado_progreso', [
+      'pendiente',
+      'completado',
+      'aprobado_manual',
+    ])
       .notNull()
       .default('pendiente'),
     resultados: json('resultados').$type<ResultadoCaso[]>(),
-    aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id, {
-      onDelete: 'set null',
-    }),
+    aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(
+      () => usuarios.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
     aprobadoEn: timestamp('aprobado_en'),
     creadoEn: timestamp('creado_en').notNull().defaultNow(),
   },
-  (table) => [unique('envios_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
+  (table) => [
+    unique('envios_usuario_problema_unico').on(
+      table.usuarioId,
+      table.problemaId,
+    ),
+  ],
 )
 ```
 
@@ -129,7 +143,12 @@ export const corridas = mysqlTable(
     ultimosResultados: json('ultimos_resultados').$type<ResultadoCaso[]>(),
     ultimaEjecucionEn: timestamp('ultima_ejecucion_en'),
   },
-  (table) => [unique('corridas_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
+  (table) => [
+    unique('corridas_usuario_problema_unico').on(
+      table.usuarioId,
+      table.problemaId,
+    ),
+  ],
 )
 ```
 
@@ -179,7 +198,9 @@ import type { LenguajeProgramacion } from '#/server/envios/validar'
 export const Route = createFileRoute('/_app/problemas/$problemaId')({
   loader: ({ context, params }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(problemaQueryOptions(params.problemaId)),
+      context.queryClient.ensureQueryData(
+        problemaQueryOptions(params.problemaId),
+      ),
       context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
     ]),
   component: ProblemDetailPage,
@@ -187,30 +208,44 @@ export const Route = createFileRoute('/_app/problemas/$problemaId')({
 
 function ProblemDetailPage() {
   const { problemaId } = Route.useParams()
-  const { data: datosProblema } = useSuspenseQuery(problemaQueryOptions(problemaId))
+  const { data: datosProblema } = useSuspenseQuery(
+    problemaQueryOptions(problemaId),
+  )
   const { data: user } = useSuspenseQuery(usuarioActualOpcionalQueryOptions())
   const { problema, casosPrueba, lenguajes } = datosProblema
-  const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(lenguajes[0]?.lenguaje ?? 'python')
+  const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
+    lenguajes[0]?.lenguaje ?? 'python',
+  )
   const [codigo, setCodigo] = useState(lenguajes[0]?.codigoInicial ?? '')
   const [mostrarAsistente, setMostrarAsistente] = useState(false)
 
   const ejecutar = useMutation({
-    mutationFn: () => ejecutarCodigo({ data: { problemaId, lenguaje, codigo } }),
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    mutationFn: () =>
+      ejecutarCodigo({ data: { problemaId, lenguaje, codigo } }),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   if (!problema) {
     return (
       <div className="p-8">
         <h1 className="text-xl font-bold">Problema no encontrado</h1>
-        <p className="text-red-600">No existe un problema con el id "{problemaId}".</p>
+        <p className="text-red-600">
+          No existe un problema con el id "{problemaId}".
+        </p>
       </div>
     )
   }
 
   const ejemplos = casosPrueba
     .filter((c) => c.visible)
-    .map((c) => ({ argumentos: c.argumentos, salidaEsperadaTexto: serializarCanonico(c.salidaEsperada, problema.tipoRetorno) }))
+    .map((c) => ({
+      argumentos: c.argumentos,
+      salidaEsperadaTexto: serializarCanonico(
+        c.salidaEsperada,
+        problema.tipoRetorno,
+      ),
+    }))
 
   function handleLenguajeChange(nuevoLenguaje: LenguajeProgramacion) {
     setLenguaje(nuevoLenguaje)
@@ -219,17 +254,26 @@ function ProblemDetailPage() {
   }
 
   const errorEjecucion = ejecutar.data?.error ?? null
-  const resultadosEjecucion = !errorEjecucion ? (ejecutar.data?.resultados ?? null) : null
+  const resultadosEjecucion = !errorEjecucion
+    ? (ejecutar.data?.resultados ?? null)
+    : null
   const hint = ejecutar.data?.hint ?? null
 
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
-      <ProblemDescription titulo={problema.titulo} descripcion={problema.descripcion} dificultad={problema.dificultad} ejemplos={ejemplos} />
+      <ProblemDescription
+        titulo={problema.titulo}
+        descripcion={problema.descripcion}
+        dificultad={problema.dificultad}
+        ejemplos={ejemplos}
+      />
       <div>
         <select
           className="border p-2"
           value={lenguaje}
-          onChange={(e) => handleLenguajeChange(e.target.value as LenguajeProgramacion)}
+          onChange={(e) =>
+            handleLenguajeChange(e.target.value as LenguajeProgramacion)
+          }
         >
           {lenguajes.map((l) => (
             <option key={l.lenguaje} value={l.lenguaje}>
@@ -251,15 +295,26 @@ function ProblemDetailPage() {
             'Run'
           )}
         </button>
-        {errorEjecucion && <p className="mt-4 text-red-600">{errorEjecucion}</p>}
-        {!errorEjecucion && resultadosEjecucion && <RunResults results={resultadosEjecucion} hint={hint} />}
+        {errorEjecucion && (
+          <p className="mt-4 text-red-600">{errorEjecucion}</p>
+        )}
+        {!errorEjecucion && resultadosEjecucion && (
+          <RunResults results={resultadosEjecucion} hint={hint} />
+        )}
         {user && user.categoria === 'invitado' && (
-          <button className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white" onClick={() => setMostrarAsistente(true)}>
+          <button
+            className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
+            onClick={() => setMostrarAsistente(true)}
+          >
             Preguntar a Haiku
           </button>
         )}
         {mostrarAsistente && user && (
-          <AssistantModal problemaId={problemaId} preguntasUsadas={user.preguntasIaUsadas} onClose={() => setMostrarAsistente(false)} />
+          <AssistantModal
+            problemaId={problemaId}
+            preguntasUsadas={user.preguntasIaUsadas}
+            onClose={() => setMostrarAsistente(false)}
+          />
         )}
       </div>
     </div>
@@ -304,15 +359,17 @@ git commit -m "feat: reestructurar envios/corridas para progreso y quitar flujo 
 ## Task 2: Lógica pura de cambio manual de estado
 
 **Files:**
+
 - Create: `src/server/envios/progreso.ts`
 - Test: `tests/envios-progreso.test.ts`
 
 **Interfaces:**
+
 - Consumes: `idSchema` from `src/server/validacion/comun.ts`.
 - Produces: `estadoProgresoSchema` (Zod enum), `actualizarEstadoProgresoSchema` (Zod object),
   `EstadoProgreso` type, `ActualizarEstadoProgreso` type, `CamposActualizacionProgreso` type,
   `aplicarCambioEstadoManual(nuevoEstado: EstadoProgreso, adminId: string, ahora: Date,
-  ultimaEjecucionEn: Date | null): CamposActualizacionProgreso` — usado por Task 7.
+ultimaEjecucionEn: Date | null): CamposActualizacionProgreso` — usado por Task 7.
 
 - [ ] **Step 1: Escribir las pruebas primero**
 
@@ -376,7 +433,11 @@ Expected: FAIL — `Cannot find module '../src/server/envios/progreso'`
 import { z } from 'zod'
 import { idSchema } from '../validacion/comun'
 
-export const estadoProgresoSchema = z.enum(['pendiente', 'completado', 'aprobado_manual'])
+export const estadoProgresoSchema = z.enum([
+  'pendiente',
+  'completado',
+  'aprobado_manual',
+])
 export type EstadoProgreso = z.infer<typeof estadoProgresoSchema>
 
 export const actualizarEstadoProgresoSchema = z.object({
@@ -384,7 +445,9 @@ export const actualizarEstadoProgresoSchema = z.object({
   problemaId: idSchema,
   estadoProgreso: estadoProgresoSchema,
 })
-export type ActualizarEstadoProgreso = z.infer<typeof actualizarEstadoProgresoSchema>
+export type ActualizarEstadoProgreso = z.infer<
+  typeof actualizarEstadoProgresoSchema
+>
 
 export type CamposActualizacionProgreso = {
   estadoProgreso: EstadoProgreso
@@ -400,7 +463,11 @@ export function aplicarCambioEstadoManual(
   ultimaEjecucionEn: Date | null,
 ): CamposActualizacionProgreso {
   if (nuevoEstado === 'pendiente') {
-    return { estadoProgreso: nuevoEstado, aprobadoPorId: adminId, aprobadoEn: ahora }
+    return {
+      estadoProgreso: nuevoEstado,
+      aprobadoPorId: adminId,
+      aprobadoEn: ahora,
+    }
   }
   return {
     estadoProgreso: nuevoEstado,
@@ -428,14 +495,16 @@ git commit -m "feat: agregar lógica pura de cambio manual de estado de progreso
 ## Task 3: Reescribir `calcularClasificacion` para el nuevo modelo de progreso
 
 **Files:**
+
 - Modify: `src/server/standings/calculate.ts`
 - Modify: `tests/standings.test.ts`
 
 **Interfaces:**
+
 - Produces: `RegistroEnvio = { usuarioId: string; problemaId: string; estadoProgreso: 'pendiente' |
-  'completado' | 'aprobado_manual'; creadoEn: Date }` (reemplaza el campo `estado` anterior),
+'completado' | 'aprobado_manual'; creadoEn: Date }` (reemplaza el campo `estado` anterior),
   `calcularClasificacion(usuarios: RegistroUsuario[], envios: RegistroEnvio[], problemas:
-  RegistroProblema[], torneoIniciadoEn: Date): FilaClasificacion[]` — usado por Task 7.
+RegistroProblema[], torneoIniciadoEn: Date): FilaClasificacion[]` — usado por Task 7.
   `agruparClasificacionPorCategoria` sin cambios de firma.
 
 - [ ] **Step 1: Actualizar las pruebas al nuevo modelo primero**
@@ -444,7 +513,10 @@ Reemplaza el contenido completo de `tests/standings.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import { calcularClasificacion, agruparClasificacionPorCategoria } from '../src/server/standings/calculate'
+import {
+  calcularClasificacion,
+  agruparClasificacionPorCategoria,
+} from '../src/server/standings/calculate'
 
 const start = new Date('2026-07-13T10:00:00Z')
 const problemas = [
@@ -454,16 +526,35 @@ const problemas = [
 
 describe('calcularClasificacion', () => {
   it('returns zero solved and zero points for a user with no envios', () => {
-    const filas = calcularClasificacion([{ id: 'u1', nombre: 'Ana', categoria: 'senior' }], [], problemas, start)
+    const filas = calcularClasificacion(
+      [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
+      [],
+      problemas,
+      start,
+    )
     expect(filas).toEqual([
-      { usuarioId: 'u1', nombre: 'Ana', categoria: 'senior', cantidadResueltos: 0, puntosTotales: 0, minutosPenalizacionTotal: 0 },
+      {
+        usuarioId: 'u1',
+        nombre: 'Ana',
+        categoria: 'senior',
+        cantidadResueltos: 0,
+        puntosTotales: 0,
+        minutosPenalizacionTotal: 0,
+      },
     ])
   })
 
   it('counts a completado envio as solved, sums its points, and applies time penalty', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:10:00Z') }],
+      [
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estadoProgreso: 'completado',
+          creadoEn: new Date('2026-07-13T10:10:00Z'),
+        },
+      ],
       problemas,
       start,
     )
@@ -475,7 +566,14 @@ describe('calcularClasificacion', () => {
   it('counts an aprobado_manual envio the same as completado', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'aprobado_manual', creadoEn: new Date('2026-07-13T10:20:00Z') }],
+      [
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estadoProgreso: 'aprobado_manual',
+          creadoEn: new Date('2026-07-13T10:20:00Z'),
+        },
+      ],
       problemas,
       start,
     )
@@ -487,7 +585,14 @@ describe('calcularClasificacion', () => {
   it('does not count a pendiente envio as solved', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'pendiente', creadoEn: new Date('2026-07-13T10:05:00Z') }],
+      [
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estadoProgreso: 'pendiente',
+          creadoEn: new Date('2026-07-13T10:05:00Z'),
+        },
+      ],
       problemas,
       start,
     )
@@ -499,8 +604,18 @@ describe('calcularClasificacion', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
       [
-        { usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:10:00Z') },
-        { usuarioId: 'u1', problemaId: 'p2', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:30:00Z') },
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estadoProgreso: 'completado',
+          creadoEn: new Date('2026-07-13T10:10:00Z'),
+        },
+        {
+          usuarioId: 'u1',
+          problemaId: 'p2',
+          estadoProgreso: 'completado',
+          creadoEn: new Date('2026-07-13T10:30:00Z'),
+        },
       ],
       problemas,
       start,
@@ -517,8 +632,18 @@ describe('calcularClasificacion', () => {
         { id: 'u2', nombre: 'Beto', categoria: 'senior' },
       ],
       [
-        { usuarioId: 'u1', problemaId: 'p2', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:30:00Z') },
-        { usuarioId: 'u2', problemaId: 'p1', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:05:00Z') },
+        {
+          usuarioId: 'u1',
+          problemaId: 'p2',
+          estadoProgreso: 'completado',
+          creadoEn: new Date('2026-07-13T10:30:00Z'),
+        },
+        {
+          usuarioId: 'u2',
+          problemaId: 'p1',
+          estadoProgreso: 'completado',
+          creadoEn: new Date('2026-07-13T10:05:00Z'),
+        },
       ],
       problemas,
       start,
@@ -530,9 +655,30 @@ describe('calcularClasificacion', () => {
 describe('agruparClasificacionPorCategoria', () => {
   it('separa las filas en invitado, junior y senior', () => {
     const agrupado = agruparClasificacionPorCategoria([
-      { usuarioId: 'u1', nombre: 'Ana', categoria: 'senior', cantidadResueltos: 1, puntosTotales: 10, minutosPenalizacionTotal: 5 },
-      { usuarioId: 'u2', nombre: 'Beto', categoria: 'junior', cantidadResueltos: 0, puntosTotales: 0, minutosPenalizacionTotal: 0 },
-      { usuarioId: 'u3', nombre: 'Cata', categoria: 'invitado', cantidadResueltos: 0, puntosTotales: 0, minutosPenalizacionTotal: 0 },
+      {
+        usuarioId: 'u1',
+        nombre: 'Ana',
+        categoria: 'senior',
+        cantidadResueltos: 1,
+        puntosTotales: 10,
+        minutosPenalizacionTotal: 5,
+      },
+      {
+        usuarioId: 'u2',
+        nombre: 'Beto',
+        categoria: 'junior',
+        cantidadResueltos: 0,
+        puntosTotales: 0,
+        minutosPenalizacionTotal: 0,
+      },
+      {
+        usuarioId: 'u3',
+        nombre: 'Cata',
+        categoria: 'invitado',
+        cantidadResueltos: 0,
+        puntosTotales: 0,
+        minutosPenalizacionTotal: 0,
+      },
     ])
     expect(agrupado.senior.map((f) => f.usuarioId)).toEqual(['u1'])
     expect(agrupado.junior.map((f) => f.usuarioId)).toEqual(['u2'])
@@ -587,7 +733,8 @@ export function calcularClasificacion(
   const resueltosPorUsuario = new Map<string, RegistroEnvio[]>()
   for (const e of envios) {
     if (e.estadoProgreso === 'pendiente') continue
-    if (!resueltosPorUsuario.has(e.usuarioId)) resueltosPorUsuario.set(e.usuarioId, [])
+    if (!resueltosPorUsuario.has(e.usuarioId))
+      resueltosPorUsuario.set(e.usuarioId, [])
     resueltosPorUsuario.get(e.usuarioId)!.push(e)
   }
 
@@ -618,7 +765,8 @@ export function calcularClasificacion(
   })
 
   return filas.sort((a, b) => {
-    if (b.puntosTotales !== a.puntosTotales) return b.puntosTotales - a.puntosTotales
+    if (b.puntosTotales !== a.puntosTotales)
+      return b.puntosTotales - a.puntosTotales
     return a.minutosPenalizacionTotal - b.minutosPenalizacionTotal
   })
 }
@@ -643,17 +791,17 @@ Expected: PASS (7 pruebas)
 Ábrelo y reemplaza el bloque que mapea `todosEnvios`:
 
 ```ts
-  const filas = calcularClasificacion(
-    usuariosElegibles,
-    todosEnvios.map((e) => ({
-      usuarioId: e.usuarioId,
-      problemaId: e.problemaId,
-      estadoProgreso: e.estadoProgreso,
-      creadoEn: e.creadoEn,
-    })),
-    problemasConPuntos,
-    estado.iniciadoEn,
-  )
+const filas = calcularClasificacion(
+  usuariosElegibles,
+  todosEnvios.map((e) => ({
+    usuarioId: e.usuarioId,
+    problemaId: e.problemaId,
+    estadoProgreso: e.estadoProgreso,
+    creadoEn: e.creadoEn,
+  })),
+  problemasConPuntos,
+  estado.iniciadoEn,
+)
 ```
 
 (El único cambio es `estado: e.estado` → `estadoProgreso: e.estadoProgreso`.)
@@ -675,13 +823,15 @@ git commit -m "feat: calcular clasificación a partir de estadoProgreso sin pena
 ## Task 4: Cálculo de duración por problema
 
 **Files:**
+
 - Create: `src/server/standings/duracion.ts`
 - Test: `tests/standings-duracion.test.ts`
 
 **Interfaces:**
+
 - Produces: `RegistroResuelto = { problemaId: string; creadoEn: Date }`, `FilaDuracion = {
-  problemaId: string; duracionMinutos: number }`, `calcularDuraciones(resueltos: RegistroResuelto[],
-  torneoIniciadoEn: Date): FilaDuracion[]` — usado por Task 7.
+problemaId: string; duracionMinutos: number }`, `calcularDuraciones(resueltos: RegistroResuelto[],
+torneoIniciadoEn: Date): FilaDuracion[]` — usado por Task 7.
 
 - [ ] **Step 1: Escribir las pruebas primero**
 
@@ -758,7 +908,9 @@ export function calcularDuraciones(
   resueltos: RegistroResuelto[],
   torneoIniciadoEn: Date,
 ): FilaDuracion[] {
-  const ordenados = resueltos.slice().sort((a, b) => a.creadoEn.getTime() - b.creadoEn.getTime())
+  const ordenados = resueltos
+    .slice()
+    .sort((a, b) => a.creadoEn.getTime() - b.creadoEn.getTime())
 
   const filas: FilaDuracion[] = []
   let ultimoTimestamp = torneoIniciadoEn
@@ -795,9 +947,11 @@ plan): depende de `getRequest()`/sesión y de Piston real, así que se verifica 
 pruebas de integración existentes que si tocan esta ruta.
 
 **Files:**
+
 - Modify: `src/server/functions/run.ts`
 
 **Interfaces:**
+
 - Consumes: `corridas`, `envios`, `estadoTorneo` from `src/server/db/schema.ts`; `asegurarIniciado`
   from `src/server/tournament/guard.ts`.
 
@@ -808,7 +962,14 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problemas, casosPrueba, problemaLenguajes, corridas, envios, estadoTorneo } from '../db/schema'
+import {
+  problemas,
+  casosPrueba,
+  problemaLenguajes,
+  corridas,
+  envios,
+  estadoTorneo,
+} from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { ejecutarCasosPrueba } from '../judge/runTestCases'
 import { ocultarDetalleCasosNoVisibles } from '../judge/resultadoPublico'
@@ -823,33 +984,60 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
   .handler(
     async ({
       data,
-    }): Promise<{ resultados: ResultadoCasoPublico[]; error: string | null; hint: string | null }> => {
+    }): Promise<{
+      resultados: ResultadoCasoPublico[]
+      error: string | null
+      hint: string | null
+    }> => {
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
 
-      const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
+      const filasEstado = await db
+        .select()
+        .from(estadoTorneo)
+        .where(eq(estadoTorneo.id, 1))
       const estado = filasEstado.length > 0 ? filasEstado[0] : null
       asegurarIniciado(estado ?? { iniciadoEn: null, finalizadoEn: null })
 
-      const rows = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
+      const rows = await db
+        .select()
+        .from(problemas)
+        .where(eq(problemas.id, data.problemaId))
       const problema = rows.length > 0 ? rows[0] : null
       if (!problema) throw new Error('Problema no encontrado')
 
       const filasLenguaje = await db
         .select()
         .from(problemaLenguajes)
-        .where(and(eq(problemaLenguajes.problemaId, data.problemaId), eq(problemaLenguajes.lenguaje, data.lenguaje)))
+        .where(
+          and(
+            eq(problemaLenguajes.problemaId, data.problemaId),
+            eq(problemaLenguajes.lenguaje, data.lenguaje),
+          ),
+        )
       const filaLenguaje = filasLenguaje.length > 0 ? filasLenguaje[0] : null
-      if (!filaLenguaje) throw new Error('Lenguaje no habilitado para este problema')
+      if (!filaLenguaje)
+        throw new Error('Lenguaje no habilitado para este problema')
 
-      const casos = await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data.problemaId))
+      const casos = await db
+        .select()
+        .from(casosPrueba)
+        .where(eq(casosPrueba.problemaId, data.problemaId))
 
       try {
         const { resultados, veredicto } = await ejecutarCasosPrueba(
           data.lenguaje,
           data.codigo,
-          { nombreFuncion: filaLenguaje.nombreFuncion, parametros: problema.parametros, tipoRetorno: problema.tipoRetorno },
-          casos.map((c) => ({ argumentos: c.argumentos, salidaEsperada: c.salidaEsperada, visible: c.visible })),
+          {
+            nombreFuncion: filaLenguaje.nombreFuncion,
+            parametros: problema.parametros,
+            tipoRetorno: problema.tipoRetorno,
+          },
+          casos.map((c) => ({
+            argumentos: c.argumentos,
+            salidaEsperada: c.salidaEsperada,
+            visible: c.visible,
+          })),
         )
         const resultadosPublicos = ocultarDetalleCasosNoVisibles(resultados)
         const ahora = new Date()
@@ -881,7 +1069,12 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
           const filasEnvio = await db
             .select()
             .from(envios)
-            .where(and(eq(envios.usuarioId, user.id), eq(envios.problemaId, data.problemaId)))
+            .where(
+              and(
+                eq(envios.usuarioId, user.id),
+                eq(envios.problemaId, data.problemaId),
+              ),
+            )
           if (filasEnvio.length === 0) {
             await db.insert(envios).values({
               usuarioId: user.id,
@@ -902,11 +1095,19 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
             const filasCorrida = await db
               .select()
               .from(corridas)
-              .where(and(eq(corridas.usuarioId, user.id), eq(corridas.problemaId, data.problemaId)))
-            const contador = filasCorrida.length > 0 ? filasCorrida[0].contador : 1
+              .where(
+                and(
+                  eq(corridas.usuarioId, user.id),
+                  eq(corridas.problemaId, data.problemaId),
+                ),
+              )
+            const contador =
+              filasCorrida.length > 0 ? filasCorrida[0].contador : 1
 
             if (debeMostrarHint(contador)) {
-              const salidaError = resultados.find((r) => r.visible && r.salidaError)?.salidaError ?? ''
+              const salidaError =
+                resultados.find((r) => r.visible && r.salidaError)
+                  ?.salidaError ?? ''
               hint = await generarComentarioEnvio({
                 tituloProblema: problema.titulo,
                 descripcionProblema: problema.descripcion,
@@ -964,9 +1165,11 @@ git commit -m "feat: Run guarda snapshot de progreso y auto-crea envio al acerta
 ## Task 6: `concluirTorneo` guarda el progreso pendiente de todos
 
 **Files:**
+
 - Modify: `src/server/functions/tournament.ts`
 
 **Interfaces:**
+
 - Consumes: `corridas`, `envios` from `src/server/db/schema.ts`.
 
 - [ ] **Step 1: Reemplazar `src/server/functions/tournament.ts` completo**
@@ -980,51 +1183,71 @@ import { estadoTorneo, corridas, envios } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { asegurarNoIniciado, asegurarIniciado } from '../tournament/guard'
 
-export const obtenerEstadoTorneo = createServerFn({ method: 'GET' }).handler(async () => {
-  const rows = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
-  const estado = rows.length > 0 ? rows[0] : null
-  return estado ?? { id: 1, iniciadoEn: null, finalizadoEn: null }
-})
+export const obtenerEstadoTorneo = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const rows = await db
+      .select()
+      .from(estadoTorneo)
+      .where(eq(estadoTorneo.id, 1))
+    const estado = rows.length > 0 ? rows[0] : null
+    return estado ?? { id: 1, iniciadoEn: null, finalizadoEn: null }
+  },
+)
 
-export const iniciarTorneo = createServerFn({ method: 'POST' }).handler(async () => {
-  const request = getRequest()
-  await requerirAdmin(request.headers)
+export const iniciarTorneo = createServerFn({ method: 'POST' }).handler(
+  async () => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
 
-  const rows = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
-  const existente = rows.length > 0 ? rows[0] : null
-  asegurarNoIniciado(existente ?? { iniciadoEn: null })
+    const rows = await db
+      .select()
+      .from(estadoTorneo)
+      .where(eq(estadoTorneo.id, 1))
+    const existente = rows.length > 0 ? rows[0] : null
+    asegurarNoIniciado(existente ?? { iniciadoEn: null })
 
-  const iniciadoEn = new Date()
-  await db
-    .insert(estadoTorneo)
-    .values({ id: 1, iniciadoEn })
-    .onDuplicateKeyUpdate({ set: { iniciadoEn } })
+    const iniciadoEn = new Date()
+    await db
+      .insert(estadoTorneo)
+      .values({ id: 1, iniciadoEn })
+      .onDuplicateKeyUpdate({ set: { iniciadoEn } })
 
-  return { iniciadoEn }
-})
+    return { iniciadoEn }
+  },
+)
 
-export const concluirTorneo = createServerFn({ method: 'POST' }).handler(async () => {
-  const request = getRequest()
-  await requerirAdmin(request.headers)
+export const concluirTorneo = createServerFn({ method: 'POST' }).handler(
+  async () => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
 
-  const rows = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
-  const existente = rows.length > 0 ? rows[0] : null
-  asegurarIniciado(existente ?? { iniciadoEn: null, finalizadoEn: null })
+    const rows = await db
+      .select()
+      .from(estadoTorneo)
+      .where(eq(estadoTorneo.id, 1))
+    const existente = rows.length > 0 ? rows[0] : null
+    asegurarIniciado(existente ?? { iniciadoEn: null, finalizadoEn: null })
 
-  const finalizadoEn = new Date()
-  await db.update(estadoTorneo).set({ finalizadoEn }).where(eq(estadoTorneo.id, 1))
+    const finalizadoEn = new Date()
+    await db
+      .update(estadoTorneo)
+      .set({ finalizadoEn })
+      .where(eq(estadoTorneo.id, 1))
 
-  await guardarProgresoPendiente(finalizadoEn)
+    await guardarProgresoPendiente(finalizadoEn)
 
-  return { finalizadoEn }
-})
+    return { finalizadoEn }
+  },
+)
 
 async function guardarProgresoPendiente(finalizadoEn: Date) {
   const todasLasCorridas = await db.select().from(corridas)
   const enviosExistentes = await db
     .select({ usuarioId: envios.usuarioId, problemaId: envios.problemaId })
     .from(envios)
-  const clavesExistentes = new Set(enviosExistentes.map((e) => `${e.usuarioId}:${e.problemaId}`))
+  const clavesExistentes = new Set(
+    enviosExistentes.map((e) => `${e.usuarioId}:${e.problemaId}`),
+  )
 
   for (const corrida of todasLasCorridas) {
     const clave = `${corrida.usuarioId}:${corrida.problemaId}`
@@ -1071,10 +1294,12 @@ git commit -m "feat: concluirTorneo guarda el progreso pendiente de todos los pa
 ## Task 7: Funciones de servidor para el panel de respuestas
 
 **Files:**
+
 - Create: `src/server/functions/admin-respuestas.ts`
 - Create: `src/server/queries/respuestas.ts`
 
 **Interfaces:**
+
 - Consumes: `calcularClasificacion`, `agruparClasificacionPorCategoria`, `RegistroUsuario`,
   `RegistroEnvio`, `RegistroProblema` from Task 3; `calcularDuraciones` from Task 4;
   `aplicarCambioEstadoManual`, `actualizarEstadoProgresoSchema` from Task 2; `grupoDeCategoria` from
@@ -1095,18 +1320,38 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { usuarios, envios, problemas, estadoTorneo, corridas } from '../db/schema'
+import {
+  usuarios,
+  envios,
+  problemas,
+  estadoTorneo,
+  corridas,
+} from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
-import { calcularClasificacion, agruparClasificacionPorCategoria } from '../standings/calculate'
+import {
+  calcularClasificacion,
+  agruparClasificacionPorCategoria,
+} from '../standings/calculate'
 import { calcularDuraciones } from '../standings/duracion'
 import { grupoDeCategoria } from '../problems/grupo'
-import { aplicarCambioEstadoManual, actualizarEstadoProgresoSchema } from '../envios/progreso'
+import {
+  aplicarCambioEstadoManual,
+  actualizarEstadoProgresoSchema,
+} from '../envios/progreso'
 import { idSchema } from '../validacion/comun'
-import type { RegistroUsuario, RegistroEnvio, RegistroProblema } from '../standings/calculate'
+import type {
+  RegistroUsuario,
+  RegistroEnvio,
+  RegistroProblema,
+} from '../standings/calculate'
 
 async function cargarDatosClasificacion() {
-  const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
-  const torneoIniciadoEn = filasEstado.length > 0 ? filasEstado[0].iniciadoEn : null
+  const filasEstado = await db
+    .select()
+    .from(estadoTorneo)
+    .where(eq(estadoTorneo.id, 1))
+  const torneoIniciadoEn =
+    filasEstado.length > 0 ? filasEstado[0].iniciadoEn : null
 
   const [todosUsuarios, todosEnvios, todosProblemas] = await Promise.all([
     db.select().from(usuarios),
@@ -1125,7 +1370,10 @@ async function cargarDatosClasificacion() {
     creadoEn: e.creadoEn,
   }))
 
-  const registrosProblemas: RegistroProblema[] = todosProblemas.map((p) => ({ id: p.id, puntos: p.puntos }))
+  const registrosProblemas: RegistroProblema[] = todosProblemas.map((p) => ({
+    id: p.id,
+    puntos: p.puntos,
+  }))
 
   const clasificacion = calcularClasificacion(
     usuariosElegibles,
@@ -1137,22 +1385,30 @@ async function cargarDatosClasificacion() {
   return { clasificacion, todosUsuarios, todosProblemas, torneoIniciadoEn }
 }
 
-export const listarParticipantesConProgreso = createServerFn({ method: 'GET' }).handler(async () => {
+export const listarParticipantesConProgreso = createServerFn({
+  method: 'GET',
+}).handler(async () => {
   const request = getRequest()
   await requerirAdmin(request.headers)
 
-  const { clasificacion, todosUsuarios, todosProblemas } = await cargarDatosClasificacion()
+  const { clasificacion, todosUsuarios, todosProblemas } =
+    await cargarDatosClasificacion()
 
   const totalPorGrupo = {
-    invitado_junior: todosProblemas.filter((p) => p.grupo === 'invitado_junior').length,
+    invitado_junior: todosProblemas.filter((p) => p.grupo === 'invitado_junior')
+      .length,
     senior: todosProblemas.filter((p) => p.grupo === 'senior').length,
   }
 
   const asistieron = new Set(
-    todosUsuarios.filter((u) => u.rol === 'participante' && u.ingresadoEn !== null).map((u) => u.id),
+    todosUsuarios
+      .filter((u) => u.rol === 'participante' && u.ingresadoEn !== null)
+      .map((u) => u.id),
   )
 
-  const agrupado = agruparClasificacionPorCategoria(clasificacion.filter((f) => asistieron.has(f.usuarioId)))
+  const agrupado = agruparClasificacionPorCategoria(
+    clasificacion.filter((f) => asistieron.has(f.usuarioId)),
+  )
 
   return (['invitado', 'junior', 'senior'] as const).flatMap((categoria) =>
     agrupado[categoria].map((fila, i) => ({
@@ -1160,7 +1416,9 @@ export const listarParticipantesConProgreso = createServerFn({ method: 'GET' }).
       nombre: fila.nombre,
       categoria: fila.categoria,
       cantidadCompletados: fila.cantidadResueltos,
-      cantidadPendientes: totalPorGrupo[grupoDeCategoria(fila.categoria)] - fila.cantidadResueltos,
+      cantidadPendientes:
+        totalPorGrupo[grupoDeCategoria(fila.categoria)] -
+        fila.cantidadResueltos,
       puntosTotales: fila.puntosTotales,
       puesto: i + 1,
     })),
@@ -1173,30 +1431,50 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const filasUsuario = await db.select().from(usuarios).where(eq(usuarios.id, usuarioId))
+    const filasUsuario = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.id, usuarioId))
     const usuario = filasUsuario.length > 0 ? filasUsuario[0] : null
     if (!usuario) throw new Error('Participante no encontrado')
 
     const { clasificacion, torneoIniciadoEn } = await cargarDatosClasificacion()
-    const clasificacionCategoria = clasificacion.filter((f) => f.categoria === usuario.categoria)
-    const indice = clasificacionCategoria.findIndex((f) => f.usuarioId === usuarioId)
-    const filaClasificacion = indice >= 0 ? clasificacionCategoria[indice] : null
+    const clasificacionCategoria = clasificacion.filter(
+      (f) => f.categoria === usuario.categoria,
+    )
+    const indice = clasificacionCategoria.findIndex(
+      (f) => f.usuarioId === usuarioId,
+    )
+    const filaClasificacion =
+      indice >= 0 ? clasificacionCategoria[indice] : null
 
     const grupo = grupoDeCategoria(usuario.categoria)
-    const [problemasDelGrupo, enviosDelUsuario, corridasDelUsuario] = await Promise.all([
-      db.select().from(problemas).where(eq(problemas.grupo, grupo)).orderBy(problemas.orden),
-      db.select().from(envios).where(eq(envios.usuarioId, usuarioId)),
-      db.select().from(corridas).where(eq(corridas.usuarioId, usuarioId)),
-    ])
+    const [problemasDelGrupo, enviosDelUsuario, corridasDelUsuario] =
+      await Promise.all([
+        db
+          .select()
+          .from(problemas)
+          .where(eq(problemas.grupo, grupo))
+          .orderBy(problemas.orden),
+        db.select().from(envios).where(eq(envios.usuarioId, usuarioId)),
+        db.select().from(corridas).where(eq(corridas.usuarioId, usuarioId)),
+      ])
 
-    const envioPorProblema = new Map(enviosDelUsuario.map((e) => [e.problemaId, e]))
-    const corridaPorProblema = new Map(corridasDelUsuario.map((c) => [c.problemaId, c]))
+    const envioPorProblema = new Map(
+      enviosDelUsuario.map((e) => [e.problemaId, e]),
+    )
+    const corridaPorProblema = new Map(
+      corridasDelUsuario.map((c) => [c.problemaId, c]),
+    )
 
     const resueltos = enviosDelUsuario
       .filter((e) => e.estadoProgreso !== 'pendiente')
       .map((e) => ({ problemaId: e.problemaId, creadoEn: e.creadoEn }))
     const duraciones = new Map(
-      calcularDuraciones(resueltos, torneoIniciadoEn ?? new Date()).map((d) => [d.problemaId, d.duracionMinutos]),
+      calcularDuraciones(resueltos, torneoIniciadoEn ?? new Date()).map((d) => [
+        d.problemaId,
+        d.duracionMinutos,
+      ]),
     )
 
     const problemasConEstado = problemasDelGrupo.map((p) => {
@@ -1217,7 +1495,11 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
     })
 
     return {
-      participante: { id: usuario.id, nombre: usuario.name, categoria: usuario.categoria },
+      participante: {
+        id: usuario.id,
+        nombre: usuario.name,
+        categoria: usuario.categoria,
+      },
       puntosTotales: filaClasificacion?.puntosTotales ?? 0,
       puesto: indice >= 0 ? indice + 1 : null,
       problemas: problemasConEstado,
@@ -1233,7 +1515,12 @@ export const actualizarEstadoProgreso = createServerFn({ method: 'POST' })
     const filasCorrida = await db
       .select()
       .from(corridas)
-      .where(and(eq(corridas.usuarioId, data.usuarioId), eq(corridas.problemaId, data.problemaId)))
+      .where(
+        and(
+          eq(corridas.usuarioId, data.usuarioId),
+          eq(corridas.problemaId, data.problemaId),
+        ),
+      )
     const corrida = filasCorrida.length > 0 ? filasCorrida[0] : null
 
     const campos = aplicarCambioEstadoManual(
@@ -1246,11 +1533,19 @@ export const actualizarEstadoProgreso = createServerFn({ method: 'POST' })
     const filasEnvio = await db
       .select()
       .from(envios)
-      .where(and(eq(envios.usuarioId, data.usuarioId), eq(envios.problemaId, data.problemaId)))
+      .where(
+        and(
+          eq(envios.usuarioId, data.usuarioId),
+          eq(envios.problemaId, data.problemaId),
+        ),
+      )
     const envioExistente = filasEnvio.length > 0 ? filasEnvio[0] : null
 
     if (envioExistente) {
-      await db.update(envios).set(campos).where(eq(envios.id, envioExistente.id))
+      await db
+        .update(envios)
+        .set(campos)
+        .where(eq(envios.id, envioExistente.id))
     } else {
       await db.insert(envios).values({
         usuarioId: data.usuarioId,
@@ -1269,7 +1564,10 @@ export const actualizarEstadoProgreso = createServerFn({ method: 'POST' })
 
 ```ts
 import { queryOptions } from '@tanstack/react-query'
-import { listarParticipantesConProgreso, obtenerProgresoParticipante } from '../functions/admin-respuestas'
+import {
+  listarParticipantesConProgreso,
+  obtenerProgresoParticipante,
+} from '../functions/admin-respuestas'
 
 export function participantesConProgresoQueryOptions() {
   return queryOptions({
@@ -1305,11 +1603,13 @@ git commit -m "feat: agregar funciones de servidor para el panel de respuestas"
 ## Task 8: Rutas de admin `/admin/respuestas`
 
 **Files:**
+
 - Create: `src/routes/admin/respuestas/index.tsx`
 - Create: `src/routes/admin/respuestas/$usuarioId.tsx`
 - Modify: `src/components/NavbarAdmin.tsx`
 
 **Interfaces:**
+
 - Consumes: `participantesConProgresoQueryOptions`, `progresoParticipanteQueryOptions` from Task 7;
   `actualizarEstadoProgreso` from Task 7.
 
@@ -1321,7 +1621,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { participantesConProgresoQueryOptions } from '#/server/queries/respuestas'
 
 export const Route = createFileRoute('/admin/respuestas/')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(participantesConProgresoQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(participantesConProgresoQueryOptions()),
   component: AdminRespuestasPage,
 })
 
@@ -1342,7 +1643,9 @@ function AdminRespuestasPage() {
         if (filas.length === 0) return null
         return (
           <div key={categoria} className="mt-6">
-            <h2 className="text-lg font-bold">{ETIQUETAS_CATEGORIA[categoria]}</h2>
+            <h2 className="text-lg font-bold">
+              {ETIQUETAS_CATEGORIA[categoria]}
+            </h2>
             <table className="mt-2 w-full border-collapse text-left">
               <thead>
                 <tr className="border-b">
@@ -1358,7 +1661,11 @@ function AdminRespuestasPage() {
                   <tr key={f.usuarioId} className="border-b">
                     <td className="p-2">{f.puesto}</td>
                     <td className="p-2">
-                      <Link to="/admin/respuestas/$usuarioId" params={{ usuarioId: f.usuarioId }} className="text-blue-600 underline">
+                      <Link
+                        to="/admin/respuestas/$usuarioId"
+                        params={{ usuarioId: f.usuarioId }}
+                        className="text-blue-600 underline"
+                      >
                         {f.nombre}
                       </Link>
                     </td>
@@ -1382,15 +1689,24 @@ function AdminRespuestasPage() {
 ```tsx
 import { Fragment, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { actualizarEstadoProgreso } from '#/server/functions/admin-respuestas'
-import { participantesConProgresoQueryOptions, progresoParticipanteQueryOptions } from '#/server/queries/respuestas'
+import {
+  participantesConProgresoQueryOptions,
+  progresoParticipanteQueryOptions,
+} from '#/server/queries/respuestas'
 import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/respuestas/$usuarioId')({
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(progresoParticipanteQueryOptions(params.usuarioId)),
+    context.queryClient.ensureQueryData(
+      progresoParticipanteQueryOptions(params.usuarioId),
+    ),
   component: AdminRespuestaDetallePage,
 })
 
@@ -1407,20 +1723,35 @@ function AdminRespuestaDetallePage() {
   const [expandido, setExpandido] = useState<string | null>(null)
 
   const cambiarEstado = useMutation({
-    mutationFn: (vars: { problemaId: string; estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual' }) =>
-      actualizarEstadoProgreso({ data: { usuarioId, problemaId: vars.problemaId, estadoProgreso: vars.estadoProgreso } }),
+    mutationFn: (vars: {
+      problemaId: string
+      estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual'
+    }) =>
+      actualizarEstadoProgreso({
+        data: {
+          usuarioId,
+          problemaId: vars.problemaId,
+          estadoProgreso: vars.estadoProgreso,
+        },
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: progresoParticipanteQueryOptions(usuarioId).queryKey })
-      queryClient.invalidateQueries({ queryKey: participantesConProgresoQueryOptions().queryKey })
+      queryClient.invalidateQueries({
+        queryKey: progresoParticipanteQueryOptions(usuarioId).queryKey,
+      })
+      queryClient.invalidateQueries({
+        queryKey: participantesConProgresoQueryOptions().queryKey,
+      })
       toast.success('Estado actualizado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   return (
     <div className="flex flex-col gap-4 p-8">
       <h1 className="text-xl font-bold">
-        {data.participante.nombre} — {data.puntosTotales} pts — Puesto #{data.puesto ?? '—'}
+        {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
+        {data.puesto ?? '—'}
       </h1>
       <table className="w-full border-collapse text-left">
         <thead>
@@ -1442,7 +1773,11 @@ function AdminRespuestaDetallePage() {
                   {p.codigo && (
                     <button
                       className="mr-2 text-blue-600 underline"
-                      onClick={() => setExpandido(expandido === p.problemaId ? null : p.problemaId)}
+                      onClick={() =>
+                        setExpandido(
+                          expandido === p.problemaId ? null : p.problemaId,
+                        )
+                      }
                     >
                       {expandido === p.problemaId ? '▾' : '▸'}
                     </button>
@@ -1452,8 +1787,14 @@ function AdminRespuestaDetallePage() {
                 <td className="p-2">{p.dificultad}</td>
                 <td className="p-2">{p.categoriaProblema}</td>
                 <td className="p-2">{ETIQUETAS_ESTADO[p.estadoProgreso]}</td>
-                <td className="p-2">{p.duracionMinutos !== null ? `${p.duracionMinutos} min` : '—'}</td>
-                <td className="p-2">{p.creadoEn ? new Date(p.creadoEn).toLocaleString() : '—'}</td>
+                <td className="p-2">
+                  {p.duracionMinutos !== null
+                    ? `${p.duracionMinutos} min`
+                    : '—'}
+                </td>
+                <td className="p-2">
+                  {p.creadoEn ? new Date(p.creadoEn).toLocaleString() : '—'}
+                </td>
                 <td className="p-2">
                   <div className="flex items-center gap-2">
                     <select
@@ -1463,7 +1804,8 @@ function AdminRespuestaDetallePage() {
                       onChange={(e) =>
                         cambiarEstado.mutate({
                           problemaId: p.problemaId,
-                          estadoProgreso: e.target.value as 'pendiente' | 'completado' | 'aprobado_manual',
+                          estadoProgreso: e.target.value as
+                            'pendiente' | 'completado' | 'aprobado_manual',
                         })
                       }
                     >
@@ -1478,14 +1820,24 @@ function AdminRespuestaDetallePage() {
               {expandido === p.problemaId && p.codigo && (
                 <tr className="border-b bg-gray-50">
                   <td colSpan={7} className="p-2">
-                    <p className="text-sm text-gray-600">Lenguaje: {p.lenguaje}</p>
-                    <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">{p.codigo}</pre>
+                    <p className="text-sm text-gray-600">
+                      Lenguaje: {p.lenguaje}
+                    </p>
+                    <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">
+                      {p.codigo}
+                    </pre>
                     {p.resultados && (
                       <ul className="mt-2 flex flex-col gap-1 text-sm">
                         {p.resultados.map((r, i) => (
                           <li key={i}>
-                            <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code> — Esperado:{' '}
-                            <code>{r.salidaEsperada}</code> — Obtenido: <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
+                            <code>
+                              {r.argumentos
+                                .map((a) => JSON.stringify(a))
+                                .join(', ')}
+                            </code>{' '}
+                            — Esperado: <code>{r.salidaEsperada}</code> —
+                            Obtenido:{' '}
+                            <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
                             {r.aprobado ? '✅' : '❌'}
                           </li>
                         ))}
@@ -1534,6 +1886,7 @@ git commit -m "feat: agregar panel /admin/respuestas con lista y detalle por par
 ## Task 9: Actualizar CLAUDE.md y verificación final
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 - [ ] **Step 1: Actualizar la sección de submissions**
@@ -1625,6 +1978,7 @@ Deja anotado para el usuario, ya que este proyecto no prueba UI vía automatizac
 ## Self-Review
 
 **Spec coverage:**
+
 - Modelo de datos (`envios`/`corridas`) → Task 1.
 - Run auto-crea envio al aceptar por primera vez, sin pisar overrides → Task 5.
 - Cambio manual libre entre los 3 estados con `creadoEn` basado en el último run → Tasks 2, 7.

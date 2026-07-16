@@ -121,7 +121,7 @@ standings estilo ICPC, despliegue en Railway) se mantiene igual.
 
 - **Nueva pantalla `/admin/participantes`**: fija la categoría de la sesión/salón, permite
   agregar personas una por una (nombre, correo, carné opcional), y dispara la creación de cuenta
-  + envío de correo por cada una.
+  - envío de correo por cada una.
 - El resto del panel de administración (CRUD de problemas, iniciar torneo, check-in QR, vista en
   vivo de envíos) no cambia.
 

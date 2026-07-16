@@ -24,17 +24,22 @@
 ### Task 1: Tipos canónicos de dato
 
 **Files:**
+
 - Create: `src/server/judge/tipos.ts`
 - Test: `tests/judge-tipos.test.ts`
 
 **Interfaces:**
+
 - Produces: `TipoEscalar`, `TipoDato`, `Parametro`, `ValorEscalar`, `Valor`, `tipoEscalarDeLista(tipo: TipoDato): TipoEscalar | null`, `valorCoincideConTipo(valor: unknown, tipo: TipoDato): boolean`.
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import { tipoEscalarDeLista, valorCoincideConTipo } from '../src/server/judge/tipos'
+import {
+  tipoEscalarDeLista,
+  valorCoincideConTipo,
+} from '../src/server/judge/tipos'
 
 describe('tipoEscalarDeLista', () => {
   it('extrae el escalar de un tipo lista', () => {
@@ -88,7 +93,8 @@ export function tipoEscalarDeLista(tipo: TipoDato): TipoEscalar | null {
 }
 
 function valorCoincideConEscalar(valor: unknown, tipo: TipoEscalar): boolean {
-  if (tipo === 'int') return typeof valor === 'number' && Number.isInteger(valor)
+  if (tipo === 'int')
+    return typeof valor === 'number' && Number.isInteger(valor)
   if (tipo === 'float') return typeof valor === 'number'
   if (tipo === 'bool') return typeof valor === 'boolean'
   return typeof valor === 'string'
@@ -97,7 +103,10 @@ function valorCoincideConEscalar(valor: unknown, tipo: TipoEscalar): boolean {
 export function valorCoincideConTipo(valor: unknown, tipo: TipoDato): boolean {
   const escalar = tipoEscalarDeLista(tipo)
   if (escalar) {
-    return Array.isArray(valor) && valor.every((v) => valorCoincideConEscalar(v, escalar))
+    return (
+      Array.isArray(valor) &&
+      valor.every((v) => valorCoincideConEscalar(v, escalar))
+    )
   }
   return valorCoincideConEscalar(valor, tipo as TipoEscalar)
 }
@@ -120,10 +129,12 @@ git commit -m "feat: agregar tipos canónicos de dato para el motor de funciones
 ### Task 2: Serializador canónico de salida
 
 **Files:**
+
 - Create: `src/server/judge/serializar.ts`
 - Test: `tests/judge-serializar.test.ts`
 
 **Interfaces:**
+
 - Consumes: `TipoDato`, `Valor`, `tipoEscalarDeLista` de Task 1.
 - Produces: `serializarCanonico(valor: Valor, tipo: TipoDato): string`.
 
@@ -145,7 +156,9 @@ describe('serializarCanonico', () => {
   it('serializa listas con el mismo formato en todos los tipos', () => {
     expect(serializarCanonico([2, 4, 6], 'list<int>')).toBe('[2, 4, 6]')
     expect(serializarCanonico([], 'list<int>')).toBe('[]')
-    expect(serializarCanonico([true, false], 'list<bool>')).toBe('[true, false]')
+    expect(serializarCanonico([true, false], 'list<bool>')).toBe(
+      '[true, false]',
+    )
     expect(serializarCanonico(['a', 'b'], 'list<string>')).toBe('[a, b]')
   })
 })
@@ -194,10 +207,12 @@ git commit -m "feat: agregar serializador canónico de salida del juez"
 ### Task 3: Esquema de datos — problemas, problema_lenguajes, casos_prueba
 
 **Files:**
+
 - Modify: `src/server/db/schema.ts`
 - Modify: `tests/db.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Parametro`, `TipoDato`, `Valor` de Task 1.
 - Produces: tablas `problemas` (con `parametros`, `tipoRetorno`, `puntos`; sin `lenguajesPermitidos`), `problemaLenguajes` (nueva), `casosPrueba` (con `argumentos`, `salidaEsperada` como JSON, `visible`).
 
@@ -242,11 +257,19 @@ export const problemaLenguajes = mysqlTable(
     problemaId: varchar('problema_id', { length: 36 })
       .notNull()
       .references(() => problemas.id, { onDelete: 'cascade' }),
-    lenguaje: mysqlEnum('lenguaje', ['python', 'javascript', 'java', 'csharp', 'php']).notNull(),
+    lenguaje: mysqlEnum('lenguaje', [
+      'python',
+      'javascript',
+      'java',
+      'csharp',
+      'php',
+    ]).notNull(),
     nombreFuncion: text('nombre_funcion').notNull(),
     codigoInicial: text('codigo_inicial').notNull(),
   },
-  (table) => [unique('problema_lenguajes_unico').on(table.problemaId, table.lenguaje)],
+  (table) => [
+    unique('problema_lenguajes_unico').on(table.problemaId, table.lenguaje),
+  ],
 )
 
 export const casosPrueba = mysqlTable('casos_prueba', {
@@ -329,10 +352,12 @@ git commit -m "feat: rediseñar schema de problemas/casos de prueba para el moto
 ### Task 4: Hardening y nueva firma de `ejecutarPiston`
 
 **Files:**
+
 - Modify: `src/server/piston/client.ts`
 - Modify: `tests/piston-client.test.ts`
 
 **Interfaces:**
+
 - Produces: `ejecutarPiston(lenguaje: string, nombreArchivo: string, codigo: string): Promise<ResultadoPiston>` (firma nueva — ya no recibe `entradaEstandar`, recibe `nombreArchivo`).
 
 - [ ] **Step 1: Reescribir las pruebas existentes con la nueva firma**
@@ -349,13 +374,20 @@ describe('ejecutarPiston', () => {
   it('sends the mapped language/version, filename and resource limits', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ run: { stdout: 'hi\n', stderr: '', code: 0, signal: null } }),
+      json: async () => ({
+        run: { stdout: 'hi\n', stderr: '', code: 0, signal: null },
+      }),
     })
     vi.stubGlobal('fetch', fetchMock)
 
     const resultado = await ejecutarPiston('python', 'main.py', 'print("hi")')
 
-    expect(resultado).toEqual({ salidaEstandar: 'hi\n', salidaError: '', codigoSalida: 0, tiempoExcedido: false })
+    expect(resultado).toEqual({
+      salidaEstandar: 'hi\n',
+      salidaError: '',
+      codigoSalida: 0,
+      tiempoExcedido: false,
+    })
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toContain('/api/v2/execute')
     const body = JSON.parse(options.body)
@@ -373,15 +405,23 @@ describe('ejecutarPiston', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ run: { stdout: '', stderr: '', code: 1, signal: 'SIGKILL' } }),
+        json: async () => ({
+          run: { stdout: '', stderr: '', code: 1, signal: 'SIGKILL' },
+        }),
       }),
     )
-    const resultado = await ejecutarPiston('python', 'main.py', 'while True: pass')
+    const resultado = await ejecutarPiston(
+      'python',
+      'main.py',
+      'while True: pass',
+    )
     expect(resultado.tiempoExcedido).toBe(true)
   })
 
   it('throws for an unsupported language', async () => {
-    await expect(ejecutarPiston('cobol', 'main.cob', 'x')).rejects.toThrow('Lenguaje no soportado: cobol')
+    await expect(ejecutarPiston('cobol', 'main.cob', 'x')).rejects.toThrow(
+      'Lenguaje no soportado: cobol',
+    )
   })
 })
 ```
@@ -460,12 +500,14 @@ git commit -m "feat: agregar límites de compilación/memoria a Piston y quitar 
 ### Task 5: Extender lenguajes soportados (Java, C#, PHP)
 
 **Files:**
+
 - Modify: `src/server/piston/languages.ts`
 - Modify: `scripts/install-piston-languages.sh`
 - Modify: `docs/deployment.md`
 - Test: `tests/piston-languages.test.ts`
 
 **Interfaces:**
+
 - Produces: `MAPA_LENGUAJES` con entradas para `java`, `csharp`, `php` además de `python`/`javascript`.
 
 - [ ] **Step 1: Write the failing test**
@@ -508,7 +550,10 @@ Anotar el `version` exacto que reporte para cada uno de los tres lenguajes — P
 - [ ] **Step 4: Actualizar `languages.ts`**
 
 ```ts
-export const MAPA_LENGUAJES: Record<string, { language: string; version: string }> = {
+export const MAPA_LENGUAJES: Record<
+  string,
+  { language: string; version: string }
+> = {
   python: { language: 'python', version: '3.10.0' },
   javascript: { language: 'javascript', version: '18.15.0' },
   java: { language: 'java', version: '15.0.2' },
@@ -570,10 +615,12 @@ git commit -m "feat: agregar Java, C# y PHP como lenguajes soportados en Piston"
 ### Task 6: Driver de Python
 
 **Files:**
+
 - Create: `src/server/judge/harness/python.ts`
 - Test: `tests/harness-python.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Parametro`, `TipoDato`, `Valor`, `tipoEscalarDeLista` de Task 1.
 - Produces: `generarProgramaPython(codigoParticipante, nombreFuncion, parametros, tipoRetorno, argumentos): { archivo: string; contenido: string }`.
 
@@ -666,7 +713,9 @@ export function generarProgramaPython(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalPython(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalPython(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     codigoParticipante,
     '',
@@ -694,10 +743,12 @@ git commit -m "feat: agregar generador de driver Python"
 ### Task 7: Driver de JavaScript
 
 **Files:**
+
 - Create: `src/server/judge/harness/javascript.ts`
 - Test: `tests/harness-javascript.test.ts`
 
 **Interfaces:**
+
 - Consumes: mismos tipos de Task 1.
 - Produces: `generarProgramaJavascript(...)` con la misma forma que Task 6.
 
@@ -730,7 +781,9 @@ describe('generarProgramaJavascript', () => {
       [[1, 2, 3]],
     )
     expect(contenido).toContain('f([1, 2, 3])')
-    expect(contenido).toContain("__resultado_juez__.map(function(x) { return String(x); }).join(', ')")
+    expect(contenido).toContain(
+      "__resultado_juez__.map(function(x) { return String(x); }).join(', ')",
+    )
   })
 })
 ```
@@ -771,7 +824,9 @@ export function generarProgramaJavascript(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalJs(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalJs(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     codigoParticipante,
     '',
@@ -801,10 +856,12 @@ git commit -m "feat: agregar generador de driver JavaScript"
 ### Task 8: Driver de PHP
 
 **Files:**
+
 - Create: `src/server/judge/harness/php.ts`
 - Test: `tests/harness-php.test.ts`
 
 **Interfaces:**
+
 - Consumes: mismos tipos de Task 1.
 - Produces: `generarProgramaPhp(...)`.
 
@@ -898,7 +955,9 @@ export function generarProgramaPhp(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalPhp(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalPhp(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     '<?php',
     codigoParticipante,
@@ -929,10 +988,12 @@ git commit -m "feat: agregar generador de driver PHP"
 ### Task 9: Driver de Java
 
 **Files:**
+
 - Create: `src/server/judge/harness/java.ts`
 - Test: `tests/harness-java.test.ts`
 
 **Interfaces:**
+
 - Consumes: mismos tipos de Task 1.
 - Produces: `generarProgramaJava(...)`, envuelve el método del participante en una clase `Main`.
 
@@ -954,7 +1015,9 @@ describe('generarProgramaJava', () => {
     expect(archivo).toBe('Main.java')
     expect(contenido).toContain('public class Main {')
     expect(contenido).toContain('contarVocales("hola")')
-    expect(contenido).toContain('System.out.println(String.valueOf(__resultado_juez__));')
+    expect(contenido).toContain(
+      'System.out.println(String.valueOf(__resultado_juez__));',
+    )
   })
 
   it('usa List.<Tipo>of() para argumentos de lista, tipado explícito', () => {
@@ -993,7 +1056,9 @@ import type { Parametro, TipoDato, TipoEscalar, Valor } from '../tipos'
 import { tipoEscalarDeLista } from '../tipos'
 
 function tipoJavaEscalar(tipo: TipoEscalar): string {
-  return { int: 'Integer', float: 'Double', bool: 'Boolean', string: 'String' }[tipo]
+  return { int: 'Integer', float: 'Double', bool: 'Boolean', string: 'String' }[
+    tipo
+  ]
 }
 
 function tipoJavaRetorno(tipo: TipoDato): string {
@@ -1037,7 +1102,9 @@ export function generarProgramaJava(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalJava(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalJava(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     'import java.util.*;',
     '',
@@ -1073,10 +1140,12 @@ git commit -m "feat: agregar generador de driver Java"
 ### Task 10: Driver de C#
 
 **Files:**
+
 - Create: `src/server/judge/harness/csharp.ts`
 - Test: `tests/harness-csharp.test.ts`
 
 **Interfaces:**
+
 - Consumes: mismos tipos de Task 1.
 - Produces: `generarProgramaCsharp(...)`, envuelve el método del participante en una clase `Program`.
 
@@ -1109,7 +1178,9 @@ describe('generarProgramaCsharp', () => {
       'bool',
       [1],
     )
-    expect(contenido).toContain('Console.WriteLine(__resultado_juez__ ? "true" : "false");')
+    expect(contenido).toContain(
+      'Console.WriteLine(__resultado_juez__ ? "true" : "false");',
+    )
   })
 
   it('serializa list<bool> con formato canónico', () => {
@@ -1161,7 +1232,8 @@ function lineaImpresion(tipo: TipoDato): string {
     }
     return '    Console.WriteLine("[" + string.Join(", ", __resultado_juez__) + "]");'
   }
-  if (tipo === 'bool') return '    Console.WriteLine(__resultado_juez__ ? "true" : "false");'
+  if (tipo === 'bool')
+    return '    Console.WriteLine(__resultado_juez__ ? "true" : "false");'
   return '    Console.WriteLine(__resultado_juez__);'
 }
 
@@ -1172,7 +1244,9 @@ export function generarProgramaCsharp(
   tipoRetorno: TipoDato,
   argumentos: Valor[],
 ): { archivo: string; contenido: string } {
-  const args = argumentos.map((v, i) => literalCsharp(v, parametros[i].tipo)).join(', ')
+  const args = argumentos
+    .map((v, i) => literalCsharp(v, parametros[i].tipo))
+    .join(', ')
   const contenido = [
     'using System;',
     'using System.Collections.Generic;',
@@ -1209,10 +1283,12 @@ git commit -m "feat: agregar generador de driver C#"
 ### Task 11: Dispatcher de harness por lenguaje
 
 **Files:**
+
 - Create: `src/server/judge/harness/index.ts`
 - Test: `tests/harness-index.test.ts`
 
 **Interfaces:**
+
 - Consumes: `generarProgramaPython` (Task 6), `generarProgramaJavascript` (Task 7), `generarProgramaPhp` (Task 8), `generarProgramaJava` (Task 9), `generarProgramaCsharp` (Task 10).
 - Produces: `generarPrograma(lenguaje, codigoParticipante, nombreFuncion, parametros, tipoRetorno, argumentos): { archivo: string; contenido: string }`.
 
@@ -1224,12 +1300,21 @@ import { generarPrograma } from '../src/server/judge/harness'
 
 describe('generarPrograma', () => {
   it('despacha al generador correcto por lenguaje', () => {
-    const { archivo } = generarPrograma('python', 'def f(x):\n  return x', 'f', [{ nombre: 'x', tipo: 'int' }], 'int', [1])
+    const { archivo } = generarPrograma(
+      'python',
+      'def f(x):\n  return x',
+      'f',
+      [{ nombre: 'x', tipo: 'int' }],
+      'int',
+      [1],
+    )
     expect(archivo).toBe('main.py')
   })
 
   it('lanza error para un lenguaje no soportado', () => {
-    expect(() => generarPrograma('cobol', '', 'f', [], 'int', [])).toThrow('Lenguaje no soportado: cobol')
+    expect(() => generarPrograma('cobol', '', 'f', [], 'int', [])).toThrow(
+      'Lenguaje no soportado: cobol',
+    )
   })
 })
 ```
@@ -1275,7 +1360,13 @@ export function generarPrograma(
 ): { archivo: string; contenido: string } {
   const generador = GENERADORES[lenguaje]
   if (!generador) throw new Error(`Lenguaje no soportado: ${lenguaje}`)
-  return generador(codigoParticipante, nombreFuncion, parametros, tipoRetorno, argumentos)
+  return generador(
+    codigoParticipante,
+    nombreFuncion,
+    parametros,
+    tipoRetorno,
+    argumentos,
+  )
 }
 ```
 
@@ -1296,10 +1387,12 @@ git commit -m "feat: agregar dispatcher de generación de driver por lenguaje"
 ### Task 12: `ResultadoCaso` y veredicto con guard de 0 casos
 
 **Files:**
+
 - Modify: `src/server/judge/verdict.ts`
 - Test: `tests/judge.test.ts` (reescribir la parte de `determinarVeredicto`, se completa en Task 14)
 
 **Interfaces:**
+
 - Consumes: `Valor` de Task 1.
 - Produces: `ResultadoCaso` (con `visible: boolean`, `argumentos: Valor[]`, sin `entrada`), `Veredicto`, `determinarVeredicto(resultados): Veredicto` (con guard para `resultados.length === 0`).
 
@@ -1314,28 +1407,64 @@ import { determinarVeredicto } from '../src/server/judge/verdict'
 describe('determinarVeredicto', () => {
   it('returns accepted when all cases pass', () => {
     const veredicto = determinarVeredicto([
-      { visible: true, argumentos: [1], salidaEsperada: '2', salidaObtenida: '2', aprobado: true, salidaError: '', tiempoExcedido: false, codigoSalida: 0 },
+      {
+        visible: true,
+        argumentos: [1],
+        salidaEsperada: '2',
+        salidaObtenida: '2',
+        aprobado: true,
+        salidaError: '',
+        tiempoExcedido: false,
+        codigoSalida: 0,
+      },
     ])
     expect(veredicto).toBe('aceptado')
   })
 
   it('returns wrong_answer when a case fails without error', () => {
     const veredicto = determinarVeredicto([
-      { visible: true, argumentos: [1], salidaEsperada: '2', salidaObtenida: '3', aprobado: false, salidaError: '', tiempoExcedido: false, codigoSalida: 0 },
+      {
+        visible: true,
+        argumentos: [1],
+        salidaEsperada: '2',
+        salidaObtenida: '3',
+        aprobado: false,
+        salidaError: '',
+        tiempoExcedido: false,
+        codigoSalida: 0,
+      },
     ])
     expect(veredicto).toBe('respuesta_incorrecta')
   })
 
   it('returns runtime_error when a case has a nonzero exit code', () => {
     const veredicto = determinarVeredicto([
-      { visible: true, argumentos: [1], salidaEsperada: '2', salidaObtenida: '', aprobado: false, salidaError: 'Traceback', codigoSalida: 1, tiempoExcedido: false },
+      {
+        visible: true,
+        argumentos: [1],
+        salidaEsperada: '2',
+        salidaObtenida: '',
+        aprobado: false,
+        salidaError: 'Traceback',
+        codigoSalida: 1,
+        tiempoExcedido: false,
+      },
     ])
     expect(veredicto).toBe('error_ejecucion')
   })
 
   it('returns timeout when a case timed out, taking priority over other failures', () => {
     const veredicto = determinarVeredicto([
-      { visible: true, argumentos: [1], salidaEsperada: '2', salidaObtenida: '', aprobado: false, salidaError: 'Traceback', tiempoExcedido: true, codigoSalida: 1 },
+      {
+        visible: true,
+        argumentos: [1],
+        salidaEsperada: '2',
+        salidaObtenida: '',
+        aprobado: false,
+        salidaError: 'Traceback',
+        tiempoExcedido: true,
+        codigoSalida: 1,
+      },
     ])
     expect(veredicto).toBe('tiempo_excedido')
   })
@@ -1367,13 +1496,16 @@ export type ResultadoCaso = {
   codigoSalida: number
 }
 
-export type Veredicto = 'aceptado' | 'respuesta_incorrecta' | 'error_ejecucion' | 'tiempo_excedido'
+export type Veredicto =
+  'aceptado' | 'respuesta_incorrecta' | 'error_ejecucion' | 'tiempo_excedido'
 
 export function determinarVeredicto(resultados: ResultadoCaso[]): Veredicto {
   if (resultados.length === 0) return 'error_ejecucion'
   if (resultados.some((r) => r.tiempoExcedido)) return 'tiempo_excedido'
   if (resultados.some((r) => r.codigoSalida !== 0)) return 'error_ejecucion'
-  return resultados.every((r) => r.aprobado) ? 'aceptado' : 'respuesta_incorrecta'
+  return resultados.every((r) => r.aprobado)
+    ? 'aceptado'
+    : 'respuesta_incorrecta'
 }
 ```
 
@@ -1394,10 +1526,12 @@ git commit -m "feat: rediseñar ResultadoCaso y blindar determinarVeredicto cont
 ### Task 13: Resultado público — ocultar detalle de casos ocultos
 
 **Files:**
+
 - Create: `src/server/judge/resultadoPublico.ts`
 - Test: `tests/judge-resultado-publico.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ResultadoCaso` de Task 12.
 - Produces: `ResultadoCasoPublico` (union discriminada por `visible`), `ocultarDetalleCasosNoVisibles(resultados: ResultadoCaso[]): ResultadoCasoPublico[]`.
 
@@ -1411,15 +1545,40 @@ import type { ResultadoCaso } from '../src/server/judge/verdict'
 describe('ocultarDetalleCasosNoVisibles', () => {
   it('conserva el detalle completo de los casos visibles', () => {
     const resultados: ResultadoCaso[] = [
-      { visible: true, argumentos: ['hola'], salidaEsperada: '2', salidaObtenida: '2', aprobado: true, salidaError: '', tiempoExcedido: false, codigoSalida: 0 },
+      {
+        visible: true,
+        argumentos: ['hola'],
+        salidaEsperada: '2',
+        salidaObtenida: '2',
+        aprobado: true,
+        salidaError: '',
+        tiempoExcedido: false,
+        codigoSalida: 0,
+      },
     ]
     const publico = ocultarDetalleCasosNoVisibles(resultados)
-    expect(publico[0]).toEqual({ visible: true, argumentos: ['hola'], salidaEsperada: '2', salidaObtenida: '2', aprobado: true, salidaError: '' })
+    expect(publico[0]).toEqual({
+      visible: true,
+      argumentos: ['hola'],
+      salidaEsperada: '2',
+      salidaObtenida: '2',
+      aprobado: true,
+      salidaError: '',
+    })
   })
 
   it('oculta argumentos, salidaEsperada y salidaObtenida de los casos ocultos', () => {
     const resultados: ResultadoCaso[] = [
-      { visible: false, argumentos: ['secreto'], salidaEsperada: '99', salidaObtenida: '0', aprobado: false, salidaError: '', tiempoExcedido: false, codigoSalida: 0 },
+      {
+        visible: false,
+        argumentos: ['secreto'],
+        salidaEsperada: '99',
+        salidaObtenida: '0',
+        aprobado: false,
+        salidaError: '',
+        tiempoExcedido: false,
+        codigoSalida: 0,
+      },
     ]
     const publico = ocultarDetalleCasosNoVisibles(resultados)
     expect(publico[0]).toEqual({ visible: false, aprobado: false })
@@ -1451,7 +1610,9 @@ export type ResultadoCasoPublico =
     }
   | { visible: false; aprobado: boolean }
 
-export function ocultarDetalleCasosNoVisibles(resultados: ResultadoCaso[]): ResultadoCasoPublico[] {
+export function ocultarDetalleCasosNoVisibles(
+  resultados: ResultadoCaso[],
+): ResultadoCasoPublico[] {
   return resultados.map((r) =>
     r.visible
       ? {
@@ -1484,10 +1645,12 @@ git commit -m "feat: filtrar detalle de casos ocultos antes de responder al clie
 ### Task 14: Reescribir `runTestCases.ts`
 
 **Files:**
+
 - Modify: `src/server/judge/runTestCases.ts`
 - Modify: `tests/judge.test.ts`
 
 **Interfaces:**
+
 - Consumes: `generarPrograma` (Task 11), `ejecutarPiston` (Task 4), `serializarCanonico` (Task 2), `determinarVeredicto`/`ResultadoCaso` (Task 12), `Parametro`/`TipoDato`/`Valor` (Task 1).
 - Produces: `CasoPrueba` (`{ argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }`), `Firma` (`{ nombreFuncion, parametros, tipoRetorno }`), `ejecutarCasosPrueba(lenguaje, codigo, firma, casosPrueba): Promise<{ resultados: ResultadoCaso[]; veredicto: Veredicto }>`.
 
@@ -1504,12 +1667,14 @@ vi.mock('../src/server/piston/client', () => ({
 
 describe('ejecutarCasosPrueba', () => {
   it('genera un programa por caso, compara contra el texto canónico y agrega el veredicto', async () => {
-    vi.mocked(ejecutarPiston).mockImplementation(async (_lenguaje, _archivo, contenido) => ({
-      salidaEstandar: (contenido as string).includes('"hola"') ? '2' : '5',
-      salidaError: '',
-      codigoSalida: 0,
-      tiempoExcedido: false,
-    }))
+    vi.mocked(ejecutarPiston).mockImplementation(
+      async (_lenguaje, _archivo, contenido) => ({
+        salidaEstandar: (contenido as string).includes('"hola"') ? '2' : '5',
+        salidaError: '',
+        codigoSalida: 0,
+        tiempoExcedido: false,
+      }),
+    )
 
     const firma = {
       nombreFuncion: 'contar_vocales',
@@ -1517,13 +1682,28 @@ describe('ejecutarCasosPrueba', () => {
       tipoRetorno: 'int' as const,
     }
 
-    const { resultados, veredicto } = await ejecutarCasosPrueba('python', 'def contar_vocales(texto):\n  return 0', firma, [
-      { argumentos: ['hola'], salidaEsperada: 2, visible: true },
-      { argumentos: ['mazatenango'], salidaEsperada: 5, visible: false },
-    ])
+    const { resultados, veredicto } = await ejecutarCasosPrueba(
+      'python',
+      'def contar_vocales(texto):\n  return 0',
+      firma,
+      [
+        { argumentos: ['hola'], salidaEsperada: 2, visible: true },
+        { argumentos: ['mazatenango'], salidaEsperada: 5, visible: false },
+      ],
+    )
 
-    expect(resultados[0]).toMatchObject({ visible: true, aprobado: true, salidaEsperada: '2', salidaObtenida: '2' })
-    expect(resultados[1]).toMatchObject({ visible: false, aprobado: true, salidaEsperada: '5', salidaObtenida: '5' })
+    expect(resultados[0]).toMatchObject({
+      visible: true,
+      aprobado: true,
+      salidaEsperada: '2',
+      salidaObtenida: '2',
+    })
+    expect(resultados[1]).toMatchObject({
+      visible: false,
+      aprobado: true,
+      salidaEsperada: '5',
+      salidaObtenida: '5',
+    })
     expect(veredicto).toBe('aceptado')
   })
 
@@ -1541,9 +1721,12 @@ describe('ejecutarCasosPrueba', () => {
       tipoRetorno: 'int' as const,
     }
 
-    const { veredicto } = await ejecutarCasosPrueba('python', 'def f(x):\n  return 0', firma, [
-      { argumentos: [1], salidaEsperada: 1, visible: true },
-    ])
+    const { veredicto } = await ejecutarCasosPrueba(
+      'python',
+      'def f(x):\n  return 0',
+      firma,
+      [{ argumentos: [1], salidaEsperada: 1, visible: true }],
+    )
     expect(veredicto).toBe('respuesta_incorrecta')
   })
 })
@@ -1564,7 +1747,11 @@ import { determinarVeredicto } from './verdict'
 import type { ResultadoCaso, Veredicto } from './verdict'
 import type { Parametro, TipoDato, Valor } from './tipos'
 
-export type CasoPrueba = { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }
+export type CasoPrueba = {
+  argumentos: Valor[]
+  salidaEsperada: Valor
+  visible: boolean
+}
 
 export type Firma = {
   nombreFuncion: string
@@ -1591,7 +1778,10 @@ export async function ejecutarCasosPrueba(
     )
     const salida = await ejecutarPiston(lenguaje, archivo, contenido)
     const salidaObtenida = salida.salidaEstandar.trim()
-    const salidaEsperadaTexto = serializarCanonico(casoPrueba.salidaEsperada, firma.tipoRetorno)
+    const salidaEsperadaTexto = serializarCanonico(
+      casoPrueba.salidaEsperada,
+      firma.tipoRetorno,
+    )
     resultados.push({
       visible: casoPrueba.visible,
       argumentos: casoPrueba.argumentos,
@@ -1625,10 +1815,12 @@ git commit -m "feat: reescribir ejecutarCasosPrueba sobre el motor de funciones"
 ### Task 15: Validación de problema
 
 **Files:**
+
 - Modify: `src/server/problems/validate.ts`
 - Modify: `tests/problems-validate.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Parametro`, `TipoDato`, `valorCoincideConTipo` de Task 1.
 - Produces: `LenguajeProblema`, `CasoPruebaProblema`, `validarDatosProblema(input): string[]` con las reglas del spec (tipos, mínimo 4 casos, diversidad, al menos 1 visible y 1 oculto, nombreFuncion/codigoInicial por lenguaje).
 
@@ -1646,7 +1838,13 @@ function problemaBase() {
     puntos: 10,
     parametros: [{ nombre: 'texto', tipo: 'string' as const }],
     tipoRetorno: 'int' as const,
-    lenguajes: [{ lenguaje: 'python', nombreFuncion: 'contar_vocales', codigoInicial: 'def contar_vocales(texto):\n  pass' }],
+    lenguajes: [
+      {
+        lenguaje: 'python',
+        nombreFuncion: 'contar_vocales',
+        codigoInicial: 'def contar_vocales(texto):\n  pass',
+      },
+    ],
     casosPrueba: [
       { argumentos: ['hola'], salidaEsperada: 2, visible: true },
       { argumentos: ['mazatenango'], salidaEsperada: 5, visible: true },
@@ -1662,15 +1860,25 @@ describe('validarDatosProblema', () => {
   })
 
   it('reports missing title, description, and languages', () => {
-    const errores = validarDatosProblema({ ...problemaBase(), titulo: '  ', descripcion: '', lenguajes: [] })
+    const errores = validarDatosProblema({
+      ...problemaBase(),
+      titulo: '  ',
+      descripcion: '',
+      lenguajes: [],
+    })
     expect(errores).toContain('El título es requerido')
     expect(errores).toContain('La descripción es requerida')
     expect(errores).toContain('Debe permitir al menos un lenguaje')
   })
 
   it('reporta cuando falta un grupo válido', () => {
-    const errores = validarDatosProblema({ ...problemaBase(), grupo: '' as never })
-    expect(errores).toContain('Debe indicar el grupo (invitado_junior o senior)')
+    const errores = validarDatosProblema({
+      ...problemaBase(),
+      grupo: '' as never,
+    })
+    expect(errores).toContain(
+      'Debe indicar el grupo (invitado_junior o senior)',
+    )
   })
 
   it('reporta cuando falta el nombre de función o el código inicial de un lenguaje', () => {
@@ -1683,22 +1891,33 @@ describe('validarDatosProblema', () => {
   })
 
   it('reporta menos de 4 casos de prueba', () => {
-    const errores = validarDatosProblema({ ...problemaBase(), casosPrueba: problemaBase().casosPrueba.slice(0, 2) })
+    const errores = validarDatosProblema({
+      ...problemaBase(),
+      casosPrueba: problemaBase().casosPrueba.slice(0, 2),
+    })
     expect(errores).toContain('Debe haber al menos 4 casos de prueba')
   })
 
   it('reporta cuando todas las salidas esperadas son iguales', () => {
     const errores = validarDatosProblema({
       ...problemaBase(),
-      casosPrueba: problemaBase().casosPrueba.map((c) => ({ ...c, salidaEsperada: 0 })),
+      casosPrueba: problemaBase().casosPrueba.map((c) => ({
+        ...c,
+        salidaEsperada: 0,
+      })),
     })
-    expect(errores).toContain('Todos los casos de prueba tienen la misma salida esperada — agrega variedad')
+    expect(errores).toContain(
+      'Todos los casos de prueba tienen la misma salida esperada — agrega variedad',
+    )
   })
 
   it('reporta cuando no hay ningún caso visible', () => {
     const errores = validarDatosProblema({
       ...problemaBase(),
-      casosPrueba: problemaBase().casosPrueba.map((c) => ({ ...c, visible: false })),
+      casosPrueba: problemaBase().casosPrueba.map((c) => ({
+        ...c,
+        visible: false,
+      })),
     })
     expect(errores).toContain('Debe haber al menos un caso de prueba visible')
   })
@@ -1706,7 +1925,10 @@ describe('validarDatosProblema', () => {
   it('reporta cuando no hay ningún caso oculto', () => {
     const errores = validarDatosProblema({
       ...problemaBase(),
-      casosPrueba: problemaBase().casosPrueba.map((c) => ({ ...c, visible: true })),
+      casosPrueba: problemaBase().casosPrueba.map((c) => ({
+        ...c,
+        visible: true,
+      })),
     })
     expect(errores).toContain('Debe haber al menos un caso de prueba oculto')
   })
@@ -1740,8 +1962,16 @@ Expected: FAIL (la firma actual de `validarDatosProblema` usa `lenguajesPermitid
 import { valorCoincideConTipo } from '../judge/tipos'
 import type { Parametro, TipoDato } from '../judge/tipos'
 
-export type LenguajeProblema = { lenguaje: string; nombreFuncion: string; codigoInicial: string }
-export type CasoPruebaProblema = { argumentos: unknown[]; salidaEsperada: unknown; visible: boolean }
+export type LenguajeProblema = {
+  lenguaje: string
+  nombreFuncion: string
+  codigoInicial: string
+}
+export type CasoPruebaProblema = {
+  argumentos: unknown[]
+  salidaEsperada: unknown
+  visible: boolean
+}
 
 export function validarDatosProblema(input: {
   titulo: string
@@ -1761,32 +1991,45 @@ export function validarDatosProblema(input: {
   if (!Number.isInteger(input.puntos) || input.puntos <= 0)
     errores.push('Los puntos deben ser un entero positivo')
 
-  if (input.lenguajes.length === 0) errores.push('Debe permitir al menos un lenguaje')
+  if (input.lenguajes.length === 0)
+    errores.push('Debe permitir al menos un lenguaje')
   for (const lenguaje of input.lenguajes) {
-    if (!lenguaje.nombreFuncion.trim()) errores.push(`Falta el nombre de función para ${lenguaje.lenguaje}`)
-    if (!lenguaje.codigoInicial.trim()) errores.push(`Falta el código inicial para ${lenguaje.lenguaje}`)
+    if (!lenguaje.nombreFuncion.trim())
+      errores.push(`Falta el nombre de función para ${lenguaje.lenguaje}`)
+    if (!lenguaje.codigoInicial.trim())
+      errores.push(`Falta el código inicial para ${lenguaje.lenguaje}`)
   }
 
-  if (input.casosPrueba.length < 4) errores.push('Debe haber al menos 4 casos de prueba')
+  if (input.casosPrueba.length < 4)
+    errores.push('Debe haber al menos 4 casos de prueba')
 
   for (const [i, caso] of input.casosPrueba.entries()) {
     if (caso.argumentos.length !== input.parametros.length) {
-      errores.push(`El caso ${i + 1} no tiene la cantidad correcta de argumentos`)
+      errores.push(
+        `El caso ${i + 1} no tiene la cantidad correcta de argumentos`,
+      )
       continue
     }
     const argumentosValidos = caso.argumentos.every((valor, j) =>
       valorCoincideConTipo(valor, input.parametros[j].tipo),
     )
-    if (!argumentosValidos) errores.push(`El caso ${i + 1} tiene un argumento de tipo incorrecto`)
+    if (!argumentosValidos)
+      errores.push(`El caso ${i + 1} tiene un argumento de tipo incorrecto`)
     if (!valorCoincideConTipo(caso.salidaEsperada, input.tipoRetorno)) {
-      errores.push(`El caso ${i + 1} tiene una salida esperada de tipo incorrecto`)
+      errores.push(
+        `El caso ${i + 1} tiene una salida esperada de tipo incorrecto`,
+      )
     }
   }
 
   if (input.casosPrueba.length > 0) {
-    const salidasUnicas = new Set(input.casosPrueba.map((c) => JSON.stringify(c.salidaEsperada)))
+    const salidasUnicas = new Set(
+      input.casosPrueba.map((c) => JSON.stringify(c.salidaEsperada)),
+    )
     if (salidasUnicas.size === 1) {
-      errores.push('Todos los casos de prueba tienen la misma salida esperada — agrega variedad')
+      errores.push(
+        'Todos los casos de prueba tienen la misma salida esperada — agrega variedad',
+      )
     }
     if (!input.casosPrueba.some((c) => c.visible)) {
       errores.push('Debe haber al menos un caso de prueba visible')
@@ -1817,9 +2060,11 @@ git commit -m "feat: validar tipos, mínimos y casos ocultos al guardar un probl
 ### Task 16: Server functions de problemas (CRUD)
 
 **Files:**
+
 - Modify: `src/server/functions/problems.ts`
 
 **Interfaces:**
+
 - Consumes: schema de Task 3, `validarDatosProblema`/`LenguajeProblema`/`CasoPruebaProblema` de Task 15.
 - Produces: `DatosProblema` (nuevo shape), `crearProblema`, `actualizarProblema` (insertan/actualizan `problemaLenguajes` y `casosPrueba` con el nuevo formato), `obtenerProblema` (devuelve también `lenguajes`), `listarProblemas`/`eliminarProblema` sin cambios de lógica.
 
@@ -1831,7 +2076,10 @@ import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { problemas, casosPrueba, problemaLenguajes } from '../db/schema'
-import { requerirAdmin, requerirParticipanteIngresado } from '../auth/middleware'
+import {
+  requerirAdmin,
+  requerirParticipanteIngresado,
+} from '../auth/middleware'
 import { validarDatosProblema } from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
 import type { Parametro, TipoDato, Valor } from '../judge/tipos'
@@ -1845,19 +2093,35 @@ type DatosProblema = {
   puntos: number
   parametros: Parametro[]
   tipoRetorno: TipoDato
-  lenguajes: { lenguaje: string; nombreFuncion: string; codigoInicial: string }[]
-  casosPrueba: { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }[]
+  lenguajes: {
+    lenguaje: string
+    nombreFuncion: string
+    codigoInicial: string
+  }[]
+  casosPrueba: {
+    argumentos: Valor[]
+    salidaEsperada: Valor
+    visible: boolean
+  }[]
 }
 
-export const listarProblemas = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  const user = await requerirParticipanteIngresado(request.headers)
-  if (user.rol === 'admin') {
-    return db.select().from(problemas).orderBy(problemas.orden)
-  }
-  const grupo = grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
-  return db.select().from(problemas).where(eq(problemas.grupo, grupo)).orderBy(problemas.orden)
-})
+export const listarProblemas = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    const user = await requerirParticipanteIngresado(request.headers)
+    if (user.rol === 'admin') {
+      return db.select().from(problemas).orderBy(problemas.orden)
+    }
+    const grupo = grupoDeCategoria(
+      user.categoria as 'invitado' | 'junior' | 'senior',
+    )
+    return db
+      .select()
+      .from(problemas)
+      .where(eq(problemas.grupo, grupo))
+      .orderBy(problemas.orden)
+  },
+)
 
 export const obtenerProblema = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
@@ -1868,13 +2132,20 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const filaProblema = rows.length > 0 ? rows[0] : null
     const puedeVerlo =
       user.rol === 'admin' ||
-      filaProblema?.grupo === grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
+      filaProblema?.grupo ===
+        grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
     const problema = filaProblema && puedeVerlo ? filaProblema : null
     const casos = problema
-      ? await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data))
+      ? await db
+          .select()
+          .from(casosPrueba)
+          .where(eq(casosPrueba.problemaId, data))
       : []
     const lenguajes = problema
-      ? await db.select().from(problemaLenguajes).where(eq(problemaLenguajes.problemaId, data))
+      ? await db
+          .select()
+          .from(problemaLenguajes)
+          .where(eq(problemaLenguajes.problemaId, data))
       : []
     return { problema, casosPrueba: casos, lenguajes }
   })
@@ -1905,7 +2176,8 @@ export const crearProblema = createServerFn({ method: 'POST' })
       await db.insert(problemaLenguajes).values(
         data.lenguajes.map((l) => ({
           problemaId: id,
-          lenguaje: l.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php',
+          lenguaje: l.lenguaje as
+            'python' | 'javascript' | 'java' | 'csharp' | 'php',
           nombreFuncion: l.nombreFuncion,
           codigoInicial: l.codigoInicial,
         })),
@@ -1949,12 +2221,15 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
       })
       .where(eq(problemas.id, data.id))
 
-    await db.delete(problemaLenguajes).where(eq(problemaLenguajes.problemaId, data.id))
+    await db
+      .delete(problemaLenguajes)
+      .where(eq(problemaLenguajes.problemaId, data.id))
     if (data.lenguajes.length > 0) {
       await db.insert(problemaLenguajes).values(
         data.lenguajes.map((l) => ({
           problemaId: data.id,
-          lenguaje: l.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php',
+          lenguaje: l.lenguaje as
+            'python' | 'javascript' | 'java' | 'csharp' | 'php',
           nombreFuncion: l.nombreFuncion,
           codigoInicial: l.codigoInicial,
         })),
@@ -2000,10 +2275,12 @@ git commit -m "feat: adaptar CRUD de problemas al modelo de función tipada"
 ### Task 17: Server functions Run y Submit
 
 **Files:**
+
 - Modify: `src/server/functions/run.ts`
 - Modify: `src/server/functions/submit.ts`
 
 **Interfaces:**
+
 - Consumes: `problemaLenguajes` (Task 3), `ejecutarCasosPrueba`/`Firma`/`CasoPrueba` (Task 14), `ocultarDetalleCasosNoVisibles`/`ResultadoCasoPublico` (Task 13).
 - Produces: `ejecutarCodigo`/`enviarCodigo` devuelven `resultados: ResultadoCasoPublico[]` — corren siempre contra todos los casos, y el servidor nunca manda detalle de los ocultos.
 
@@ -2014,7 +2291,12 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problemas, casosPrueba, problemaLenguajes, corridas } from '../db/schema'
+import {
+  problemas,
+  casosPrueba,
+  problemaLenguajes,
+  corridas,
+} from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { ejecutarCasosPrueba } from '../judge/runTestCases'
 import { ocultarDetalleCasosNoVisibles } from '../judge/resultadoPublico'
@@ -2023,33 +2305,63 @@ import { generarComentarioEnvio } from '../claude/feedback'
 import type { ResultadoCasoPublico } from '../judge/resultadoPublico'
 
 export const ejecutarCodigo = createServerFn({ method: 'POST' })
-  .validator((input: { problemaId: string; lenguaje: string; codigo: string }) => input)
+  .validator(
+    (input: { problemaId: string; lenguaje: string; codigo: string }) => input,
+  )
   .handler(
     async ({
       data,
-    }): Promise<{ resultados: ResultadoCasoPublico[]; error: string | null; hint: string | null }> => {
+    }): Promise<{
+      resultados: ResultadoCasoPublico[]
+      error: string | null
+      hint: string | null
+    }> => {
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
 
-      const rows = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
+      const rows = await db
+        .select()
+        .from(problemas)
+        .where(eq(problemas.id, data.problemaId))
       const problema = rows.length > 0 ? rows[0] : null
       if (!problema) throw new Error('Problema no encontrado')
 
       const filasLenguaje = await db
         .select()
         .from(problemaLenguajes)
-        .where(and(eq(problemaLenguajes.problemaId, data.problemaId), eq(problemaLenguajes.lenguaje, data.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php')))
+        .where(
+          and(
+            eq(problemaLenguajes.problemaId, data.problemaId),
+            eq(
+              problemaLenguajes.lenguaje,
+              data.lenguaje as
+                'python' | 'javascript' | 'java' | 'csharp' | 'php',
+            ),
+          ),
+        )
       const filaLenguaje = filasLenguaje.length > 0 ? filasLenguaje[0] : null
-      if (!filaLenguaje) throw new Error('Lenguaje no habilitado para este problema')
+      if (!filaLenguaje)
+        throw new Error('Lenguaje no habilitado para este problema')
 
-      const casos = await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data.problemaId))
+      const casos = await db
+        .select()
+        .from(casosPrueba)
+        .where(eq(casosPrueba.problemaId, data.problemaId))
 
       try {
         const { resultados, veredicto } = await ejecutarCasosPrueba(
           data.lenguaje,
           data.codigo,
-          { nombreFuncion: filaLenguaje.nombreFuncion, parametros: problema.parametros, tipoRetorno: problema.tipoRetorno },
-          casos.map((c) => ({ argumentos: c.argumentos, salidaEsperada: c.salidaEsperada, visible: c.visible })),
+          {
+            nombreFuncion: filaLenguaje.nombreFuncion,
+            parametros: problema.parametros,
+            tipoRetorno: problema.tipoRetorno,
+          },
+          casos.map((c) => ({
+            argumentos: c.argumentos,
+            salidaEsperada: c.salidaEsperada,
+            visible: c.visible,
+          })),
         )
         const resultadosPublicos = ocultarDetalleCasosNoVisibles(resultados)
 
@@ -2058,16 +2370,30 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
           try {
             await db
               .insert(corridas)
-              .values({ usuarioId: user.id, problemaId: data.problemaId, contador: 1 })
-              .onDuplicateKeyUpdate({ set: { contador: sql`${corridas.contador} + 1` } })
+              .values({
+                usuarioId: user.id,
+                problemaId: data.problemaId,
+                contador: 1,
+              })
+              .onDuplicateKeyUpdate({
+                set: { contador: sql`${corridas.contador} + 1` },
+              })
             const filasCorrida = await db
               .select()
               .from(corridas)
-              .where(and(eq(corridas.usuarioId, user.id), eq(corridas.problemaId, data.problemaId)))
-            const contador = filasCorrida.length > 0 ? filasCorrida[0].contador : 1
+              .where(
+                and(
+                  eq(corridas.usuarioId, user.id),
+                  eq(corridas.problemaId, data.problemaId),
+                ),
+              )
+            const contador =
+              filasCorrida.length > 0 ? filasCorrida[0].contador : 1
 
             if (debeMostrarHint(contador)) {
-              const salidaError = resultados.find((r) => r.visible && r.salidaError)?.salidaError ?? ''
+              const salidaError =
+                resultados.find((r) => r.visible && r.salidaError)
+                  ?.salidaError ?? ''
               hint = await generarComentarioEnvio({
                 tituloProblema: problema.titulo,
                 descripcionProblema: problema.descripcion,
@@ -2104,7 +2430,13 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problemas, casosPrueba, problemaLenguajes, envios, estadoTorneo } from '../db/schema'
+import {
+  problemas,
+  casosPrueba,
+  problemaLenguajes,
+  envios,
+  estadoTorneo,
+} from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { ejecutarCasosPrueba } from '../judge/runTestCases'
 import { ocultarDetalleCasosNoVisibles } from '../judge/resultadoPublico'
@@ -2113,30 +2445,56 @@ import { asegurarIniciado } from '../tournament/guard'
 import type { ResultadoCasoPublico } from '../judge/resultadoPublico'
 
 export const enviarCodigo = createServerFn({ method: 'POST' })
-  .validator((input: { problemaId: string; lenguaje: string; codigo: string }) => input)
+  .validator(
+    (input: { problemaId: string; lenguaje: string; codigo: string }) => input,
+  )
   .handler(
     async ({
       data,
-    }): Promise<{ envioId: string; veredicto: string | null; resultados: ResultadoCasoPublico[]; error: string | null }> => {
+    }): Promise<{
+      envioId: string
+      veredicto: string | null
+      resultados: ResultadoCasoPublico[]
+      error: string | null
+    }> => {
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
 
-      const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
+      const filasEstado = await db
+        .select()
+        .from(estadoTorneo)
+        .where(eq(estadoTorneo.id, 1))
       const estado = filasEstado.length > 0 ? filasEstado[0] : null
       asegurarIniciado(estado ?? { iniciadoEn: null })
 
-      const filasProblema = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
+      const filasProblema = await db
+        .select()
+        .from(problemas)
+        .where(eq(problemas.id, data.problemaId))
       const problema = filasProblema.length > 0 ? filasProblema[0] : null
       if (!problema) throw new Error('Problema no encontrado')
 
       const filasLenguaje = await db
         .select()
         .from(problemaLenguajes)
-        .where(and(eq(problemaLenguajes.problemaId, data.problemaId), eq(problemaLenguajes.lenguaje, data.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php')))
+        .where(
+          and(
+            eq(problemaLenguajes.problemaId, data.problemaId),
+            eq(
+              problemaLenguajes.lenguaje,
+              data.lenguaje as
+                'python' | 'javascript' | 'java' | 'csharp' | 'php',
+            ),
+          ),
+        )
       const filaLenguaje = filasLenguaje.length > 0 ? filasLenguaje[0] : null
-      if (!filaLenguaje) throw new Error('Lenguaje no habilitado para este problema')
+      if (!filaLenguaje)
+        throw new Error('Lenguaje no habilitado para este problema')
 
-      const casos = await db.select().from(casosPrueba).where(eq(casosPrueba.problemaId, data.problemaId))
+      const casos = await db
+        .select()
+        .from(casosPrueba)
+        .where(eq(casosPrueba.problemaId, data.problemaId))
 
       const envioId = crypto.randomUUID()
       await db.insert(envios).values({
@@ -2152,12 +2510,24 @@ export const enviarCodigo = createServerFn({ method: 'POST' })
         const { resultados, veredicto } = await ejecutarCasosPrueba(
           data.lenguaje,
           data.codigo,
-          { nombreFuncion: filaLenguaje.nombreFuncion, parametros: problema.parametros, tipoRetorno: problema.tipoRetorno },
-          casos.map((c) => ({ argumentos: c.argumentos, salidaEsperada: c.salidaEsperada, visible: c.visible })),
+          {
+            nombreFuncion: filaLenguaje.nombreFuncion,
+            parametros: problema.parametros,
+            tipoRetorno: problema.tipoRetorno,
+          },
+          casos.map((c) => ({
+            argumentos: c.argumentos,
+            salidaEsperada: c.salidaEsperada,
+            visible: c.visible,
+          })),
         )
-        const salidaError = resultados.find((r) => r.visible && r.salidaError)?.salidaError ?? ''
+        const salidaError =
+          resultados.find((r) => r.visible && r.salidaError)?.salidaError ?? ''
 
-        await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
+        await db
+          .update(envios)
+          .set({ estado: veredicto })
+          .where(eq(envios.id, envioId))
 
         if (user.categoria === 'invitado') {
           generarComentarioEnvio({
@@ -2167,11 +2537,23 @@ export const enviarCodigo = createServerFn({ method: 'POST' })
             veredicto,
             salidaError,
           })
-            .then((comentario) => db.update(envios).set({ comentarioClaude: comentario }).where(eq(envios.id, envioId)))
-            .catch((err: unknown) => console.error('Comentario de Claude falló', err))
+            .then((comentario) =>
+              db
+                .update(envios)
+                .set({ comentarioClaude: comentario })
+                .where(eq(envios.id, envioId)),
+            )
+            .catch((err: unknown) =>
+              console.error('Comentario de Claude falló', err),
+            )
         }
 
-        return { envioId, veredicto, resultados: ocultarDetalleCasosNoVisibles(resultados), error: null }
+        return {
+          envioId,
+          veredicto,
+          resultados: ocultarDetalleCasosNoVisibles(resultados),
+          error: null,
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         return {
@@ -2211,10 +2593,12 @@ git commit -m "feat: correr Run/Submit siempre contra todos los casos y ocultar 
 ### Task 18: Panel de admin — formulario de problema
 
 **Files:**
+
 - Modify: `src/components/AdminProblemForm.tsx`
 - Modify: `src/routes/admin/problemas/$problemaId.tsx`
 
 **Interfaces:**
+
 - Consumes: `Parametro`/`TipoDato` (Task 1), `LenguajeProblema`/`CasoPruebaProblema` (Task 15), `obtenerProblema`/`crearProblema`/`actualizarProblema` (Task 16).
 - Produces: `ValorFormularioProblema`, `DatosProblemaEnviado`, `AdminProblemForm` con parámetros tipados, puntos, casos de prueba con JSON por argumento, checkbox `visible`, y starter code + nombre de función por lenguaje.
 
@@ -2224,17 +2608,39 @@ git commit -m "feat: correr Run/Submit siempre contra todos los casos y ocultar 
 import { useState } from 'react'
 
 export type TipoDatoFormulario =
-  | 'int' | 'float' | 'bool' | 'string' | 'list<int>' | 'list<float>' | 'list<bool>' | 'list<string>'
+  | 'int'
+  | 'float'
+  | 'bool'
+  | 'string'
+  | 'list<int>'
+  | 'list<float>'
+  | 'list<bool>'
+  | 'list<string>'
 
 const TIPOS_DATO: TipoDatoFormulario[] = [
-  'int', 'float', 'bool', 'string', 'list<int>', 'list<float>', 'list<bool>', 'list<string>',
+  'int',
+  'float',
+  'bool',
+  'string',
+  'list<int>',
+  'list<float>',
+  'list<bool>',
+  'list<string>',
 ]
 
 const LENGUAJES_DISPONIBLES = ['python', 'javascript', 'java', 'csharp', 'php']
 
 export type ParametroFormulario = { nombre: string; tipo: TipoDatoFormulario }
-export type LenguajeFormulario = { lenguaje: string; nombreFuncion: string; codigoInicial: string }
-export type CasoPruebaFormulario = { argumentosTexto: string[]; salidaEsperadaTexto: string; visible: boolean }
+export type LenguajeFormulario = {
+  lenguaje: string
+  nombreFuncion: string
+  codigoInicial: string
+}
+export type CasoPruebaFormulario = {
+  argumentosTexto: string[]
+  salidaEsperadaTexto: string
+  visible: boolean
+}
 
 export type ValorFormularioProblema = {
   titulo: string
@@ -2259,7 +2665,11 @@ export type DatosProblemaEnviado = {
   parametros: ParametroFormulario[]
   tipoRetorno: TipoDatoFormulario
   lenguajes: LenguajeFormulario[]
-  casosPrueba: { argumentos: unknown[]; salidaEsperada: unknown; visible: boolean }[]
+  casosPrueba: {
+    argumentos: unknown[]
+    salidaEsperada: unknown
+    visible: boolean
+  }[]
 }
 
 export function AdminProblemForm({
@@ -2272,17 +2682,28 @@ export function AdminProblemForm({
   const [value, setValue] = useState(initial)
   const [errorParseo, setErrorParseo] = useState<string | null>(null)
 
-  function actualizarParametro(index: number, campo: 'nombre' | 'tipo', texto: string) {
+  function actualizarParametro(
+    index: number,
+    campo: 'nombre' | 'tipo',
+    texto: string,
+  ) {
     const next = value.parametros.slice()
     next[index] = { ...next[index], [campo]: texto } as ParametroFormulario
     setValue({ ...value, parametros: next })
   }
 
   function agregarParametro() {
-    setValue({ ...value, parametros: [...value.parametros, { nombre: '', tipo: 'int' }] })
+    setValue({
+      ...value,
+      parametros: [...value.parametros, { nombre: '', tipo: 'int' }],
+    })
   }
 
-  function actualizarLenguaje(index: number, campo: 'nombreFuncion' | 'codigoInicial', texto: string) {
+  function actualizarLenguaje(
+    index: number,
+    campo: 'nombreFuncion' | 'codigoInicial',
+    texto: string,
+  ) {
     const next = value.lenguajes.slice()
     next[index] = { ...next[index], [campo]: texto }
     setValue({ ...value, lenguajes: next })
@@ -2291,19 +2712,39 @@ export function AdminProblemForm({
   function alternarLenguaje(lenguaje: string) {
     const existe = value.lenguajes.some((l) => l.lenguaje === lenguaje)
     if (existe) {
-      setValue({ ...value, lenguajes: value.lenguajes.filter((l) => l.lenguaje !== lenguaje) })
+      setValue({
+        ...value,
+        lenguajes: value.lenguajes.filter((l) => l.lenguaje !== lenguaje),
+      })
     } else {
-      setValue({ ...value, lenguajes: [...value.lenguajes, { lenguaje, nombreFuncion: '', codigoInicial: '' }] })
+      setValue({
+        ...value,
+        lenguajes: [
+          ...value.lenguajes,
+          { lenguaje, nombreFuncion: '', codigoInicial: '' },
+        ],
+      })
     }
   }
 
-  function actualizarCasoPrueba(index: number, campo: 'salidaEsperadaTexto' | 'visible', valorCampo: string | boolean) {
+  function actualizarCasoPrueba(
+    index: number,
+    campo: 'salidaEsperadaTexto' | 'visible',
+    valorCampo: string | boolean,
+  ) {
     const next = value.casosPrueba.slice()
-    next[index] = { ...next[index], [campo]: valorCampo } as CasoPruebaFormulario
+    next[index] = {
+      ...next[index],
+      [campo]: valorCampo,
+    } as CasoPruebaFormulario
     setValue({ ...value, casosPrueba: next })
   }
 
-  function actualizarArgumento(indexCaso: number, indexArgumento: number, texto: string) {
+  function actualizarArgumento(
+    indexCaso: number,
+    indexArgumento: number,
+    texto: string,
+  ) {
     const next = value.casosPrueba.slice()
     const argumentos = next[indexCaso].argumentosTexto.slice()
     argumentos[indexArgumento] = texto
@@ -2316,7 +2757,11 @@ export function AdminProblemForm({
       ...value,
       casosPrueba: [
         ...value.casosPrueba,
-        { argumentosTexto: value.parametros.map(() => ''), salidaEsperadaTexto: '', visible: true },
+        {
+          argumentosTexto: value.parametros.map(() => ''),
+          salidaEsperadaTexto: '',
+          visible: true,
+        },
       ],
     })
   }
@@ -2345,18 +2790,43 @@ export function AdminProblemForm({
         manejarEnvio()
       }}
     >
-      <input className="border p-2" placeholder="Título" value={value.titulo}
-        onChange={(e) => setValue({ ...value, titulo: e.target.value })} />
-      <textarea className="border p-2" placeholder="Descripción (markdown)" value={value.descripcion}
-        onChange={(e) => setValue({ ...value, descripcion: e.target.value })} />
-      <input className="border p-2" placeholder="Dificultad (easy/medium/hard)" value={value.dificultad}
-        onChange={(e) => setValue({ ...value, dificultad: e.target.value })} />
-      <input className="border p-2" type="number" placeholder="Puntos" value={value.puntos}
-        onChange={(e) => setValue({ ...value, puntos: Number(e.target.value) })} />
+      <input
+        className="border p-2"
+        placeholder="Título"
+        value={value.titulo}
+        onChange={(e) => setValue({ ...value, titulo: e.target.value })}
+      />
+      <textarea
+        className="border p-2"
+        placeholder="Descripción (markdown)"
+        value={value.descripcion}
+        onChange={(e) => setValue({ ...value, descripcion: e.target.value })}
+      />
+      <input
+        className="border p-2"
+        placeholder="Dificultad (easy/medium/hard)"
+        value={value.dificultad}
+        onChange={(e) => setValue({ ...value, dificultad: e.target.value })}
+      />
+      <input
+        className="border p-2"
+        type="number"
+        placeholder="Puntos"
+        value={value.puntos}
+        onChange={(e) => setValue({ ...value, puntos: Number(e.target.value) })}
+      />
       <label>
         Grupo:
-        <select className="ml-2 border p-2" value={value.grupo}
-          onChange={(e) => setValue({ ...value, grupo: e.target.value as ValorFormularioProblema['grupo'] })}>
+        <select
+          className="ml-2 border p-2"
+          value={value.grupo}
+          onChange={(e) =>
+            setValue({
+              ...value,
+              grupo: e.target.value as ValorFormularioProblema['grupo'],
+            })
+          }
+        >
           <option value="invitado_junior">Invitados + Junior</option>
           <option value="senior">Senior</option>
         </select>
@@ -2365,26 +2835,49 @@ export function AdminProblemForm({
       <h3 className="font-bold">Parámetros de la función</h3>
       {value.parametros.map((p, i) => (
         <div key={i} className="flex gap-2">
-          <input className="border p-2" placeholder="nombre" value={p.nombre}
-            onChange={(e) => actualizarParametro(i, 'nombre', e.target.value)} />
-          <select className="border p-2" value={p.tipo}
-            onChange={(e) => actualizarParametro(i, 'tipo', e.target.value)}>
+          <input
+            className="border p-2"
+            placeholder="nombre"
+            value={p.nombre}
+            onChange={(e) => actualizarParametro(i, 'nombre', e.target.value)}
+          />
+          <select
+            className="border p-2"
+            value={p.tipo}
+            onChange={(e) => actualizarParametro(i, 'tipo', e.target.value)}
+          >
             {TIPOS_DATO.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>
+                {t}
+              </option>
             ))}
           </select>
         </div>
       ))}
-      <button type="button" className="rounded bg-gray-200 px-4 py-2" onClick={agregarParametro}>
+      <button
+        type="button"
+        className="rounded bg-gray-200 px-4 py-2"
+        onClick={agregarParametro}
+      >
         + Agregar parámetro
       </button>
 
       <label>
         Tipo de retorno:
-        <select className="ml-2 border p-2" value={value.tipoRetorno}
-          onChange={(e) => setValue({ ...value, tipoRetorno: e.target.value as TipoDatoFormulario })}>
+        <select
+          className="ml-2 border p-2"
+          value={value.tipoRetorno}
+          onChange={(e) =>
+            setValue({
+              ...value,
+              tipoRetorno: e.target.value as TipoDatoFormulario,
+            })
+          }
+        >
           {TIPOS_DATO.map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
       </label>
@@ -2396,15 +2889,31 @@ export function AdminProblemForm({
         return (
           <div key={lenguaje} className="border p-2">
             <label>
-              <input type="checkbox" checked={!!config} onChange={() => alternarLenguaje(lenguaje)} />
+              <input
+                type="checkbox"
+                checked={!!config}
+                onChange={() => alternarLenguaje(lenguaje)}
+              />
               <span className="ml-2">{lenguaje}</span>
             </label>
             {config && (
               <div className="mt-2 flex flex-col gap-2">
-                <input className="border p-2" placeholder="Nombre de la función" value={config.nombreFuncion}
-                  onChange={(e) => actualizarLenguaje(index, 'nombreFuncion', e.target.value)} />
-                <textarea className="border p-2 font-mono" placeholder="Código inicial" value={config.codigoInicial}
-                  onChange={(e) => actualizarLenguaje(index, 'codigoInicial', e.target.value)} />
+                <input
+                  className="border p-2"
+                  placeholder="Nombre de la función"
+                  value={config.nombreFuncion}
+                  onChange={(e) =>
+                    actualizarLenguaje(index, 'nombreFuncion', e.target.value)
+                  }
+                />
+                <textarea
+                  className="border p-2 font-mono"
+                  placeholder="Código inicial"
+                  value={config.codigoInicial}
+                  onChange={(e) =>
+                    actualizarLenguaje(index, 'codigoInicial', e.target.value)
+                  }
+                />
               </div>
             )}
           </div>
@@ -2415,24 +2924,49 @@ export function AdminProblemForm({
       {value.casosPrueba.map((caso, i) => (
         <div key={i} className="flex flex-col gap-2 border p-2">
           {value.parametros.map((p, j) => (
-            <input key={j} className="border p-2" placeholder={`${p.nombre} (JSON)`} value={caso.argumentosTexto[j] ?? ''}
-              onChange={(e) => actualizarArgumento(i, j, e.target.value)} />
+            <input
+              key={j}
+              className="border p-2"
+              placeholder={`${p.nombre} (JSON)`}
+              value={caso.argumentosTexto[j] ?? ''}
+              onChange={(e) => actualizarArgumento(i, j, e.target.value)}
+            />
           ))}
-          <input className="border p-2" placeholder="Salida esperada (JSON)" value={caso.salidaEsperadaTexto}
-            onChange={(e) => actualizarCasoPrueba(i, 'salidaEsperadaTexto', e.target.value)} />
+          <input
+            className="border p-2"
+            placeholder="Salida esperada (JSON)"
+            value={caso.salidaEsperadaTexto}
+            onChange={(e) =>
+              actualizarCasoPrueba(i, 'salidaEsperadaTexto', e.target.value)
+            }
+          />
           <label>
-            <input type="checkbox" checked={caso.visible}
-              onChange={(e) => actualizarCasoPrueba(i, 'visible', e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={caso.visible}
+              onChange={(e) =>
+                actualizarCasoPrueba(i, 'visible', e.target.checked)
+              }
+            />
             <span className="ml-2">Visible para el participante</span>
           </label>
         </div>
       ))}
-      <button type="button" className="rounded bg-gray-200 px-4 py-2" onClick={agregarCasoPrueba}>
+      <button
+        type="button"
+        className="rounded bg-gray-200 px-4 py-2"
+        onClick={agregarCasoPrueba}
+      >
         + Agregar caso de prueba
       </button>
 
       {errorParseo && <p className="text-red-600">{errorParseo}</p>}
-      <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">Guardar</button>
+      <button
+        type="submit"
+        className="rounded bg-blue-600 px-4 py-2 text-white"
+      >
+        Guardar
+      </button>
     </form>
   )
 }
@@ -2442,9 +2976,17 @@ export function AdminProblemForm({
 
 ```tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { obtenerProblema, crearProblema, actualizarProblema } from '#/server/functions/problems'
+import {
+  obtenerProblema,
+  crearProblema,
+  actualizarProblema,
+} from '#/server/functions/problems'
 import { AdminProblemForm } from '#/components/AdminProblemForm'
-import type { ValorFormularioProblema, DatosProblemaEnviado, TipoDatoFormulario } from '#/components/AdminProblemForm'
+import type {
+  ValorFormularioProblema,
+  DatosProblemaEnviado,
+  TipoDatoFormulario,
+} from '#/components/AdminProblemForm'
 
 export const Route = createFileRoute('/admin/problemas/$problemaId')({
   loader: async ({ params }) => {
@@ -2463,7 +3005,9 @@ function AdminProblemEditPage() {
     return (
       <div className="p-8">
         <h1 className="text-xl font-bold">Problema no encontrado</h1>
-        <p className="text-red-600">No existe un problema con el id "{problemaId}".</p>
+        <p className="text-red-600">
+          No existe un problema con el id "{problemaId}".
+        </p>
       </div>
     )
   }
@@ -2477,7 +3021,8 @@ function AdminProblemEditPage() {
           orden: data.problema.orden,
           grupo: data.problema.grupo,
           puntos: data.problema.puntos,
-          parametros: data.problema.parametros as ValorFormularioProblema['parametros'],
+          parametros: data.problema
+            .parametros as ValorFormularioProblema['parametros'],
           tipoRetorno: data.problema.tipoRetorno as TipoDatoFormulario,
           lenguajes: data.lenguajes.map((l) => ({
             lenguaje: l.lenguaje,
@@ -2485,7 +3030,9 @@ function AdminProblemEditPage() {
             codigoInicial: l.codigoInicial,
           })),
           casosPrueba: data.casosPrueba.map((cp) => ({
-            argumentosTexto: (cp.argumentos as unknown[]).map((a) => JSON.stringify(a)),
+            argumentosTexto: (cp.argumentos as unknown[]).map((a) =>
+              JSON.stringify(a),
+            ),
             salidaEsperadaTexto: JSON.stringify(cp.salidaEsperada),
             visible: cp.visible,
           })),
@@ -2533,9 +3080,11 @@ git commit -m "feat: rediseñar el formulario de admin para parámetros tipados 
 ### Task 19: Editor de código — nuevos lenguajes
 
 **Files:**
+
 - Modify: `src/components/CodeEditor.tsx`
 
 **Interfaces:**
+
 - Produces: `CodeEditor` con mapeo de Monaco para `java`, `csharp`, `php` además de `python`/`javascript`.
 
 - [ ] **Step 1: Actualizar el mapeo de lenguajes**
@@ -2587,12 +3136,14 @@ git commit -m "feat: soportar resaltado de Java, C# y PHP en el editor"
 ### Task 20: Página de problema — ejemplos, reset de lenguaje y resultados
 
 **Files:**
+
 - Modify: `src/components/ProblemDescription.tsx`
 - Modify: `src/components/RunResults.tsx`
 - Modify: `src/components/SubmitResult.tsx`
 - Modify: `src/routes/problemas/$problemaId.tsx`
 
 **Interfaces:**
+
 - Consumes: `serializarCanonico` (Task 2), `ResultadoCasoPublico` (Task 13), `obtenerProblema`/`ejecutarCodigo`/`enviarCodigo` (Tasks 16-17).
 - Produces: tabla de ejemplos autogenerada, reset de `codigo` al `codigoInicial` del lenguaje al cambiar de `<select>`, detalle de resultados solo para casos visibles + resumen agregado de ocultos.
 
@@ -2627,7 +3178,9 @@ export function ProblemDescription({
             {ejemplos.map((ej, i) => (
               <tr key={i}>
                 <td className="border p-2">
-                  <code>{ej.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code>
+                  <code>
+                    {ej.argumentos.map((a) => JSON.stringify(a)).join(', ')}
+                  </code>
                 </td>
                 <td className="border p-2">
                   <code>{ej.salidaEsperadaTexto}</code>
@@ -2662,19 +3215,29 @@ export function RunResults({
     <div className="mt-4">
       <ul className="flex flex-col gap-2">
         {visibles.map((r, i) => (
-          <li key={i} className={r.aprobado ? 'text-green-600' : 'text-red-600'}>
-            {r.aprobado ? '✅' : '❌'} Input: <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code> —
-            Esperado: <code>{r.salidaEsperada}</code> — Obtenido: <code>{r.salidaObtenida || r.salidaError}</code>
+          <li
+            key={i}
+            className={r.aprobado ? 'text-green-600' : 'text-red-600'}
+          >
+            {r.aprobado ? '✅' : '❌'} Input:{' '}
+            <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code>{' '}
+            — Esperado: <code>{r.salidaEsperada}</code> — Obtenido:{' '}
+            <code>{r.salidaObtenida || r.salidaError}</code>
           </li>
         ))}
         {ocultos.length > 0 && (
           <li className={ocultosAprobados ? 'text-green-600' : 'text-red-600'}>
-            {ocultosAprobados ? '✅' : '❌'} {ocultos.length} caso{ocultos.length > 1 ? 's' : ''} oculto
+            {ocultosAprobados ? '✅' : '❌'} {ocultos.length} caso
+            {ocultos.length > 1 ? 's' : ''} oculto
             {ocultos.length > 1 ? 's' : ''}
           </li>
         )}
       </ul>
-      {hint && <p className="mt-2 rounded bg-purple-50 p-2 text-sm text-purple-800">💡 {hint}</p>}
+      {hint && (
+        <p className="mt-2 rounded bg-purple-50 p-2 text-sm text-purple-800">
+          💡 {hint}
+        </p>
+      )}
     </div>
   )
 }
@@ -2715,11 +3278,16 @@ function ProblemDetailPage() {
   const { problema, casosPrueba, lenguajes, user } = Route.useLoaderData()
   const [lenguaje, setLenguaje] = useState(lenguajes[0]?.lenguaje ?? '')
   const [codigo, setCodigo] = useState(lenguajes[0]?.codigoInicial ?? '')
-  const [resultadosEjecucion, setResultadosEjecucion] = useState<ResultadoCasoPublico[] | null>(null)
+  const [resultadosEjecucion, setResultadosEjecucion] = useState<
+    ResultadoCasoPublico[] | null
+  >(null)
   const [errorEjecucion, setErrorEjecucion] = useState<string | null>(null)
   const [hint, setHint] = useState<string | null>(null)
   const [ejecutando, setEjecutando] = useState(false)
-  const [resultadoEnvio, setResultadoEnvio] = useState<{ envioId: string; veredicto: string } | null>(null)
+  const [resultadoEnvio, setResultadoEnvio] = useState<{
+    envioId: string
+    veredicto: string
+  } | null>(null)
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [mostrarAsistente, setMostrarAsistente] = useState(false)
@@ -2728,7 +3296,9 @@ function ProblemDetailPage() {
     return (
       <div className="p-8">
         <h1 className="text-xl font-bold">Problema no encontrado</h1>
-        <p className="text-red-600">No existe un problema con el id "{problemaId}".</p>
+        <p className="text-red-600">
+          No existe un problema con el id "{problemaId}".
+        </p>
       </div>
     )
   }
@@ -2736,7 +3306,13 @@ function ProblemDetailPage() {
   const problemaIdActual = problema.id
   const ejemplos = casosPrueba
     .filter((c) => c.visible)
-    .map((c) => ({ argumentos: c.argumentos, salidaEsperadaTexto: serializarCanonico(c.salidaEsperada, problema.tipoRetorno) }))
+    .map((c) => ({
+      argumentos: c.argumentos,
+      salidaEsperadaTexto: serializarCanonico(
+        c.salidaEsperada,
+        problema.tipoRetorno,
+      ),
+    }))
 
   function handleLenguajeChange(nuevoLenguaje: string) {
     setLenguaje(nuevoLenguaje)
@@ -2747,7 +3323,11 @@ function ProblemDetailPage() {
   async function handleRun() {
     setEjecutando(true)
     try {
-      const { resultados, error, hint: nuevoHint } = await ejecutarCodigo({
+      const {
+        resultados,
+        error,
+        hint: nuevoHint,
+      } = await ejecutarCodigo({
         data: { problemaId: problemaIdActual, lenguaje, codigo },
       })
       setResultadosEjecucion(resultados)
@@ -2761,12 +3341,17 @@ function ProblemDetailPage() {
   async function handleSubmit() {
     setEnviando(true)
     try {
-      const resultado = await enviarCodigo({ data: { problemaId: problemaIdActual, lenguaje, codigo } })
+      const resultado = await enviarCodigo({
+        data: { problemaId: problemaIdActual, lenguaje, codigo },
+      })
       if (resultado.error || !resultado.veredicto) {
         setErrorEnvio(resultado.error ?? 'No se pudo evaluar el envío.')
         setResultadoEnvio(null)
       } else {
-        setResultadoEnvio({ envioId: resultado.envioId, veredicto: resultado.veredicto })
+        setResultadoEnvio({
+          envioId: resultado.envioId,
+          veredicto: resultado.veredicto,
+        })
         setErrorEnvio(null)
       }
     } catch (err) {
@@ -2779,9 +3364,18 @@ function ProblemDetailPage() {
 
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
-      <ProblemDescription titulo={problema.titulo} descripcion={problema.descripcion} dificultad={problema.dificultad} ejemplos={ejemplos} />
+      <ProblemDescription
+        titulo={problema.titulo}
+        descripcion={problema.descripcion}
+        dificultad={problema.dificultad}
+        ejemplos={ejemplos}
+      />
       <div>
-        <select className="border p-2" value={lenguaje} onChange={(e) => handleLenguajeChange(e.target.value)}>
+        <select
+          className="border p-2"
+          value={lenguaje}
+          onChange={(e) => handleLenguajeChange(e.target.value)}
+        >
           {lenguajes.map((l) => (
             <option key={l.lenguaje} value={l.lenguaje}>
               {l.lenguaje}
@@ -2789,25 +3383,48 @@ function ProblemDetailPage() {
           ))}
         </select>
         <CodeEditor lenguaje={lenguaje} value={codigo} onChange={setCodigo} />
-        <button className="mt-2 rounded bg-gray-700 px-4 py-2 text-white" onClick={handleRun} disabled={ejecutando}>
+        <button
+          className="mt-2 rounded bg-gray-700 px-4 py-2 text-white"
+          onClick={handleRun}
+          disabled={ejecutando}
+        >
           {ejecutando ? 'Ejecutando...' : 'Run'}
         </button>
-        {errorEjecucion && <p className="mt-4 text-red-600">{errorEjecucion}</p>}
-        {!errorEjecucion && resultadosEjecucion && <RunResults results={resultadosEjecucion} hint={hint} />}
-        <button className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white" onClick={handleSubmit} disabled={enviando}>
+        {errorEjecucion && (
+          <p className="mt-4 text-red-600">{errorEjecucion}</p>
+        )}
+        {!errorEjecucion && resultadosEjecucion && (
+          <RunResults results={resultadosEjecucion} hint={hint} />
+        )}
+        <button
+          className="mt-2 ml-2 rounded bg-blue-600 px-4 py-2 text-white"
+          onClick={handleSubmit}
+          disabled={enviando}
+        >
           {enviando ? 'Enviando...' : 'Submit'}
         </button>
         {errorEnvio && <p className="mt-4 text-red-600">{errorEnvio}</p>}
         {!errorEnvio && resultadoEnvio && (
-          <SubmitResult envioId={resultadoEnvio.envioId} veredicto={resultadoEnvio.veredicto} mostrarFeedback={user?.categoria === 'invitado'} />
+          <SubmitResult
+            envioId={resultadoEnvio.envioId}
+            veredicto={resultadoEnvio.veredicto}
+            mostrarFeedback={user?.categoria === 'invitado'}
+          />
         )}
         {user && user.categoria === 'invitado' && (
-          <button className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white" onClick={() => setMostrarAsistente(true)}>
+          <button
+            className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
+            onClick={() => setMostrarAsistente(true)}
+          >
             Preguntar a Haiku
           </button>
         )}
         {mostrarAsistente && user && (
-          <AssistantModal problemaId={problemaIdActual} preguntasUsadas={user.preguntasIaUsadas} onClose={() => setMostrarAsistente(false)} />
+          <AssistantModal
+            problemaId={problemaIdActual}
+            preguntasUsadas={user.preguntasIaUsadas}
+            onClose={() => setMostrarAsistente(false)}
+          />
         )}
       </div>
     </div>
@@ -2834,17 +3451,22 @@ git commit -m "feat: tabla de ejemplos autogenerada, reset de lenguaje y resumen
 ### Task 21: Modelo de puntuación — clasificación
 
 **Files:**
+
 - Modify: `src/server/standings/calculate.ts`
 - Modify: `tests/standings.test.ts`
 
 **Interfaces:**
+
 - Produces: `RegistroProblema` (`{ id: string; puntos: number }`), `FilaClasificacion` (con `puntosTotales`), `calcularClasificacion(usuarios, envios, problemas, torneoIniciadoEn)` — nueva firma con 4 argumentos, ordena por puntos.
 
 - [ ] **Step 1: Reescribir `tests/standings.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import { calcularClasificacion, agruparClasificacionPorCategoria } from '../src/server/standings/calculate'
+import {
+  calcularClasificacion,
+  agruparClasificacionPorCategoria,
+} from '../src/server/standings/calculate'
 
 const start = new Date('2026-07-13T10:00:00Z')
 const problemas = [
@@ -2854,16 +3476,35 @@ const problemas = [
 
 describe('calcularClasificacion', () => {
   it('returns zero solved and zero points for a user with no submissions', () => {
-    const filas = calcularClasificacion([{ id: 'u1', nombre: 'Ana', categoria: 'senior' }], [], problemas, start)
+    const filas = calcularClasificacion(
+      [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
+      [],
+      problemas,
+      start,
+    )
     expect(filas).toEqual([
-      { usuarioId: 'u1', nombre: 'Ana', categoria: 'senior', cantidadResueltos: 0, puntosTotales: 0, minutosPenalizacionTotal: 0 },
+      {
+        usuarioId: 'u1',
+        nombre: 'Ana',
+        categoria: 'senior',
+        cantidadResueltos: 0,
+        puntosTotales: 0,
+        minutosPenalizacionTotal: 0,
+      },
     ])
   })
 
   it('counts an accepted submission as solved, sums its points, and applies time penalty', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:10:00Z') }],
+      [
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estado: 'aceptado',
+          creadoEn: new Date('2026-07-13T10:10:00Z'),
+        },
+      ],
       problemas,
       start,
     )
@@ -2876,9 +3517,24 @@ describe('calcularClasificacion', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
       [
-        { usuarioId: 'u1', problemaId: 'p1', estado: 'respuesta_incorrecta', creadoEn: new Date('2026-07-13T10:02:00Z') },
-        { usuarioId: 'u1', problemaId: 'p1', estado: 'respuesta_incorrecta', creadoEn: new Date('2026-07-13T10:05:00Z') },
-        { usuarioId: 'u1', problemaId: 'p1', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:10:00Z') },
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estado: 'respuesta_incorrecta',
+          creadoEn: new Date('2026-07-13T10:02:00Z'),
+        },
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estado: 'respuesta_incorrecta',
+          creadoEn: new Date('2026-07-13T10:05:00Z'),
+        },
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estado: 'aceptado',
+          creadoEn: new Date('2026-07-13T10:10:00Z'),
+        },
       ],
       problemas,
       start,
@@ -2891,7 +3547,14 @@ describe('calcularClasificacion', () => {
   it('does not count a problem with no accepted submission as solved', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estado: 'respuesta_incorrecta', creadoEn: new Date('2026-07-13T10:05:00Z') }],
+      [
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estado: 'respuesta_incorrecta',
+          creadoEn: new Date('2026-07-13T10:05:00Z'),
+        },
+      ],
       problemas,
       start,
     )
@@ -2907,8 +3570,18 @@ describe('calcularClasificacion', () => {
       ],
       [
         // Ana resuelve solo p2 (20 pts) — Beto resuelve p1 y p1-otra-vez no aplica, resuelve solo p1 (10 pts).
-        { usuarioId: 'u1', problemaId: 'p2', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:30:00Z') },
-        { usuarioId: 'u2', problemaId: 'p1', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:05:00Z') },
+        {
+          usuarioId: 'u1',
+          problemaId: 'p2',
+          estado: 'aceptado',
+          creadoEn: new Date('2026-07-13T10:30:00Z'),
+        },
+        {
+          usuarioId: 'u2',
+          problemaId: 'p1',
+          estado: 'aceptado',
+          creadoEn: new Date('2026-07-13T10:05:00Z'),
+        },
       ],
       problemas,
       start,
@@ -2920,7 +3593,14 @@ describe('calcularClasificacion', () => {
   it('ignores pending submissions', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'junior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estado: 'pendiente', creadoEn: new Date('2026-07-13T10:05:00Z') }],
+      [
+        {
+          usuarioId: 'u1',
+          problemaId: 'p1',
+          estado: 'pendiente',
+          creadoEn: new Date('2026-07-13T10:05:00Z'),
+        },
+      ],
       problemas,
       start,
     )
@@ -2932,9 +3612,30 @@ describe('calcularClasificacion', () => {
 describe('agruparClasificacionPorCategoria', () => {
   it('separa las filas en invitado, junior y senior', () => {
     const agrupado = agruparClasificacionPorCategoria([
-      { usuarioId: 'u1', nombre: 'Ana', categoria: 'senior', cantidadResueltos: 1, puntosTotales: 10, minutosPenalizacionTotal: 5 },
-      { usuarioId: 'u2', nombre: 'Beto', categoria: 'junior', cantidadResueltos: 0, puntosTotales: 0, minutosPenalizacionTotal: 0 },
-      { usuarioId: 'u3', nombre: 'Cata', categoria: 'invitado', cantidadResueltos: 0, puntosTotales: 0, minutosPenalizacionTotal: 0 },
+      {
+        usuarioId: 'u1',
+        nombre: 'Ana',
+        categoria: 'senior',
+        cantidadResueltos: 1,
+        puntosTotales: 10,
+        minutosPenalizacionTotal: 5,
+      },
+      {
+        usuarioId: 'u2',
+        nombre: 'Beto',
+        categoria: 'junior',
+        cantidadResueltos: 0,
+        puntosTotales: 0,
+        minutosPenalizacionTotal: 0,
+      },
+      {
+        usuarioId: 'u3',
+        nombre: 'Cata',
+        categoria: 'invitado',
+        cantidadResueltos: 0,
+        puntosTotales: 0,
+        minutosPenalizacionTotal: 0,
+      },
     ])
     expect(agrupado.senior.map((f) => f.usuarioId)).toEqual(['u1'])
     expect(agrupado.junior.map((f) => f.usuarioId)).toEqual(['u2'])
@@ -2954,7 +3655,12 @@ Expected: FAIL (`calcularClasificacion` todavía recibe 3 argumentos y ordena po
 export type RegistroEnvio = {
   usuarioId: string
   problemaId: string
-  estado: 'pendiente' | 'aceptado' | 'respuesta_incorrecta' | 'error_ejecucion' | 'tiempo_excedido'
+  estado:
+    | 'pendiente'
+    | 'aceptado'
+    | 'respuesta_incorrecta'
+    | 'error_ejecucion'
+    | 'tiempo_excedido'
   creadoEn: Date
 }
 
@@ -2991,9 +3697,9 @@ export function calcularClasificacion(
   }
 
   const filas = usuarios.map((usuario): FilaClasificacion => {
-    const enviosUsuario = (porUsuario.get(usuario.id) ?? []).slice().sort(
-      (a, b) => a.creadoEn.getTime() - b.creadoEn.getTime(),
-    )
+    const enviosUsuario = (porUsuario.get(usuario.id) ?? [])
+      .slice()
+      .sort((a, b) => a.creadoEn.getTime() - b.creadoEn.getTime())
     const porProblema = new Map<string, RegistroEnvio[]>()
     for (const e of enviosUsuario) {
       if (!porProblema.has(e.problemaId)) porProblema.set(e.problemaId, [])
@@ -3005,7 +3711,9 @@ export function calcularClasificacion(
     let minutosPenalizacionTotal = 0
 
     for (const [problemaId, enviosProblema] of porProblema) {
-      const indiceAceptado = enviosProblema.findIndex((e) => e.estado === 'aceptado')
+      const indiceAceptado = enviosProblema.findIndex(
+        (e) => e.estado === 'aceptado',
+      )
       if (indiceAceptado === -1) continue
       cantidadResueltos += 1
       puntosTotales += puntosPorProblema.get(problemaId) ?? 0
@@ -3014,7 +3722,8 @@ export function calcularClasificacion(
       const minutosDesdeInicio = Math.floor(
         (envioAceptado.creadoEn.getTime() - torneoIniciadoEn.getTime()) / 60000,
       )
-      minutosPenalizacionTotal += minutosDesdeInicio + intentosFallidosAntes * 20
+      minutosPenalizacionTotal +=
+        minutosDesdeInicio + intentosFallidosAntes * 20
     }
 
     return {
@@ -3028,7 +3737,8 @@ export function calcularClasificacion(
   })
 
   return filas.sort((a, b) => {
-    if (b.puntosTotales !== a.puntosTotales) return b.puntosTotales - a.puntosTotales
+    if (b.puntosTotales !== a.puntosTotales)
+      return b.puntosTotales - a.puntosTotales
     return a.minutosPenalizacionTotal - b.minutosPenalizacionTotal
   })
 }
@@ -3059,10 +3769,12 @@ git commit -m "feat: rankear el leaderboard por suma de puntos en vez de cantida
 ### Task 22: Leaderboard — server function y tabla
 
 **Files:**
+
 - Modify: `src/server/functions/leaderboard.ts`
 - Modify: `src/components/LeaderboardTable.tsx`
 
 **Interfaces:**
+
 - Consumes: `calcularClasificacion` con la nueva firma (Task 21), tabla `problemas` (Task 3).
 - Produces: `obtenerClasificacion` pasa los puntos de cada problema; `LeaderboardTable` muestra la columna de puntos.
 
@@ -3073,40 +3785,50 @@ import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { usuarios, envios, estadoTorneo, problemas } from '../db/schema'
-import { calcularClasificacion, agruparClasificacionPorCategoria } from '../standings/calculate'
+import {
+  calcularClasificacion,
+  agruparClasificacionPorCategoria,
+} from '../standings/calculate'
 import type { RegistroUsuario, RegistroProblema } from '../standings/calculate'
 
-export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(async () => {
-  const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
-  const estado = filasEstado.length > 0 ? filasEstado[0] : null
-  if (!estado?.iniciadoEn) {
-    return { iniciado: false as const, invitado: [], junior: [], senior: [] }
-  }
+export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const filasEstado = await db
+      .select()
+      .from(estadoTorneo)
+      .where(eq(estadoTorneo.id, 1))
+    const estado = filasEstado.length > 0 ? filasEstado[0] : null
+    if (!estado?.iniciadoEn) {
+      return { iniciado: false as const, invitado: [], junior: [], senior: [] }
+    }
 
-  const todosUsuarios = await db.select().from(usuarios)
-  const todosEnvios = await db.select().from(envios)
-  const todosProblemas = await db.select().from(problemas)
+    const todosUsuarios = await db.select().from(usuarios)
+    const todosEnvios = await db.select().from(envios)
+    const todosProblemas = await db.select().from(problemas)
 
-  const usuariosElegibles: Array<RegistroUsuario> = todosUsuarios
-    .filter((u) => u.rol === 'participante')
-    .map((u) => ({ id: u.id, nombre: u.name, categoria: u.categoria }))
+    const usuariosElegibles: Array<RegistroUsuario> = todosUsuarios
+      .filter((u) => u.rol === 'participante')
+      .map((u) => ({ id: u.id, nombre: u.name, categoria: u.categoria }))
 
-  const problemasConPuntos: Array<RegistroProblema> = todosProblemas.map((p) => ({ id: p.id, puntos: p.puntos }))
+    const problemasConPuntos: Array<RegistroProblema> = todosProblemas.map(
+      (p) => ({ id: p.id, puntos: p.puntos }),
+    )
 
-  const filas = calcularClasificacion(
-    usuariosElegibles,
-    todosEnvios.map((e) => ({
-      usuarioId: e.usuarioId,
-      problemaId: e.problemaId,
-      estado: e.estado,
-      creadoEn: e.creadoEn,
-    })),
-    problemasConPuntos,
-    estado.iniciadoEn,
-  )
-  const agrupado = agruparClasificacionPorCategoria(filas)
-  return { iniciado: true as const, ...agrupado }
-})
+    const filas = calcularClasificacion(
+      usuariosElegibles,
+      todosEnvios.map((e) => ({
+        usuarioId: e.usuarioId,
+        problemaId: e.problemaId,
+        estado: e.estado,
+        creadoEn: e.creadoEn,
+      })),
+      problemasConPuntos,
+      estado.iniciadoEn,
+    )
+    const agrupado = agruparClasificacionPorCategoria(filas)
+    return { iniciado: true as const, ...agrupado }
+  },
+)
 ```
 
 - [ ] **Step 2: Actualizar `LeaderboardTable.tsx`**
@@ -3114,7 +3836,13 @@ export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(as
 ```tsx
 import type { FilaClasificacion } from '#/server/standings/calculate'
 
-export function LeaderboardTable({ title, rows }: { title: string; rows: Array<FilaClasificacion> }) {
+export function LeaderboardTable({
+  title,
+  rows,
+}: {
+  title: string
+  rows: Array<FilaClasificacion>
+}) {
   return (
     <div>
       <h2 className="text-lg font-bold">{title}</h2>
@@ -3135,7 +3863,9 @@ export function LeaderboardTable({ title, rows }: { title: string; rows: Array<F
               <td className="border p-2">{row.nombre}</td>
               <td className="border p-2">{row.puntosTotales}</td>
               <td className="border p-2">{row.cantidadResueltos}</td>
-              <td className="border p-2">{Math.round(row.minutosPenalizacionTotal)} min</td>
+              <td className="border p-2">
+                {Math.round(row.minutosPenalizacionTotal)} min
+              </td>
             </tr>
           ))}
         </tbody>

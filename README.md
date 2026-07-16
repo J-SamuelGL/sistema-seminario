@@ -59,17 +59,17 @@ Las cuentas de participantes no se crean por auto-registro: un admin las provisi
 
 ## Scripts disponibles
 
-| Script                         | Descripción                                                              |
-| ------------------------------ | ------------------------------------------------------------------------- |
-| `npm run dev`                   | Levanta la webapp en `:3000`                                              |
-| `npm run dev:piston`             | Levanta Piston vía Docker Compose (`http://localhost:2000`)                |
-| `npm run piston:install-languages` | Instala los runtimes de lenguaje en Piston (solo hace falta una vez)   |
-| `npm run build`                 | Build de producción                                                       |
-| `npm run start`                  | Corre el build de producción (usado por Railway)                          |
-| `npm run test`                   | Corre los tests con Vitest                                                |
-| `npm run lint`                   | Lint con ESLint                                                            |
-| `npm run format`                  | Formatea con Prettier y corrige lint                                      |
-| `npm run check`                  | Verifica formato sin escribir cambios                                     |
+| Script                             | Descripción                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| `npm run dev`                      | Levanta la webapp en `:3000`                                                   |
+| `npm run dev:piston`               | Levanta Piston vía Docker Compose (`http://localhost:2000`)                    |
+| `npm run piston:install-languages` | Instala los runtimes de lenguaje en Piston (solo hace falta una vez)           |
+| `npm run build`                    | Build de producción                                                            |
+| `npm run start`                    | Corre el build de producción (usado por Railway)                               |
+| `npm run test`                     | Corre los tests con Vitest                                                     |
+| `npm run lint`                     | Lint con ESLint                                                                |
+| `npm run format`                   | Formatea con Prettier y corrige lint                                           |
+| `npm run check`                    | Verifica formato sin escribir cambios                                          |
 | `npm run generate-routes`          | Regenera `src/routeTree.gen.ts` (normalmente automático vía el plugin de Vite) |
 
 ## Testing

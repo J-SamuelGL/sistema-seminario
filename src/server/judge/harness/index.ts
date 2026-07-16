@@ -31,5 +31,11 @@ export function generarPrograma(
 ): { archivo: string; contenido: string } {
   const generador = GENERADORES[lenguaje]
   if (!generador) throw new Error(`Lenguaje no soportado: ${lenguaje}`)
-  return generador(codigoParticipante, nombreFuncion, parametros, tipoRetorno, argumentos)
+  return generador(
+    codigoParticipante,
+    nombreFuncion,
+    parametros,
+    tipoRetorno,
+    argumentos,
+  )
 }

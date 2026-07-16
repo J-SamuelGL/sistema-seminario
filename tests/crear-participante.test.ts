@@ -16,20 +16,36 @@ describe('crearCuentaParticipante', () => {
       semestre: null,
     })
 
-    const filasCuenta = await db.select().from(cuentas).where(eq(cuentas.userId, id))
+    const filasCuenta = await db
+      .select()
+      .from(cuentas)
+      .where(eq(cuentas.userId, id))
     const cuenta = filasCuenta.length > 0 ? filasCuenta[0] : null
     expect(cuenta?.providerId).toBe('credential')
     expect(cuenta?.password).toBeTruthy()
     expect(
-      await verifyPassword({ hash: cuenta!.password!, password: contrasenaGenerada }),
+      await verifyPassword({
+        hash: cuenta!.password!,
+        password: contrasenaGenerada,
+      }),
     ).toBe(true)
   })
 
   it('rechaza un correo que ya está registrado', async () => {
     const correo = `dup-${crypto.randomUUID()}@example.com`
-    await crearCuentaParticipante({ nombre: 'Ana', correo, categoria: 'invitado', carnet: null })
+    await crearCuentaParticipante({
+      nombre: 'Ana',
+      correo,
+      categoria: 'invitado',
+      carnet: null,
+    })
     await expect(
-      crearCuentaParticipante({ nombre: 'Ana 2', correo, categoria: 'junior', carnet: null }),
+      crearCuentaParticipante({
+        nombre: 'Ana 2',
+        correo,
+        categoria: 'junior',
+        carnet: null,
+      }),
     ).rejects.toThrow('Ya existe una cuenta con ese correo')
   })
 })

@@ -90,8 +90,8 @@ resto de dispositivos lo recogen en el siguiente ciclo de `refetchInterval`.
 
 - `resultados` (json, nullable): el arreglo completo por caso (argumentos, esperado, obtenido,
   error, tiempo excedido) que `submit.ts` ya calcula en cada envío pero hoy descarta — solo
-  persiste el veredicto final (`estado`). Sin este campo, un admin no tiene forma de revisar *por
-  qué* el sistema marcó algo como incorrecto, y el override sería una decisión a ciegas.
+  persiste el veredicto final (`estado`). Sin este campo, un admin no tiene forma de revisar _por
+  qué_ el sistema marcó algo como incorrecto, y el override sería una decisión a ciegas.
 - `veredictoOriginal` (mismo enum que `estado`, nullable): se llena solo la primera vez que se
   aprueba manualmente un envío, para poder revertir después.
 - `aprobadoPorId` (varchar, referencia a `usuarios.id`, nullable) y `aprobadoEn` (timestamp,

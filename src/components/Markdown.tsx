@@ -23,7 +23,11 @@ export function Markdown({ children }: { children: string }) {
               )
             }
             return (
-              <SyntaxHighlighter language={lenguaje} style={vscDarkPlus} PreTag="div">
+              <SyntaxHighlighter
+                language={lenguaje}
+                style={vscDarkPlus}
+                PreTag="div"
+              >
                 {String(children).replace(/\n$/, '')}
               </SyntaxHighlighter>
             )

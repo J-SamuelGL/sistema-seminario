@@ -1,5 +1,4 @@
-
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
 * {
@@ -28,4 +27,3 @@ body {
   border-radius: 0.25rem;
   padding: 0.15em 0.4em;
 }
-

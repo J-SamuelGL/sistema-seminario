@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { db } from '../src/server/db/client'
-import { estadoTorneo, usuarios, problemas, corridas } from '../src/server/db/schema'
+import {
+  estadoTorneo,
+  usuarios,
+  problemas,
+  corridas,
+} from '../src/server/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
 
 describe('conexión a la base de datos', () => {
@@ -70,13 +75,20 @@ describe('categorías y corridas', () => {
       await db
         .insert(corridas)
         .values({ usuarioId, problemaId, contador: 1 })
-        .onDuplicateKeyUpdate({ set: { contador: sql`${corridas.contador} + 1` } })
+        .onDuplicateKeyUpdate({
+          set: { contador: sql`${corridas.contador} + 1` },
+        })
     }
 
     const rows = await db
       .select()
       .from(corridas)
-      .where(and(eq(corridas.usuarioId, usuarioId), eq(corridas.problemaId, problemaId)))
+      .where(
+        and(
+          eq(corridas.usuarioId, usuarioId),
+          eq(corridas.problemaId, problemaId),
+        ),
+      )
     expect(rows[0]?.contador).toBe(2)
   })
 })

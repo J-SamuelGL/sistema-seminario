@@ -1,14 +1,23 @@
 import { Fragment, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { actualizarEstadoProgreso } from '#/server/functions/admin-respuestas'
-import { participantesConProgresoQueryOptions, progresoParticipanteQueryOptions } from '#/server/queries/respuestas'
+import {
+  participantesConProgresoQueryOptions,
+  progresoParticipanteQueryOptions,
+} from '#/server/queries/respuestas'
 import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/respuestas/$usuarioId')({
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(progresoParticipanteQueryOptions(params.usuarioId)),
+    context.queryClient.ensureQueryData(
+      progresoParticipanteQueryOptions(params.usuarioId),
+    ),
   component: AdminRespuestaDetallePage,
 })
 
@@ -25,20 +34,35 @@ function AdminRespuestaDetallePage() {
   const [expandido, setExpandido] = useState<string | null>(null)
 
   const cambiarEstado = useMutation({
-    mutationFn: (vars: { problemaId: string; estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual' }) =>
-      actualizarEstadoProgreso({ data: { usuarioId, problemaId: vars.problemaId, estadoProgreso: vars.estadoProgreso } }),
+    mutationFn: (vars: {
+      problemaId: string
+      estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual'
+    }) =>
+      actualizarEstadoProgreso({
+        data: {
+          usuarioId,
+          problemaId: vars.problemaId,
+          estadoProgreso: vars.estadoProgreso,
+        },
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: progresoParticipanteQueryOptions(usuarioId).queryKey })
-      queryClient.invalidateQueries({ queryKey: participantesConProgresoQueryOptions().queryKey })
+      queryClient.invalidateQueries({
+        queryKey: progresoParticipanteQueryOptions(usuarioId).queryKey,
+      })
+      queryClient.invalidateQueries({
+        queryKey: participantesConProgresoQueryOptions().queryKey,
+      })
       toast.success('Estado actualizado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   return (
     <div className="flex flex-col gap-4 p-8">
       <h1 className="text-xl font-bold">
-        {data.participante.nombre} — {data.puntosTotales} pts — Puesto #{data.puesto ?? '—'}
+        {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
+        {data.puesto ?? '—'}
       </h1>
       <table className="w-full border-collapse text-left">
         <thead>
@@ -60,7 +84,11 @@ function AdminRespuestaDetallePage() {
                   {p.codigo && (
                     <button
                       className="mr-2 text-blue-600 underline"
-                      onClick={() => setExpandido(expandido === p.problemaId ? null : p.problemaId)}
+                      onClick={() =>
+                        setExpandido(
+                          expandido === p.problemaId ? null : p.problemaId,
+                        )
+                      }
                     >
                       {expandido === p.problemaId ? '▾' : '▸'}
                     </button>
@@ -70,8 +98,14 @@ function AdminRespuestaDetallePage() {
                 <td className="p-2">{p.dificultad}</td>
                 <td className="p-2">{p.categoriaProblema}</td>
                 <td className="p-2">{ETIQUETAS_ESTADO[p.estadoProgreso]}</td>
-                <td className="p-2">{p.duracionMinutos !== null ? `${p.duracionMinutos} min` : '—'}</td>
-                <td className="p-2">{p.creadoEn ? new Date(p.creadoEn).toLocaleString() : '—'}</td>
+                <td className="p-2">
+                  {p.duracionMinutos !== null
+                    ? `${p.duracionMinutos} min`
+                    : '—'}
+                </td>
+                <td className="p-2">
+                  {p.creadoEn ? new Date(p.creadoEn).toLocaleString() : '—'}
+                </td>
                 <td className="p-2">
                   <div className="flex items-center gap-2">
                     <select
@@ -81,7 +115,8 @@ function AdminRespuestaDetallePage() {
                       onChange={(e) =>
                         cambiarEstado.mutate({
                           problemaId: p.problemaId,
-                          estadoProgreso: e.target.value as 'pendiente' | 'completado' | 'aprobado_manual',
+                          estadoProgreso: e.target.value as
+                            'pendiente' | 'completado' | 'aprobado_manual',
                         })
                       }
                     >
@@ -96,14 +131,24 @@ function AdminRespuestaDetallePage() {
               {expandido === p.problemaId && p.codigo && (
                 <tr className="border-b bg-gray-50">
                   <td colSpan={7} className="p-2">
-                    <p className="text-sm text-gray-600">Lenguaje: {p.lenguaje}</p>
-                    <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">{p.codigo}</pre>
+                    <p className="text-sm text-gray-600">
+                      Lenguaje: {p.lenguaje}
+                    </p>
+                    <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">
+                      {p.codigo}
+                    </pre>
                     {p.resultados && (
                       <ul className="mt-2 flex flex-col gap-1 text-sm">
                         {p.resultados.map((r, i) => (
                           <li key={i}>
-                            <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code> — Esperado:{' '}
-                            <code>{r.salidaEsperada}</code> — Obtenido: <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
+                            <code>
+                              {r.argumentos
+                                .map((a) => JSON.stringify(a))
+                                .join(', ')}
+                            </code>{' '}
+                            — Esperado: <code>{r.salidaEsperada}</code> —
+                            Obtenido:{' '}
+                            <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
                             {r.aprobado ? '✅' : '❌'}
                           </li>
                         ))}

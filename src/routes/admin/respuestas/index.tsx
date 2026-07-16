@@ -3,7 +3,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { participantesConProgresoQueryOptions } from '#/server/queries/respuestas'
 
 export const Route = createFileRoute('/admin/respuestas/')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(participantesConProgresoQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(participantesConProgresoQueryOptions()),
   component: AdminRespuestasPage,
 })
 
@@ -24,7 +25,9 @@ function AdminRespuestasPage() {
         if (filas.length === 0) return null
         return (
           <div key={categoria} className="mt-6">
-            <h2 className="text-lg font-bold">{ETIQUETAS_CATEGORIA[categoria]}</h2>
+            <h2 className="text-lg font-bold">
+              {ETIQUETAS_CATEGORIA[categoria]}
+            </h2>
             <table className="mt-2 w-full border-collapse text-left">
               <thead>
                 <tr className="border-b">
@@ -40,7 +43,11 @@ function AdminRespuestasPage() {
                   <tr key={f.usuarioId} className="border-b">
                     <td className="p-2">{f.puesto}</td>
                     <td className="p-2">
-                      <Link to="/admin/respuestas/$usuarioId" params={{ usuarioId: f.usuarioId }} className="text-blue-600 underline">
+                      <Link
+                        to="/admin/respuestas/$usuarioId"
+                        params={{ usuarioId: f.usuarioId }}
+                        className="text-blue-600 underline"
+                      >
                         {f.nombre}
                       </Link>
                     </td>

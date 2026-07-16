@@ -1,12 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { iniciarTorneo, concluirTorneo } from '#/server/functions/tournament'
 import { estadoTorneoQueryOptions } from '#/server/queries/torneo'
 import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/torneo')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(estadoTorneoQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(estadoTorneoQueryOptions()),
   component: TournamentControlPage,
 })
 
@@ -24,7 +29,8 @@ function TournamentControlPage() {
       })
       toast.success('Torneo iniciado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const concluir = useMutation({
@@ -36,17 +42,24 @@ function TournamentControlPage() {
       })
       toast.success('Torneo concluido.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   return (
     <div className="p-8">
       <h1 className="text-xl font-bold">Control del torneo</h1>
       {estado.finalizadoEn ? (
-        <p>Torneo concluido a las {new Date(estado.finalizadoEn).toLocaleTimeString()}</p>
+        <p>
+          Torneo concluido a las{' '}
+          {new Date(estado.finalizadoEn).toLocaleTimeString()}
+        </p>
       ) : estado.iniciadoEn ? (
         <div>
-          <p>Torneo iniciado a las {new Date(estado.iniciadoEn).toLocaleTimeString()}</p>
+          <p>
+            Torneo iniciado a las{' '}
+            {new Date(estado.iniciadoEn).toLocaleTimeString()}
+          </p>
           <button
             className="mt-4 rounded bg-red-600 px-4 py-2 text-white"
             onClick={() => concluir.mutate()}

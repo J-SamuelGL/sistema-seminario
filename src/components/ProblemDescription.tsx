@@ -26,7 +26,9 @@ export function ProblemDescription({
             {ejemplos.map((ej, i) => (
               <tr key={i}>
                 <td className="border p-2">
-                  <code>{ej.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code>
+                  <code>
+                    {ej.argumentos.map((a) => JSON.stringify(a)).join(', ')}
+                  </code>
                 </td>
                 <td className="border p-2">
                   <code>{ej.salidaEsperadaTexto}</code>

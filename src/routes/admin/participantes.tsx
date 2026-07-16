@@ -81,11 +81,13 @@ function AdminParticipantsPage() {
       })
       toast.success('Participante registrado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const reenviar = useMutation({
-    mutationFn: (usuarioId: string) => reenviarCredenciales({ data: usuarioId }),
+    mutationFn: (usuarioId: string) =>
+      reenviarCredenciales({ data: usuarioId }),
     onSuccess: (resultado, usuarioId) => {
       setRegistrados((prev) =>
         prev.map((p) =>
@@ -100,7 +102,8 @@ function AdminParticipantsPage() {
       )
       toast.success('Credenciales reenviadas.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const eliminar = useMutation({
@@ -112,7 +115,8 @@ function AdminParticipantsPage() {
       })
       toast.success('Participante eliminado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   function handleRegistrar(e: React.FormEvent) {

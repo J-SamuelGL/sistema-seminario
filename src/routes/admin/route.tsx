@@ -3,7 +3,8 @@ import { NavbarAdmin } from '#/components/NavbarAdmin'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 
 export const Route = createFileRoute('/admin')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
   component: AdminLayout,
 })
 

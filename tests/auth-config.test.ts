@@ -8,6 +8,8 @@ describe('configuración de Better Auth', () => {
   })
 
   it('no configura proveedores OAuth', () => {
-    expect((auth.options as { socialProviders?: unknown }).socialProviders).toBeUndefined()
+    expect(
+      (auth.options as { socialProviders?: unknown }).socialProviders,
+    ).toBeUndefined()
   })
 })

@@ -1,45 +1,64 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { registrarAdministrador, eliminarAdministrador } from '#/server/functions/administradores'
+import {
+  registrarAdministrador,
+  eliminarAdministrador,
+} from '#/server/functions/administradores'
 import { administradoresQueryOptions } from '#/server/queries/administradores'
 import { datosAdministradorSchema } from '#/server/administradores/validar'
 import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/administradores')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(administradoresQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(administradoresQueryOptions()),
   component: AdminAdministradoresPage,
 })
 
 function AdminAdministradoresPage() {
   const queryClient = useQueryClient()
-  const { data: administradores } = useSuspenseQuery(administradoresQueryOptions())
+  const { data: administradores } = useSuspenseQuery(
+    administradoresQueryOptions(),
+  )
   const [nombre, setNombre] = useState('')
   const [correo, setCorreo] = useState('')
-  const [credenciales, setCredenciales] = useState<
-    { correoEnviado: boolean; contrasenaGenerada: string } | null
-  >(null)
+  const [credenciales, setCredenciales] = useState<{
+    correoEnviado: boolean
+    contrasenaGenerada: string
+  } | null>(null)
 
   const crear = useMutation({
-    mutationFn: (input: { nombre: string; correo: string }) => registrarAdministrador({ data: input }),
+    mutationFn: (input: { nombre: string; correo: string }) =>
+      registrarAdministrador({ data: input }),
     onSuccess: (resultado) => {
       setCredenciales(resultado)
       setNombre('')
       setCorreo('')
-      queryClient.invalidateQueries({ queryKey: administradoresQueryOptions().queryKey })
+      queryClient.invalidateQueries({
+        queryKey: administradoresQueryOptions().queryKey,
+      })
       toast.success('Administrador registrado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const eliminar = useMutation({
-    mutationFn: (usuarioId: string) => eliminarAdministrador({ data: usuarioId }),
+    mutationFn: (usuarioId: string) =>
+      eliminarAdministrador({ data: usuarioId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: administradoresQueryOptions().queryKey })
+      queryClient.invalidateQueries({
+        queryKey: administradoresQueryOptions().queryKey,
+      })
       toast.success('Administrador eliminado.')
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   return (
@@ -50,7 +69,10 @@ function AdminAdministradoresPage() {
         className="flex flex-col gap-2"
         onSubmit={(e) => {
           e.preventDefault()
-          const validacion = datosAdministradorSchema.safeParse({ nombre, correo })
+          const validacion = datosAdministradorSchema.safeParse({
+            nombre,
+            correo,
+          })
           if (!validacion.success) {
             toast.error(validacion.error.issues[0].message)
             return
@@ -91,13 +113,17 @@ function AdminAdministradoresPage() {
 
       {credenciales && !credenciales.correoEnviado && (
         <p className="text-yellow-600">
-          ⚠️ No se pudo enviar el correo — contraseña: {credenciales.contrasenaGenerada}
+          ⚠️ No se pudo enviar el correo — contraseña:{' '}
+          {credenciales.contrasenaGenerada}
         </p>
       )}
 
       <ul className="flex flex-col gap-2">
         {administradores.map((a) => (
-          <li key={a.id} className="flex items-center justify-between border p-2">
+          <li
+            key={a.id}
+            className="flex items-center justify-between border p-2"
+          >
             <span>
               <strong>{a.nombre}</strong> — {a.correo}
             </span>

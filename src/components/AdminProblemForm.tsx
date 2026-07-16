@@ -3,10 +3,24 @@ import { toast } from 'sonner'
 import { Spinner } from '#/components/Spinner'
 
 export type TipoDatoFormulario =
-  | 'int' | 'float' | 'bool' | 'string' | 'list<int>' | 'list<float>' | 'list<bool>' | 'list<string>'
+  | 'int'
+  | 'float'
+  | 'bool'
+  | 'string'
+  | 'list<int>'
+  | 'list<float>'
+  | 'list<bool>'
+  | 'list<string>'
 
 const TIPOS_DATO: TipoDatoFormulario[] = [
-  'int', 'float', 'bool', 'string', 'list<int>', 'list<float>', 'list<bool>', 'list<string>',
+  'int',
+  'float',
+  'bool',
+  'string',
+  'list<int>',
+  'list<float>',
+  'list<bool>',
+  'list<string>',
 ]
 
 const LENGUAJES_DISPONIBLES = ['python', 'javascript', 'java', 'csharp', 'php']
@@ -26,14 +40,25 @@ const GRUPOS: { valor: 'invitado_junior' | 'senior'; etiqueta: string }[] = [
 
 export type CategoriaProblemaFormulario = 'debugging' | 'normal'
 
-const CATEGORIAS_PROBLEMA: { valor: CategoriaProblemaFormulario; etiqueta: string }[] = [
+const CATEGORIAS_PROBLEMA: {
+  valor: CategoriaProblemaFormulario
+  etiqueta: string
+}[] = [
   { valor: 'normal', etiqueta: 'Normal' },
   { valor: 'debugging', etiqueta: 'Debugging' },
 ]
 
 export type ParametroFormulario = { nombre: string; tipo: TipoDatoFormulario }
-export type LenguajeFormulario = { lenguaje: string; nombreFuncion: string; codigoInicial: string }
-export type CasoPruebaFormulario = { argumentosTexto: string[]; salidaEsperadaTexto: string; visible: boolean }
+export type LenguajeFormulario = {
+  lenguaje: string
+  nombreFuncion: string
+  codigoInicial: string
+}
+export type CasoPruebaFormulario = {
+  argumentosTexto: string[]
+  salidaEsperadaTexto: string
+  visible: boolean
+}
 
 export type ValorFormularioProblema = {
   titulo: string
@@ -60,7 +85,11 @@ export type DatosProblemaEnviado = {
   parametros: ParametroFormulario[]
   tipoRetorno: TipoDatoFormulario
   lenguajes: LenguajeFormulario[]
-  casosPrueba: { argumentos: unknown[]; salidaEsperada: unknown; visible: boolean }[]
+  casosPrueba: {
+    argumentos: unknown[]
+    salidaEsperada: unknown
+    visible: boolean
+  }[]
 }
 
 export function AdminProblemForm({
@@ -74,17 +103,28 @@ export function AdminProblemForm({
 }) {
   const [value, setValue] = useState(initial)
 
-  function actualizarParametro(index: number, campo: 'nombre' | 'tipo', texto: string) {
+  function actualizarParametro(
+    index: number,
+    campo: 'nombre' | 'tipo',
+    texto: string,
+  ) {
     const next = value.parametros.slice()
-    next[index] = { ...next[index], [campo]: texto } as ParametroFormulario
+    next[index] = { ...next[index], [campo]: texto }
     setValue({ ...value, parametros: next })
   }
 
   function agregarParametro() {
-    setValue({ ...value, parametros: [...value.parametros, { nombre: '', tipo: 'int' }] })
+    setValue({
+      ...value,
+      parametros: [...value.parametros, { nombre: '', tipo: 'int' }],
+    })
   }
 
-  function actualizarLenguaje(index: number, campo: 'nombreFuncion' | 'codigoInicial', texto: string) {
+  function actualizarLenguaje(
+    index: number,
+    campo: 'nombreFuncion' | 'codigoInicial',
+    texto: string,
+  ) {
     const next = value.lenguajes.slice()
     next[index] = { ...next[index], [campo]: texto }
     setValue({ ...value, lenguajes: next })
@@ -93,19 +133,39 @@ export function AdminProblemForm({
   function alternarLenguaje(lenguaje: string) {
     const existe = value.lenguajes.some((l) => l.lenguaje === lenguaje)
     if (existe) {
-      setValue({ ...value, lenguajes: value.lenguajes.filter((l) => l.lenguaje !== lenguaje) })
+      setValue({
+        ...value,
+        lenguajes: value.lenguajes.filter((l) => l.lenguaje !== lenguaje),
+      })
     } else {
-      setValue({ ...value, lenguajes: [...value.lenguajes, { lenguaje, nombreFuncion: '', codigoInicial: '' }] })
+      setValue({
+        ...value,
+        lenguajes: [
+          ...value.lenguajes,
+          { lenguaje, nombreFuncion: '', codigoInicial: '' },
+        ],
+      })
     }
   }
 
-  function actualizarCasoPrueba(index: number, campo: 'salidaEsperadaTexto' | 'visible', valorCampo: string | boolean) {
+  function actualizarCasoPrueba(
+    index: number,
+    campo: 'salidaEsperadaTexto' | 'visible',
+    valorCampo: string | boolean,
+  ) {
     const next = value.casosPrueba.slice()
-    next[index] = { ...next[index], [campo]: valorCampo } as CasoPruebaFormulario
+    next[index] = {
+      ...next[index],
+      [campo]: valorCampo,
+    }
     setValue({ ...value, casosPrueba: next })
   }
 
-  function actualizarArgumento(indexCaso: number, indexArgumento: number, texto: string) {
+  function actualizarArgumento(
+    indexCaso: number,
+    indexArgumento: number,
+    texto: string,
+  ) {
     const next = value.casosPrueba.slice()
     const argumentos = next[indexCaso].argumentosTexto.slice()
     argumentos[indexArgumento] = texto
@@ -118,7 +178,11 @@ export function AdminProblemForm({
       ...value,
       casosPrueba: [
         ...value.casosPrueba,
-        { argumentosTexto: value.parametros.map(() => ''), salidaEsperadaTexto: '', visible: true },
+        {
+          argumentosTexto: value.parametros.map(() => ''),
+          salidaEsperadaTexto: '',
+          visible: true,
+        },
       ],
     })
   }
@@ -148,13 +212,21 @@ export function AdminProblemForm({
     >
       <label className="flex flex-col gap-1">
         Título
-        <input className="border p-2" placeholder="Título" value={value.titulo}
-          onChange={(e) => setValue({ ...value, titulo: e.target.value })} />
+        <input
+          className="border p-2"
+          placeholder="Título"
+          value={value.titulo}
+          onChange={(e) => setValue({ ...value, titulo: e.target.value })}
+        />
       </label>
       <label className="flex flex-col gap-1">
         Descripción
-        <textarea className="border p-2" placeholder="Descripción (markdown)" value={value.descripcion}
-          onChange={(e) => setValue({ ...value, descripcion: e.target.value })} />
+        <textarea
+          className="border p-2"
+          placeholder="Descripción (markdown)"
+          value={value.descripcion}
+          onChange={(e) => setValue({ ...value, descripcion: e.target.value })}
+        />
       </label>
       <div>
         <span className="mb-2 block font-bold">Dificultad</span>
@@ -178,8 +250,15 @@ export function AdminProblemForm({
       </div>
       <label className="flex flex-col gap-1">
         Puntos
-        <input className="border p-2" type="number" placeholder="Puntos" value={value.puntos}
-          onChange={(e) => setValue({ ...value, puntos: Number(e.target.value) })} />
+        <input
+          className="border p-2"
+          type="number"
+          placeholder="Puntos"
+          value={value.puntos}
+          onChange={(e) =>
+            setValue({ ...value, puntos: Number(e.target.value) })
+          }
+        />
       </label>
       <div>
         <span className="mb-2 block font-bold">Grupo</span>
@@ -227,30 +306,53 @@ export function AdminProblemForm({
         <div key={i} className="flex gap-2">
           <label className="flex flex-col gap-1">
             Nombre
-            <input className="border p-2" placeholder="nombre" value={p.nombre}
-              onChange={(e) => actualizarParametro(i, 'nombre', e.target.value)} />
+            <input
+              className="border p-2"
+              placeholder="nombre"
+              value={p.nombre}
+              onChange={(e) => actualizarParametro(i, 'nombre', e.target.value)}
+            />
           </label>
           <label className="flex flex-col gap-1">
             Tipo
-            <select className="border p-2" value={p.tipo}
-              onChange={(e) => actualizarParametro(i, 'tipo', e.target.value)}>
+            <select
+              className="border p-2"
+              value={p.tipo}
+              onChange={(e) => actualizarParametro(i, 'tipo', e.target.value)}
+            >
               {TIPOS_DATO.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </select>
           </label>
         </div>
       ))}
-      <button type="button" className="rounded bg-gray-200 px-4 py-2" onClick={agregarParametro}>
+      <button
+        type="button"
+        className="rounded bg-gray-200 px-4 py-2"
+        onClick={agregarParametro}
+      >
         + Agregar parámetro
       </button>
 
       <label>
         Tipo de retorno:
-        <select className="ml-2 border p-2" value={value.tipoRetorno}
-          onChange={(e) => setValue({ ...value, tipoRetorno: e.target.value as TipoDatoFormulario })}>
+        <select
+          className="ml-2 border p-2"
+          value={value.tipoRetorno}
+          onChange={(e) =>
+            setValue({
+              ...value,
+              tipoRetorno: e.target.value as TipoDatoFormulario,
+            })
+          }
+        >
           {TIPOS_DATO.map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
       </label>
@@ -262,20 +364,36 @@ export function AdminProblemForm({
         return (
           <div key={lenguaje} className="border p-2">
             <label>
-              <input type="checkbox" checked={!!config} onChange={() => alternarLenguaje(lenguaje)} />
+              <input
+                type="checkbox"
+                checked={!!config}
+                onChange={() => alternarLenguaje(lenguaje)}
+              />
               <span className="ml-2">{lenguaje}</span>
             </label>
             {config && (
               <div className="mt-2 flex flex-col gap-2">
                 <label className="flex flex-col gap-1">
                   Nombre de la función
-                  <input className="border p-2" placeholder="Nombre de la función" value={config.nombreFuncion}
-                    onChange={(e) => actualizarLenguaje(index, 'nombreFuncion', e.target.value)} />
+                  <input
+                    className="border p-2"
+                    placeholder="Nombre de la función"
+                    value={config.nombreFuncion}
+                    onChange={(e) =>
+                      actualizarLenguaje(index, 'nombreFuncion', e.target.value)
+                    }
+                  />
                 </label>
                 <label className="flex flex-col gap-1">
                   Código inicial
-                  <textarea className="border p-2 font-mono" placeholder="Código inicial" value={config.codigoInicial}
-                    onChange={(e) => actualizarLenguaje(index, 'codigoInicial', e.target.value)} />
+                  <textarea
+                    className="border p-2 font-mono"
+                    placeholder="Código inicial"
+                    value={config.codigoInicial}
+                    onChange={(e) =>
+                      actualizarLenguaje(index, 'codigoInicial', e.target.value)
+                    }
+                  />
                 </label>
               </div>
             )}
@@ -289,23 +407,42 @@ export function AdminProblemForm({
           {value.parametros.map((p, j) => (
             <label key={j} className="flex flex-col gap-1">
               {p.nombre || `Argumento ${j + 1}`}
-              <input className="border p-2" placeholder={`${p.nombre} (JSON)`} value={caso.argumentosTexto[j] ?? ''}
-                onChange={(e) => actualizarArgumento(i, j, e.target.value)} />
+              <input
+                className="border p-2"
+                placeholder={`${p.nombre} (JSON)`}
+                value={caso.argumentosTexto[j] ?? ''}
+                onChange={(e) => actualizarArgumento(i, j, e.target.value)}
+              />
             </label>
           ))}
           <label className="flex flex-col gap-1">
             Salida esperada
-            <input className="border p-2" placeholder="Salida esperada (JSON)" value={caso.salidaEsperadaTexto}
-              onChange={(e) => actualizarCasoPrueba(i, 'salidaEsperadaTexto', e.target.value)} />
+            <input
+              className="border p-2"
+              placeholder="Salida esperada (JSON)"
+              value={caso.salidaEsperadaTexto}
+              onChange={(e) =>
+                actualizarCasoPrueba(i, 'salidaEsperadaTexto', e.target.value)
+              }
+            />
           </label>
           <label>
-            <input type="checkbox" checked={caso.visible}
-              onChange={(e) => actualizarCasoPrueba(i, 'visible', e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={caso.visible}
+              onChange={(e) =>
+                actualizarCasoPrueba(i, 'visible', e.target.checked)
+              }
+            />
             <span className="ml-2">Visible para el participante</span>
           </label>
         </div>
       ))}
-      <button type="button" className="rounded bg-gray-200 px-4 py-2" onClick={agregarCasoPrueba}>
+      <button
+        type="button"
+        className="rounded bg-gray-200 px-4 py-2"
+        onClick={agregarCasoPrueba}
+      >
         + Agregar caso de prueba
       </button>
 

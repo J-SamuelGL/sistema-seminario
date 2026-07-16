@@ -33,7 +33,8 @@ export function calcularClasificacion(
   const resueltosPorUsuario = new Map<string, RegistroEnvio[]>()
   for (const e of envios) {
     if (e.estadoProgreso === 'pendiente') continue
-    if (!resueltosPorUsuario.has(e.usuarioId)) resueltosPorUsuario.set(e.usuarioId, [])
+    if (!resueltosPorUsuario.has(e.usuarioId))
+      resueltosPorUsuario.set(e.usuarioId, [])
     resueltosPorUsuario.get(e.usuarioId)!.push(e)
   }
 
@@ -64,7 +65,8 @@ export function calcularClasificacion(
   })
 
   return filas.sort((a, b) => {
-    if (b.puntosTotales !== a.puntosTotales) return b.puntosTotales - a.puntosTotales
+    if (b.puntosTotales !== a.puntosTotales)
+      return b.puntosTotales - a.puntosTotales
     return a.minutosPenalizacionTotal - b.minutosPenalizacionTotal
   })
 }

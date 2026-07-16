@@ -12,7 +12,9 @@ export function calcularDuraciones(
   resueltos: RegistroResuelto[],
   torneoIniciadoEn: Date,
 ): FilaDuracion[] {
-  const ordenados = resueltos.slice().sort((a, b) => a.creadoEn.getTime() - b.creadoEn.getTime())
+  const ordenados = resueltos
+    .slice()
+    .sort((a, b) => a.creadoEn.getTime() - b.creadoEn.getTime())
 
   const filas: FilaDuracion[] = []
   let ultimoTimestamp = torneoIniciadoEn

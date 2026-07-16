@@ -11,7 +11,7 @@ describe('ejecutarCasosPrueba', () => {
   it('genera un programa por caso, compara contra el texto canónico y agrega el veredicto', async () => {
     vi.mocked(ejecutarPiston).mockImplementation(
       async (_lenguaje, _archivo, contenido) => ({
-        salidaEstandar: (contenido as string).includes('"hola"')
+        salidaEstandar: contenido.includes('"hola"')
           ? `${MARCADOR_RESULTADO_JUEZ}2`
           : `${MARCADOR_RESULTADO_JUEZ}5`,
         salidaError: '',

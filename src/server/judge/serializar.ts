@@ -18,7 +18,8 @@ export function serializarCanonico(valor: Valor, tipo: TipoDato): string {
 function compararFloats(obtenido: string, esperado: string): boolean {
   const numObtenido = Number(obtenido)
   const numEsperado = Number(esperado)
-  if (!Number.isFinite(numObtenido) || !Number.isFinite(numEsperado)) return false
+  if (!Number.isFinite(numObtenido) || !Number.isFinite(numEsperado))
+    return false
   return numObtenido === numEsperado
 }
 
@@ -36,7 +37,11 @@ function partesDeLista(texto: string): string[] {
  * JS/PHP/C# imprimen `2`). Para el resto de los tipos se mantiene la igualdad
  * estricta de strings.
  */
-export function compararSalidas(salidaObtenida: string, salidaEsperadaTexto: string, tipo: TipoDato): boolean {
+export function compararSalidas(
+  salidaObtenida: string,
+  salidaEsperadaTexto: string,
+  tipo: TipoDato,
+): boolean {
   if (tipo === 'float') {
     return compararFloats(salidaObtenida, salidaEsperadaTexto)
   }

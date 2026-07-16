@@ -1,5 +1,8 @@
 import { queryOptions } from '@tanstack/react-query'
-import { listarParticipantesConProgreso, obtenerProgresoParticipante } from '../functions/admin-respuestas'
+import {
+  listarParticipantesConProgreso,
+  obtenerProgresoParticipante,
+} from '../functions/admin-respuestas'
 
 export function participantesConProgresoQueryOptions() {
   return queryOptions({

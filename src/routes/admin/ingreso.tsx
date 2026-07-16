@@ -1,5 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { QrScanner } from '#/components/QrScanner'
 import { registrarIngresoPorToken } from '#/server/functions/checkin'
@@ -7,7 +11,8 @@ import { participantesQueryOptions } from '#/server/queries/participantes'
 import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/ingreso')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(participantesQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(participantesQueryOptions()),
   component: CheckinPage,
 })
 
@@ -18,9 +23,12 @@ function CheckinPage() {
   const escanear = useMutation({
     mutationFn: (token: string) => registrarIngresoPorToken({ data: token }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: participantesQueryOptions().queryKey })
+      queryClient.invalidateQueries({
+        queryKey: participantesQueryOptions().queryKey,
+      })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const yaIngresados = participantes.filter((p) => p.ingresadoEn).length
@@ -30,7 +38,8 @@ function CheckinPage() {
     <div className="flex flex-col items-center gap-4 p-8">
       <h1 className="text-xl font-bold">Check-in</h1>
       <p className="text-sm text-gray-600">
-        {yaIngresados} de {participantes.length} participantes ya hicieron check-in
+        {yaIngresados} de {participantes.length} participantes ya hicieron
+        check-in
       </p>
       <QrScanner onScan={(token) => escanear.mutate(token)} />
       {escanear.isPending && (
@@ -39,7 +48,9 @@ function CheckinPage() {
         </p>
       )}
       {ultimoResultado?.status === 'ingresado' && (
-        <p className="text-green-600">✅ {ultimoResultado.nombreUsuario} presente</p>
+        <p className="text-green-600">
+          ✅ {ultimoResultado.nombreUsuario} presente
+        </p>
       )}
       {ultimoResultado?.status === 'ya_ingresado' && (
         <p className="text-yellow-600">

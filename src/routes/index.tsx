@@ -24,7 +24,8 @@ function Home() {
       const esAdmin = (data.user as { rol?: string }).rol === 'admin'
       navigate({ to: esAdmin ? '/admin/participantes' : '/perfil' })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   function handleLogin(e: React.FormEvent) {
@@ -37,7 +38,8 @@ function Home() {
       <h1 className="text-4xl font-bold">Torneo de Programación</h1>
       <form className="flex w-72 flex-col gap-4" onSubmit={handleLogin}>
         <p className="text-sm text-gray-500">
-          Usa el correo y la contraseña que te llegaron por correo cuando te registraste.
+          Usa el correo y la contraseña que te llegaron por correo cuando te
+          registraste.
         </p>
         <input
           className="border p-2"

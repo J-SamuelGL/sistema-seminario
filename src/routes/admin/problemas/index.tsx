@@ -3,7 +3,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { problemasQueryOptions } from '#/server/queries/problemas'
 
 export const Route = createFileRoute('/admin/problemas/')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(problemasQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(problemasQueryOptions()),
   component: AdminProblemsList,
 })
 
@@ -22,7 +23,11 @@ function AdminProblemsList() {
   return (
     <div className="p-8">
       <h1 className="text-xl font-bold">Problemas</h1>
-      <Link to="/admin/problemas/$problemaId" params={{ problemaId: 'new' }} className="text-blue-600">
+      <Link
+        to="/admin/problemas/$problemaId"
+        params={{ problemaId: 'new' }}
+        className="text-blue-600"
+      >
         + Nuevo problema
       </Link>
       <table className="mt-4 w-full border-collapse text-left">
@@ -40,7 +45,11 @@ function AdminProblemsList() {
           {problemas.map((p) => (
             <tr key={p.id} className="border-b">
               <td className="p-2">
-                <Link to="/admin/problemas/$problemaId" params={{ problemaId: p.id }} className="text-blue-600">
+                <Link
+                  to="/admin/problemas/$problemaId"
+                  params={{ problemaId: p.id }}
+                  className="text-blue-600"
+                >
                   {p.titulo}
                 </Link>
               </td>
@@ -48,7 +57,10 @@ function AdminProblemsList() {
               <td className="p-2">{p.dificultad}</td>
               <td className="p-2">{p.puntos}</td>
               <td className="p-2">{ETIQUETAS_GRUPO[p.grupo] ?? p.grupo}</td>
-              <td className="p-2">{ETIQUETAS_CATEGORIA[p.categoriaProblema] ?? p.categoriaProblema}</td>
+              <td className="p-2">
+                {ETIQUETAS_CATEGORIA[p.categoriaProblema] ??
+                  p.categoriaProblema}
+              </td>
             </tr>
           ))}
         </tbody>

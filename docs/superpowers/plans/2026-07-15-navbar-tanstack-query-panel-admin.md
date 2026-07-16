@@ -21,11 +21,13 @@
 ## Task 1: Instalar y configurar TanStack Query
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `src/router.tsx`
 - Modify: `src/routes/__root.tsx`
 
 **Interfaces:**
+
 - Produces: `router.tsx` exporta `getRouter()` con `context: { queryClient: QueryClient }` ya registrado — todas las tareas siguientes que definen `loader`s con `({ context }) => context.queryClient.ensureQueryData(...)` dependen de esto.
 
 - [ ] **Step 1: Instalar la dependencia**
@@ -74,24 +76,30 @@ declare module '@tanstack/react-router' {
 En `src/routes/__root.tsx`, cambiar el import y la declaración de `Route`:
 
 ```tsx
-import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Scripts,
+  createRootRouteWithContext,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
 
 import appCss from '../styles.css?url'
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Torneo de Programación' },
-    ],
-    links: [{ rel: 'stylesheet', href: appCss }],
-  }),
-  shellComponent: RootDocument,
-})
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
+  {
+    head: () => ({
+      meta: [
+        { charSet: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { title: 'Torneo de Programación' },
+      ],
+      links: [{ rel: 'stylesheet', href: appCss }],
+    }),
+    shellComponent: RootDocument,
+  },
+)
 ```
 
 El resto del archivo (`RootDocument`) no cambia.
@@ -113,10 +121,12 @@ git commit -m "feat: integrar TanStack Query con TanStack Start"
 ## Task 2: Migrar `/clasificacion` a TanStack Query
 
 **Files:**
+
 - Create: `src/server/queries/clasificacion.ts`
 - Modify: `src/routes/clasificacion.tsx`
 
 **Interfaces:**
+
 - Consumes: `obtenerClasificacion` de `src/server/functions/leaderboard.ts` (sin cambios).
 - Produces: `clasificacionQueryOptions()` — reutilizada en la Tarea 14 (navbar admin, como referencia de patrón) y por cualquier otra pantalla que necesite el leaderboard.
 
@@ -148,14 +158,16 @@ import { clasificacionQueryOptions } from '#/server/queries/clasificacion'
 import { LeaderboardTable } from '#/components/LeaderboardTable'
 
 export const Route = createFileRoute('/clasificacion')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(clasificacionQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(clasificacionQueryOptions()),
   component: LeaderboardPage,
 })
 
 function LeaderboardPage() {
   const { data } = useSuspenseQuery(clasificacionQueryOptions())
 
-  if (!data.iniciado) return <p className="p-8">El torneo aún no ha comenzado.</p>
+  if (!data.iniciado)
+    return <p className="p-8">El torneo aún no ha comenzado.</p>
 
   return (
     <div className="grid grid-cols-3 gap-8 p-8">
@@ -186,10 +198,12 @@ git commit -m "refactor: migrar /clasificacion de polling manual a TanStack Quer
 ## Task 3: Migrar `/admin/envios` a TanStack Query
 
 **Files:**
+
 - Create: `src/server/queries/envios.ts`
 - Modify: `src/routes/admin/envios.tsx`
 
 **Interfaces:**
+
 - Consumes: `listarTodosLosEnvios` de `src/server/functions/admin-submissions.ts` (sin cambios).
 - Produces: `enviosQueryOptions()` — reutilizada en la Tarea 12 (para invalidar tras aprobar/revertir un envío).
 
@@ -220,7 +234,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { enviosQueryOptions } from '#/server/queries/envios'
 
 export const Route = createFileRoute('/admin/envios')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(enviosQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(enviosQueryOptions()),
   component: AdminSubmissionsPage,
 })
 
@@ -243,7 +258,9 @@ function AdminSubmissionsPage() {
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
-              <td className="border p-2">{new Date(row.creadoEn).toLocaleTimeString()}</td>
+              <td className="border p-2">
+                {new Date(row.creadoEn).toLocaleTimeString()}
+              </td>
               <td className="border p-2">{row.nombreUsuario}</td>
               <td className="border p-2">{row.tituloProblema}</td>
               <td className="border p-2">{row.lenguaje}</td>
@@ -274,11 +291,13 @@ git commit -m "refactor: migrar /admin/envios de polling manual a TanStack Query
 ## Task 4: `obtenerParticipantes` y lista en vivo en `/admin/participantes`
 
 **Files:**
+
 - Modify: `src/server/functions/participantes.ts`
 - Create: `src/server/queries/participantes.ts`
 - Modify: `src/routes/admin/participantes.tsx`
 
 **Interfaces:**
+
 - Produces: `obtenerParticipantes` (devuelve `{ id, nombre, correo, categoria, carnet, ingresadoEn, cantidadEnvios }[]`), `participantesQueryOptions()` — reutilizados en la Tarea 5 (botón eliminar) y también wireados en `/admin/ingreso` dentro de esta misma tarea (Step 4) para mostrar el conteo de check-in en vivo.
 
 - [ ] **Step 1: Agregar el server function**
@@ -302,27 +321,32 @@ import { enviarCorreoBienvenida } from '../email/brevo'
 Al final del archivo:
 
 ```ts
-export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  await requerirAdmin(request.headers)
+export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
 
-  const filas = await db
-    .select({
-      id: usuarios.id,
-      nombre: usuarios.name,
-      correo: usuarios.email,
-      categoria: usuarios.categoria,
-      carnet: usuarios.carnet,
-      ingresadoEn: usuarios.ingresadoEn,
-      cantidadEnvios: sql<number>`count(${envios.id})`,
-    })
-    .from(usuarios)
-    .leftJoin(envios, eq(envios.usuarioId, usuarios.id))
-    .where(eq(usuarios.rol, 'participante'))
-    .groupBy(usuarios.id)
+    const filas = await db
+      .select({
+        id: usuarios.id,
+        nombre: usuarios.name,
+        correo: usuarios.email,
+        categoria: usuarios.categoria,
+        carnet: usuarios.carnet,
+        ingresadoEn: usuarios.ingresadoEn,
+        cantidadEnvios: sql<number>`count(${envios.id})`,
+      })
+      .from(usuarios)
+      .leftJoin(envios, eq(envios.usuarioId, usuarios.id))
+      .where(eq(usuarios.rol, 'participante'))
+      .groupBy(usuarios.id)
 
-  return filas.map((f) => ({ ...f, cantidadEnvios: Number(f.cantidadEnvios) }))
-})
+    return filas.map((f) => ({
+      ...f,
+      cantidadEnvios: Number(f.cantidadEnvios),
+    }))
+  },
+)
 ```
 
 - [ ] **Step 2: Crear las query options**
@@ -357,7 +381,8 @@ Cambiar la declaración de la ruta para precargar la query:
 
 ```tsx
 export const Route = createFileRoute('/admin/participantes')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(participantesQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(participantesQueryOptions()),
   component: AdminParticipantsPage,
 })
 ```
@@ -365,7 +390,7 @@ export const Route = createFileRoute('/admin/participantes')({
 Dentro de `AdminParticipantsPage`, después de `const [registrados, setRegistrados] = useState<ParticipanteRegistrado[]>([])`, agregar:
 
 ```tsx
-  const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
+const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
 ```
 
 Y al final del JSX, después del `</ul>` de la lista transitoria y antes del `</div>` de cierre, agregar la tabla en vivo:
@@ -410,14 +435,16 @@ import { participantesQueryOptions } from '#/server/queries/participantes'
 import type { ResultadoIngreso } from '#/server/checkin/result'
 
 export const Route = createFileRoute('/admin/ingreso')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(participantesQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(participantesQueryOptions()),
   component: CheckinPage,
 })
 
 function CheckinPage() {
   const queryClient = useQueryClient()
   const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
-  const [ultimoResultado, setUltimoResultado] = useState<ResultadoIngreso | null>(null)
+  const [ultimoResultado, setUltimoResultado] =
+    useState<ResultadoIngreso | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const yaIngresados = participantes.filter((p) => p.ingresadoEn).length
@@ -427,7 +454,9 @@ function CheckinPage() {
       const resultado = await registrarIngresoPorToken({ data: token })
       setUltimoResultado(resultado)
       setError(null)
-      queryClient.invalidateQueries({ queryKey: participantesQueryOptions().queryKey })
+      queryClient.invalidateQueries({
+        queryKey: participantesQueryOptions().queryKey,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -437,11 +466,14 @@ function CheckinPage() {
     <div className="flex flex-col items-center gap-4 p-8">
       <h1 className="text-xl font-bold">Check-in</h1>
       <p className="text-sm text-gray-600">
-        {yaIngresados} de {participantes.length} participantes ya hicieron check-in
+        {yaIngresados} de {participantes.length} participantes ya hicieron
+        check-in
       </p>
       <QrScanner onScan={handleScan} />
       {ultimoResultado?.status === 'ingresado' && (
-        <p className="text-green-600">✅ {ultimoResultado.nombreUsuario} presente</p>
+        <p className="text-green-600">
+          ✅ {ultimoResultado.nombreUsuario} presente
+        </p>
       )}
       {ultimoResultado?.status === 'ya_ingresado' && (
         <p className="text-yellow-600">
@@ -478,12 +510,14 @@ git commit -m "feat: listar participantes en vivo en /admin/participantes y /adm
 ## Task 5: Eliminar participante
 
 **Files:**
+
 - Create: `src/server/participantes/eliminar.ts`
 - Test: `tests/participantes-eliminar.test.ts`
 - Modify: `src/server/functions/participantes.ts`
 - Modify: `src/routes/admin/participantes.tsx`
 
 **Interfaces:**
+
 - Consumes: `usuarios`, `envios`, `preguntasIa` de `src/server/db/schema.ts`.
 - Produces: `puedeEliminarParticipante(input)` (función pura, reutilizada por el botón de eliminar en el cliente y por el server function), `eliminarParticipante` server function.
 
@@ -497,12 +531,16 @@ export function puedeEliminarParticipante(input: {
   cantidadEnvios: number
 }): { puede: true } | { puede: false; motivo: string } {
   if (input.rol !== 'participante') {
-    return { puede: false, motivo: 'Solo se pueden eliminar cuentas de participante desde aquí.' }
+    return {
+      puede: false,
+      motivo: 'Solo se pueden eliminar cuentas de participante desde aquí.',
+    }
   }
   if (input.cantidadEnvios > 0) {
     return {
       puede: false,
-      motivo: 'Este participante ya tiene envíos registrados; eliminarlo alteraría el leaderboard.',
+      motivo:
+        'Este participante ya tiene envíos registrados; eliminarlo alteraría el leaderboard.',
     }
   }
   return { puede: true }
@@ -517,18 +555,26 @@ import { puedeEliminarParticipante } from '../src/server/participantes/eliminar'
 
 describe('puedeEliminarParticipante', () => {
   it('permite eliminar a un participante sin envíos', () => {
-    expect(puedeEliminarParticipante({ rol: 'participante', cantidadEnvios: 0 })).toEqual({
+    expect(
+      puedeEliminarParticipante({ rol: 'participante', cantidadEnvios: 0 }),
+    ).toEqual({
       puede: true,
     })
   })
 
   it('bloquea eliminar a un participante con envíos', () => {
-    const resultado = puedeEliminarParticipante({ rol: 'participante', cantidadEnvios: 3 })
+    const resultado = puedeEliminarParticipante({
+      rol: 'participante',
+      cantidadEnvios: 3,
+    })
     expect(resultado.puede).toBe(false)
   })
 
   it('bloquea eliminar una cuenta que no es de participante', () => {
-    const resultado = puedeEliminarParticipante({ rol: 'admin', cantidadEnvios: 0 })
+    const resultado = puedeEliminarParticipante({
+      rol: 'admin',
+      cantidadEnvios: 0,
+    })
     expect(resultado.puede).toBe(false)
   })
 })
@@ -559,7 +605,10 @@ export const eliminarParticipante = createServerFn({ method: 'POST' })
     const usuario = filas.length > 0 ? filas[0] : null
     if (!usuario) throw new Error('Participante no encontrado')
 
-    const filasEnvios = await db.select().from(envios).where(eq(envios.usuarioId, data))
+    const filasEnvios = await db
+      .select()
+      .from(envios)
+      .where(eq(envios.usuarioId, data))
     const permiso = puedeEliminarParticipante({
       rol: usuario.rol,
       cantidadEnvios: filasEnvios.length,
@@ -586,55 +635,65 @@ import { puedeEliminarParticipante } from '#/server/participantes/eliminar'
 Dentro de `AdminParticipantsPage`, después de la línea `const { data: participantes } = useSuspenseQuery(participantesQueryOptions())`, agregar:
 
 ```tsx
-  const queryClient = useQueryClient()
-  const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
-  const eliminar = useMutation({
-    mutationFn: (usuarioId: string) => eliminarParticipante({ data: usuarioId }),
-    onSuccess: () => {
-      setErrorEliminar(null)
-      queryClient.invalidateQueries({ queryKey: participantesQueryOptions().queryKey })
-    },
-    onError: (err) => setErrorEliminar(err instanceof Error ? err.message : String(err)),
-  })
+const queryClient = useQueryClient()
+const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
+const eliminar = useMutation({
+  mutationFn: (usuarioId: string) => eliminarParticipante({ data: usuarioId }),
+  onSuccess: () => {
+    setErrorEliminar(null)
+    queryClient.invalidateQueries({
+      queryKey: participantesQueryOptions().queryKey,
+    })
+  },
+  onError: (err) =>
+    setErrorEliminar(err instanceof Error ? err.message : String(err)),
+})
 ```
 
 Reemplazar la fila `<tr key={p.id}>...</tr>` de la tabla en vivo (agregada en la Tarea 4) por:
 
 ```tsx
-          {participantes.map((p) => {
-            const permiso = puedeEliminarParticipante({ rol: 'participante', cantidadEnvios: p.cantidadEnvios })
-            return (
-              <tr key={p.id}>
-                <td className="border p-2">{p.nombre}</td>
-                <td className="border p-2">{p.correo}</td>
-                <td className="border p-2">{p.categoria}</td>
-                <td className="border p-2">{p.ingresadoEn ? '✅' : '—'}</td>
-                <td className="border p-2">{p.cantidadEnvios}</td>
-                <td className="border p-2">
-                  <button
-                    className="text-red-600 underline disabled:text-gray-400 disabled:no-underline"
-                    disabled={!permiso.puede || eliminar.isPending}
-                    title={permiso.puede ? undefined : permiso.motivo}
-                    onClick={() => eliminar.mutate(p.id)}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            )
-          })}
+{
+  participantes.map((p) => {
+    const permiso = puedeEliminarParticipante({
+      rol: 'participante',
+      cantidadEnvios: p.cantidadEnvios,
+    })
+    return (
+      <tr key={p.id}>
+        <td className="border p-2">{p.nombre}</td>
+        <td className="border p-2">{p.correo}</td>
+        <td className="border p-2">{p.categoria}</td>
+        <td className="border p-2">{p.ingresadoEn ? '✅' : '—'}</td>
+        <td className="border p-2">{p.cantidadEnvios}</td>
+        <td className="border p-2">
+          <button
+            className="text-red-600 underline disabled:text-gray-400 disabled:no-underline"
+            disabled={!permiso.puede || eliminar.isPending}
+            title={permiso.puede ? undefined : permiso.motivo}
+            onClick={() => eliminar.mutate(p.id)}
+          >
+            Eliminar
+          </button>
+        </td>
+      </tr>
+    )
+  })
+}
 ```
 
 Y agregar la columna de encabezado correspondiente en el `<thead>` de esa misma tabla:
 
 ```tsx
-            <th className="border p-2 text-left">Acciones</th>
+<th className="border p-2 text-left">Acciones</th>
 ```
 
 Y mostrar `errorEliminar` debajo de la tabla:
 
 ```tsx
-      {errorEliminar && <p className="text-red-600">{errorEliminar}</p>}
+{
+  errorEliminar && <p className="text-red-600">{errorEliminar}</p>
+}
 ```
 
 - [ ] **Step 5: Verificar que compila**
@@ -658,11 +717,13 @@ git commit -m "feat: permitir eliminar participantes sin envíos"
 ## Task 6: Administradores — backend
 
 **Files:**
+
 - Modify: `src/server/participantes/crear.ts`
 - Create: `src/server/functions/administradores.ts`
 - Create: `src/server/queries/administradores.ts`
 
 **Interfaces:**
+
 - Produces: `crearCuentaParticipante` ahora acepta `rol?: 'participante' | 'admin'`; `obtenerAdministradores`, `registrarAdministrador`, `eliminarAdministrador`, `administradoresQueryOptions()` — usados por la Tarea 7 (pantalla).
 
 - [ ] **Step 1: Generalizar `crearCuentaParticipante`**
@@ -677,7 +738,10 @@ export async function crearCuentaParticipante(input: {
   carnet: string | null
   rol?: 'participante' | 'admin'
 }): Promise<{ id: string; contrasenaGenerada: string }> {
-  const existentes = await db.select().from(usuarios).where(eq(usuarios.email, input.correo))
+  const existentes = await db
+    .select()
+    .from(usuarios)
+    .where(eq(usuarios.email, input.correo))
   if (existentes.length > 0) {
     throw new Error('Ya existe una cuenta con ese correo')
   }
@@ -722,14 +786,20 @@ import { requerirAdmin } from '../auth/middleware'
 import { crearCuentaParticipante } from '../participantes/crear'
 import { enviarCorreoBienvenida } from '../email/brevo'
 
-export const obtenerAdministradores = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  await requerirAdmin(request.headers)
-  return db
-    .select({ id: usuarios.id, nombre: usuarios.name, correo: usuarios.email })
-    .from(usuarios)
-    .where(eq(usuarios.rol, 'admin'))
-})
+export const obtenerAdministradores = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
+    return db
+      .select({
+        id: usuarios.id,
+        nombre: usuarios.name,
+        correo: usuarios.email,
+      })
+      .from(usuarios)
+      .where(eq(usuarios.rol, 'admin'))
+  },
+)
 
 export const registrarAdministrador = createServerFn({ method: 'POST' })
   .validator((input: { nombre: string; correo: string }) => input)
@@ -747,13 +817,23 @@ export const registrarAdministrador = createServerFn({ method: 'POST' })
 
     let correoEnviado = true
     try {
-      await enviarCorreoBienvenida({ nombre: data.nombre, correo: data.correo, contrasena: contrasenaGenerada })
+      await enviarCorreoBienvenida({
+        nombre: data.nombre,
+        correo: data.correo,
+        contrasena: contrasenaGenerada,
+      })
     } catch (err) {
       console.error('No se pudo enviar el correo de bienvenida', err)
       correoEnviado = false
     }
 
-    return { id, nombre: data.nombre, correo: data.correo, correoEnviado, contrasenaGenerada }
+    return {
+      id,
+      nombre: data.nombre,
+      correo: data.correo,
+      correoEnviado,
+      contrasenaGenerada,
+    }
   })
 
 export const eliminarAdministrador = createServerFn({ method: 'POST' })
@@ -765,7 +845,8 @@ export const eliminarAdministrador = createServerFn({ method: 'POST' })
     const filas = await db.select().from(usuarios).where(eq(usuarios.id, data))
     const usuario = filas.length > 0 ? filas[0] : null
     if (!usuario) throw new Error('Administrador no encontrado')
-    if (usuario.rol !== 'admin') throw new Error('Esta cuenta no es de administrador')
+    if (usuario.rol !== 'admin')
+      throw new Error('Esta cuenta no es de administrador')
 
     await db.delete(usuarios).where(eq(usuarios.id, data))
   })
@@ -805,9 +886,11 @@ git commit -m "feat: agregar CRUD de administradores en el servidor"
 ## Task 7: Pantalla `/admin/administradores`
 
 **Files:**
+
 - Create: `src/routes/admin/administradores.tsx`
 
 **Interfaces:**
+
 - Consumes: `obtenerAdministradores`/`registrarAdministrador`/`eliminarAdministrador` (Tarea 6), `administradoresQueryOptions()` (Tarea 6).
 - Produces: la ruta `/admin/administradores`, enlazada por `NavbarAdmin` en la Tarea 14.
 
@@ -818,41 +901,61 @@ Crear `src/routes/admin/administradores.tsx`:
 ```tsx
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { registrarAdministrador, eliminarAdministrador } from '#/server/functions/administradores'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
+import {
+  registrarAdministrador,
+  eliminarAdministrador,
+} from '#/server/functions/administradores'
 import { administradoresQueryOptions } from '#/server/queries/administradores'
 
 export const Route = createFileRoute('/admin/administradores')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(administradoresQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(administradoresQueryOptions()),
   component: AdminAdministradoresPage,
 })
 
 function AdminAdministradoresPage() {
   const queryClient = useQueryClient()
-  const { data: administradores } = useSuspenseQuery(administradoresQueryOptions())
+  const { data: administradores } = useSuspenseQuery(
+    administradoresQueryOptions(),
+  )
   const [nombre, setNombre] = useState('')
   const [correo, setCorreo] = useState('')
-  const [credenciales, setCredenciales] = useState<
-    { correoEnviado: boolean; contrasenaGenerada: string } | null
-  >(null)
+  const [credenciales, setCredenciales] = useState<{
+    correoEnviado: boolean
+    contrasenaGenerada: string
+  } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const crear = useMutation({
-    mutationFn: (input: { nombre: string; correo: string }) => registrarAdministrador({ data: input }),
+    mutationFn: (input: { nombre: string; correo: string }) =>
+      registrarAdministrador({ data: input }),
     onSuccess: (resultado) => {
       setCredenciales(resultado)
       setNombre('')
       setCorreo('')
       setError(null)
-      queryClient.invalidateQueries({ queryKey: administradoresQueryOptions().queryKey })
+      queryClient.invalidateQueries({
+        queryKey: administradoresQueryOptions().queryKey,
+      })
     },
-    onError: (err) => setError(err instanceof Error ? err.message : String(err)),
+    onError: (err) =>
+      setError(err instanceof Error ? err.message : String(err)),
   })
 
   const eliminar = useMutation({
-    mutationFn: (usuarioId: string) => eliminarAdministrador({ data: usuarioId }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: administradoresQueryOptions().queryKey }),
-    onError: (err) => setError(err instanceof Error ? err.message : String(err)),
+    mutationFn: (usuarioId: string) =>
+      eliminarAdministrador({ data: usuarioId }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: administradoresQueryOptions().queryKey,
+      }),
+    onError: (err) =>
+      setError(err instanceof Error ? err.message : String(err)),
   })
 
   return (
@@ -893,13 +996,17 @@ function AdminAdministradoresPage() {
 
       {credenciales && !credenciales.correoEnviado && (
         <p className="text-yellow-600">
-          ⚠️ No se pudo enviar el correo — contraseña: {credenciales.contrasenaGenerada}
+          ⚠️ No se pudo enviar el correo — contraseña:{' '}
+          {credenciales.contrasenaGenerada}
         </p>
       )}
 
       <ul className="flex flex-col gap-2">
         {administradores.map((a) => (
-          <li key={a.id} className="flex items-center justify-between border p-2">
+          <li
+            key={a.id}
+            className="flex items-center justify-between border p-2"
+          >
             <span>
               <strong>{a.nombre}</strong> — {a.correo}
             </span>
@@ -939,9 +1046,11 @@ git commit -m "feat: agregar pantalla /admin/administradores"
 ## Task 8: Conectar el botón "Eliminar problema"
 
 **Files:**
+
 - Modify: `src/routes/admin/problemas/$problemaId.tsx`
 
 **Interfaces:**
+
 - Consumes: `eliminarProblema` de `src/server/functions/problems.ts` (ya existe, sin cambios).
 
 - [ ] **Step 1: Agregar el handler y el botón**
@@ -949,37 +1058,45 @@ git commit -m "feat: agregar pantalla /admin/administradores"
 En `src/routes/admin/problemas/$problemaId.tsx`, cambiar el import:
 
 ```tsx
-import { obtenerProblema, crearProblema, actualizarProblema, eliminarProblema } from '#/server/functions/problems'
+import {
+  obtenerProblema,
+  crearProblema,
+  actualizarProblema,
+  eliminarProblema,
+} from '#/server/functions/problems'
 ```
 
 Dentro de `AdminProblemEditPage`, después de `handleSubmit`, agregar:
 
 ```tsx
-  async function handleDelete() {
-    if (
-      !window.confirm(
-        '¿Eliminar este problema? Se borran también sus casos de prueba y su configuración de lenguajes.',
-      )
+async function handleDelete() {
+  if (
+    !window.confirm(
+      '¿Eliminar este problema? Se borran también sus casos de prueba y su configuración de lenguajes.',
     )
-      return
-    await eliminarProblema({ data: problemaId })
-    await navigate({ to: '/admin/problemas' })
-  }
+  )
+    return
+  await eliminarProblema({ data: problemaId })
+  await navigate({ to: '/admin/problemas' })
+}
 ```
 
 Cambiar el `return` final para envolver el formulario y agregar el botón (solo cuando no es un problema nuevo):
 
 ```tsx
-  return (
-    <div>
-      {problemaId !== 'new' && (
-        <button className="m-4 rounded bg-red-600 px-4 py-2 text-white" onClick={handleDelete}>
-          Eliminar problema
-        </button>
-      )}
-      <AdminProblemForm initial={initial} onSubmit={handleSubmit} />
-    </div>
-  )
+return (
+  <div>
+    {problemaId !== 'new' && (
+      <button
+        className="m-4 rounded bg-red-600 px-4 py-2 text-white"
+        onClick={handleDelete}
+      >
+        Eliminar problema
+      </button>
+    )}
+    <AdminProblemForm initial={initial} onSubmit={handleSubmit} />
+  </div>
+)
 ```
 
 - [ ] **Step 2: Verificar que compila**
@@ -1003,10 +1120,12 @@ git commit -m "feat: conectar el botón de eliminar problema"
 ## Task 9: Esquema de `envios` (resultados y auditoría de aprobación) + persistir `resultados`
 
 **Files:**
+
 - Modify: `src/server/db/schema.ts`
 - Modify: `src/server/functions/submit.ts`
 
 **Interfaces:**
+
 - Produces: columnas `envios.resultados`, `envios.veredictoOriginal`, `envios.aprobadoPorId`, `envios.aprobadoEn` — consumidas por las Tareas 10-12.
 
 - [ ] **Step 1: Agregar las columnas al esquema**
@@ -1050,7 +1169,9 @@ export const envios = mysqlTable('envios', {
     'error_ejecucion',
     'tiempo_excedido',
   ]),
-  aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id),
+  aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(
+    () => usuarios.id,
+  ),
   aprobadoEn: timestamp('aprobado_en'),
   comentarioClaude: text('comentario_claude'),
   creadoEn: timestamp('creado_en').notNull().defaultNow(),
@@ -1073,7 +1194,10 @@ await db.update(envios).set({ estado: veredicto }).where(eq(envios.id, envioId))
 por:
 
 ```ts
-await db.update(envios).set({ estado: veredicto, resultados }).where(eq(envios.id, envioId))
+await db
+  .update(envios)
+  .set({ estado: veredicto, resultados })
+  .where(eq(envios.id, envioId))
 ```
 
 (`resultados` ya está en scope — es la variable desestructurada de `ejecutarCasosPrueba` un poco más arriba en la misma función.)
@@ -1100,10 +1224,12 @@ git commit -m "feat: persistir resultados detallados por caso en cada envío"
 ## Task 10: Aprobación manual — funciones puras y tests
 
 **Files:**
+
 - Create: `src/server/envios/aprobacion.ts`
 - Test: `tests/envios-aprobacion.test.ts`
 
 **Interfaces:**
+
 - Produces: `aplicarAprobacionManual(envio, adminId, ahora)`, `revertirAprobacionEnvio(envio)` — consumidas por los server functions de la Tarea 11.
 
 - [ ] **Step 1: Escribir el test (falla primero)**
@@ -1112,7 +1238,10 @@ Crear `tests/envios-aprobacion.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import { aplicarAprobacionManual, revertirAprobacionEnvio } from '../src/server/envios/aprobacion'
+import {
+  aplicarAprobacionManual,
+  revertirAprobacionEnvio,
+} from '../src/server/envios/aprobacion'
 
 describe('aplicarAprobacionManual', () => {
   it('guarda el veredicto original la primera vez que se aprueba', () => {
@@ -1141,7 +1270,9 @@ describe('aplicarAprobacionManual', () => {
 
 describe('revertirAprobacionEnvio', () => {
   it('restaura el veredicto original y limpia los campos de auditoría', () => {
-    const resultado = revertirAprobacionEnvio({ veredictoOriginal: 'tiempo_excedido' })
+    const resultado = revertirAprobacionEnvio({
+      veredictoOriginal: 'tiempo_excedido',
+    })
     expect(resultado).toEqual({
       estado: 'tiempo_excedido',
       veredictoOriginal: null,
@@ -1222,9 +1353,11 @@ git commit -m "feat: agregar lógica pura de aprobación manual de envíos"
 ## Task 11: Server functions de aprobación manual
 
 **Files:**
+
 - Modify: `src/server/functions/admin-submissions.ts`
 
 **Interfaces:**
+
 - Consumes: `aplicarAprobacionManual`/`revertirAprobacionEnvio` (Tarea 10).
 - Produces: `obtenerDetalleEnvio`, `aprobarEnvioManualmente`, `revertirAprobacion` — consumidos por la Tarea 12 (pantalla de detalle).
 
@@ -1239,27 +1372,32 @@ import { desc, eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { envios, usuarios, problemas } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
-import { aplicarAprobacionManual, revertirAprobacionEnvio } from '../envios/aprobacion'
+import {
+  aplicarAprobacionManual,
+  revertirAprobacionEnvio,
+} from '../envios/aprobacion'
 
-export const listarTodosLosEnvios = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  await requerirAdmin(request.headers)
+export const listarTodosLosEnvios = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
 
-  return db
-    .select({
-      id: envios.id,
-      nombreUsuario: usuarios.name,
-      tituloProblema: problemas.titulo,
-      lenguaje: envios.lenguaje,
-      estado: envios.estado,
-      creadoEn: envios.creadoEn,
-    })
-    .from(envios)
-    .innerJoin(usuarios, eq(envios.usuarioId, usuarios.id))
-    .innerJoin(problemas, eq(envios.problemaId, problemas.id))
-    .orderBy(desc(envios.creadoEn))
-    .limit(100)
-})
+    return db
+      .select({
+        id: envios.id,
+        nombreUsuario: usuarios.name,
+        tituloProblema: problemas.titulo,
+        lenguaje: envios.lenguaje,
+        estado: envios.estado,
+        creadoEn: envios.creadoEn,
+      })
+      .from(envios)
+      .innerJoin(usuarios, eq(envios.usuarioId, usuarios.id))
+      .innerJoin(problemas, eq(envios.problemaId, problemas.id))
+      .orderBy(desc(envios.creadoEn))
+      .limit(100)
+  },
+)
 
 export const obtenerDetalleEnvio = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
@@ -1317,7 +1455,9 @@ export const revertirAprobacion = createServerFn({ method: 'POST' })
     const envio = filas.length > 0 ? filas[0] : null
     if (!envio) throw new Error('Envío no encontrado')
 
-    const campos = revertirAprobacionEnvio({ veredictoOriginal: envio.veredictoOriginal })
+    const campos = revertirAprobacionEnvio({
+      veredictoOriginal: envio.veredictoOriginal,
+    })
     await db.update(envios).set(campos).where(eq(envios.id, data))
   })
 ```
@@ -1339,11 +1479,13 @@ git commit -m "feat: agregar server functions de detalle y aprobación manual de
 ## Task 12: Vista de detalle `/admin/envios/$envioId`
 
 **Files:**
+
 - Create: `src/routes/admin/envios/index.tsx` (contenido movido de `src/routes/admin/envios.tsx`)
 - Delete: `src/routes/admin/envios.tsx`
 - Create: `src/routes/admin/envios/$envioId.tsx`
 
 **Interfaces:**
+
 - Consumes: `obtenerDetalleEnvio`/`aprobarEnvioManualmente`/`revertirAprobacion` (Tarea 11), `enviosQueryOptions()` (Tarea 3).
 
 - [ ] **Step 1: Convertir `envios.tsx` en un directorio**
@@ -1356,7 +1498,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { enviosQueryOptions } from '#/server/queries/envios'
 
 export const Route = createFileRoute('/admin/envios/')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(enviosQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(enviosQueryOptions()),
   component: AdminSubmissionsPage,
 })
 
@@ -1379,9 +1522,15 @@ function AdminSubmissionsPage() {
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
-              <td className="border p-2">{new Date(row.creadoEn).toLocaleTimeString()}</td>
               <td className="border p-2">
-                <Link to="/admin/envios/$envioId" params={{ envioId: row.id }} className="text-blue-600 underline">
+                {new Date(row.creadoEn).toLocaleTimeString()}
+              </td>
+              <td className="border p-2">
+                <Link
+                  to="/admin/envios/$envioId"
+                  params={{ envioId: row.id }}
+                  className="text-blue-600 underline"
+                >
                   {row.nombreUsuario}
                 </Link>
               </td>
@@ -1405,8 +1554,17 @@ Crear `src/routes/admin/envios/$envioId.tsx`:
 
 ```tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { obtenerDetalleEnvio, aprobarEnvioManualmente, revertirAprobacion } from '#/server/functions/admin-submissions'
+import {
+  queryOptions,
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
+import {
+  obtenerDetalleEnvio,
+  aprobarEnvioManualmente,
+  revertirAprobacion,
+} from '#/server/functions/admin-submissions'
 import { enviosQueryOptions } from '#/server/queries/envios'
 
 function detalleEnvioQueryOptions(envioId: string) {
@@ -1418,7 +1576,9 @@ function detalleEnvioQueryOptions(envioId: string) {
 
 export const Route = createFileRoute('/admin/envios/$envioId')({
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(detalleEnvioQueryOptions(params.envioId)),
+    context.queryClient.ensureQueryData(
+      detalleEnvioQueryOptions(params.envioId),
+    ),
   component: AdminEnvioDetailPage,
 })
 
@@ -1428,7 +1588,8 @@ function AdminEnvioDetailPage() {
   const queryClient = useQueryClient()
   const { data: envio } = useSuspenseQuery(detalleEnvioQueryOptions(envioId))
 
-  const invalidarTodo = () => queryClient.invalidateQueries({ queryKey: enviosQueryOptions().queryKey })
+  const invalidarTodo = () =>
+    queryClient.invalidateQueries({ queryKey: enviosQueryOptions().queryKey })
 
   const aprobar = useMutation({
     mutationFn: () => aprobarEnvioManualmente({ data: envioId }),
@@ -1450,7 +1611,10 @@ function AdminEnvioDetailPage() {
 
   return (
     <div className="flex flex-col gap-4 p-8">
-      <button className="text-blue-600 underline" onClick={() => navigate({ to: '/admin/envios' })}>
+      <button
+        className="text-blue-600 underline"
+        onClick={() => navigate({ to: '/admin/envios' })}
+      >
         ← Volver a envíos
       </button>
       <h1 className="text-xl font-bold">
@@ -1462,19 +1626,23 @@ function AdminEnvioDetailPage() {
       </p>
       {envio.veredictoOriginal && (
         <p className="text-sm text-gray-600">
-          Veredicto original del sistema: {envio.veredictoOriginal} — aprobado manualmente el{' '}
+          Veredicto original del sistema: {envio.veredictoOriginal} — aprobado
+          manualmente el{' '}
           {envio.aprobadoEn ? new Date(envio.aprobadoEn).toLocaleString() : ''}
         </p>
       )}
 
-      <pre className="whitespace-pre-wrap rounded bg-gray-50 p-2 text-sm">{envio.codigo}</pre>
+      <pre className="whitespace-pre-wrap rounded bg-gray-50 p-2 text-sm">
+        {envio.codigo}
+      </pre>
 
       <h2 className="font-bold">Resultados por caso</h2>
       <ul className="flex flex-col gap-2">
         {(envio.resultados ?? []).map((r, i) => (
           <li key={i} className="border p-2 text-sm">
-            <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code> — Esperado:{' '}
-            <code>{r.salidaEsperada}</code> — Obtenido: <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
+            <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code>{' '}
+            — Esperado: <code>{r.salidaEsperada}</code> — Obtenido:{' '}
+            <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
             {r.aprobado ? '✅' : '❌'}
           </li>
         ))}
@@ -1535,10 +1703,12 @@ git commit -m "feat: agregar vista de detalle y aprobación manual de envíos"
 ## Task 13: `obtenerUsuarioActualOpcional`
 
 **Files:**
+
 - Modify: `src/server/functions/auth.ts`
 - Create: `src/server/queries/usuarioActual.ts`
 
 **Interfaces:**
+
 - Produces: `obtenerUsuarioActualOpcional` (devuelve `user | null`, no lanza si no hay sesión), `usuarioActualOpcionalQueryOptions()` — consumidos por las Tareas 14 y 15 (navbars).
 
 - [ ] **Step 1: Agregar el server function**
@@ -1550,12 +1720,16 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { requerirUsuario, obtenerUsuarioSesion } from '../auth/middleware'
 
-export const obtenerUsuarioActual = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  return requerirUsuario(request.headers)
-})
+export const obtenerUsuarioActual = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    return requerirUsuario(request.headers)
+  },
+)
 
-export const obtenerUsuarioActualOpcional = createServerFn({ method: 'GET' }).handler(async () => {
+export const obtenerUsuarioActualOpcional = createServerFn({
+  method: 'GET',
+}).handler(async () => {
   const request = getRequest()
   return obtenerUsuarioSesion(request.headers)
 })
@@ -1595,11 +1769,13 @@ git commit -m "feat: agregar consulta opcional del usuario actual (sin exigir se
 ## Task 14: NavbarAdmin + layout `/admin` + logout
 
 **Files:**
+
 - Create: `src/components/useCerrarSesion.ts`
 - Create: `src/components/NavbarAdmin.tsx`
 - Create: `src/routes/admin/route.tsx`
 
 **Interfaces:**
+
 - Consumes: `usuarioActualOpcionalQueryOptions()` (Tarea 13).
 - Produces: `useCerrarSesion()` — reutilizado también por `NavbarParticipante` en la Tarea 15.
 
@@ -1643,7 +1819,9 @@ const ENLACES = [
 ] as const
 
 export function NavbarAdmin() {
-  const { data: usuario } = useSuspenseQuery(usuarioActualOpcionalQueryOptions())
+  const { data: usuario } = useSuspenseQuery(
+    usuarioActualOpcionalQueryOptions(),
+  )
   const cerrarSesion = useCerrarSesion()
 
   return (
@@ -1661,8 +1839,13 @@ export function NavbarAdmin() {
         ))}
       </div>
       <div className="flex items-center gap-4">
-        {usuario && <span className="text-sm text-gray-500">{usuario.name}</span>}
-        <button className="text-sm text-red-600 underline" onClick={() => cerrarSesion()}>
+        {usuario && (
+          <span className="text-sm text-gray-500">{usuario.name}</span>
+        )}
+        <button
+          className="text-sm text-red-600 underline"
+          onClick={() => cerrarSesion()}
+        >
           Cerrar sesión
         </button>
       </div>
@@ -1681,7 +1864,8 @@ import { NavbarAdmin } from '#/components/NavbarAdmin'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 
 export const Route = createFileRoute('/admin')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
   component: AdminLayout,
 })
 
@@ -1717,6 +1901,7 @@ git commit -m "feat: agregar navbar de administrador con logout"
 ## Task 15: NavbarParticipante + layout `/_app`
 
 **Files:**
+
 - Create: `src/routes/_app/route.tsx`
 - Create: `src/routes/_app/perfil.tsx` (movido de `src/routes/perfil.tsx`)
 - Create: `src/routes/_app/problemas/index.tsx` (movido de `src/routes/problemas/index.tsx`)
@@ -1726,6 +1911,7 @@ git commit -m "feat: agregar navbar de administrador con logout"
 - Create: `src/components/NavbarParticipante.tsx`
 
 **Interfaces:**
+
 - Consumes: `usuarioActualOpcionalQueryOptions()` (Tarea 13), `useCerrarSesion()` (Tarea 14).
 
 - [ ] **Step 1: Mover los 4 archivos de ruta**
@@ -1754,13 +1940,17 @@ import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActua
 import { useCerrarSesion } from './useCerrarSesion'
 
 export function NavbarParticipante() {
-  const { data: usuario } = useSuspenseQuery(usuarioActualOpcionalQueryOptions())
+  const { data: usuario } = useSuspenseQuery(
+    usuarioActualOpcionalQueryOptions(),
+  )
   const cerrarSesion = useCerrarSesion()
 
   if (!usuario) {
     return (
       <nav className="border-b bg-gray-50 px-4 py-2">
-        <span className="text-sm font-medium text-gray-700">Torneo de Programación</span>
+        <span className="text-sm font-medium text-gray-700">
+          Torneo de Programación
+        </span>
       </nav>
     )
   }
@@ -1796,7 +1986,10 @@ export function NavbarParticipante() {
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-gray-500">{usuario.name}</span>
-        <button className="text-sm text-red-600 underline" onClick={() => cerrarSesion()}>
+        <button
+          className="text-sm text-red-600 underline"
+          onClick={() => cerrarSesion()}
+        >
           Cerrar sesión
         </button>
       </div>
@@ -1815,7 +2008,8 @@ import { NavbarParticipante } from '#/components/NavbarParticipante'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 
 export const Route = createFileRoute('/_app')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
   component: AppLayout,
 })
 
@@ -1843,6 +2037,7 @@ Expected: build exitoso, con las URLs `/perfil`, `/problemas`, `/problemas/$prob
 - [ ] **Step 6: Verificación manual**
 
 Con `npm run dev`:
+
 - Como participante sin check-in: entra a `/perfil`, confirma que solo ves "Perfil" y "Cerrar sesión" en el navbar (no "Problemas" ni "Clasificación").
 - Haz check-in a ese usuario desde `/admin/ingreso` (en otra pestaña/sesión de admin) y, sin recargar la pestaña del participante, confirma que "Problemas" y "Clasificación" aparecen solos dentro de los 3 segundos siguientes.
 - Cierra sesión y confirma que `/clasificacion` sigue siendo visible (con el navbar mínimo, sin "Perfil" ni "Cerrar sesión") y que `/perfil` y `/problemas` ya no son accesibles sin volver a iniciar sesión.

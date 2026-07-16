@@ -9,13 +9,20 @@ describe('ejecutarPiston', () => {
   it('sends the mapped language/version, filename and resource limits', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ run: { stdout: 'hi\n', stderr: '', code: 0, signal: null } }),
+      json: async () => ({
+        run: { stdout: 'hi\n', stderr: '', code: 0, signal: null },
+      }),
     })
     vi.stubGlobal('fetch', fetchMock)
 
     const resultado = await ejecutarPiston('python', 'main.py', 'print("hi")')
 
-    expect(resultado).toEqual({ salidaEstandar: 'hi\n', salidaError: '', codigoSalida: 0, tiempoExcedido: false })
+    expect(resultado).toEqual({
+      salidaEstandar: 'hi\n',
+      salidaError: '',
+      codigoSalida: 0,
+      tiempoExcedido: false,
+    })
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toContain('/api/v2/execute')
     const body = JSON.parse(options.body)
@@ -33,14 +40,22 @@ describe('ejecutarPiston', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ run: { stdout: '', stderr: '', code: 1, signal: 'SIGKILL' } }),
+        json: async () => ({
+          run: { stdout: '', stderr: '', code: 1, signal: 'SIGKILL' },
+        }),
       }),
     )
-    const resultado = await ejecutarPiston('python', 'main.py', 'while True: pass')
+    const resultado = await ejecutarPiston(
+      'python',
+      'main.py',
+      'while True: pass',
+    )
     expect(resultado.tiempoExcedido).toBe(true)
   })
 
   it('throws for an unsupported language', async () => {
-    await expect(ejecutarPiston('cobol', 'main.cob', 'x')).rejects.toThrow('Lenguaje no soportado: cobol')
+    await expect(ejecutarPiston('cobol', 'main.cob', 'x')).rejects.toThrow(
+      'Lenguaje no soportado: cobol',
+    )
   })
 })

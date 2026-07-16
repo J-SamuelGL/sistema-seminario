@@ -3,7 +3,8 @@ import { NavbarParticipante } from '#/components/NavbarParticipante'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 
 export const Route = createFileRoute('/_app')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
   component: AppLayout,
 })
 

@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { tipoEscalarDeLista, valorCoincideConTipo } from '../src/server/judge/tipos'
+import {
+  tipoEscalarDeLista,
+  valorCoincideConTipo,
+} from '../src/server/judge/tipos'
 
 describe('tipoEscalarDeLista', () => {
   it('extrae el escalar de un tipo lista', () => {

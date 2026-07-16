@@ -39,6 +39,7 @@ El marcador se define una sola vez en un módulo nuevo, `src/server/judge/harnes
 que nunca puedan desincronizarse.
 
 Se descartaron dos alternativas:
+
 - **Redirección de stdout por lenguaje** (capturar el stdout del usuario en un buffer separado durante la
   llamada a la función, ej. `sys.stdout` en Python, `System.setOut` en Java, `ob_start()` en PHP): más
   "correcto" en teoría, pero exige una implementación distinta por cada uno de los 5 lenguajes para un
@@ -49,7 +50,7 @@ Se descartaron dos alternativas:
 ## Flujo de datos
 
 1. `src/server/judge/consola.ts` (nuevo) exporta `separarSalidaConsola(salidaCruda: string): { salidaConsola:
-   string; salidaResultado: string }`. Busca la última ocurrencia del marcador en `salidaCruda`:
+string; salidaResultado: string }`. Busca la última ocurrencia del marcador en `salidaCruda`:
    - Si aparece: todo lo anterior (trimmed) es `salidaConsola`; todo lo posterior (trimmed) es
      `salidaResultado`.
    - Si no aparece (la ejecución truena o hace timeout antes de llegar a esa línea): todo el `stdout`
