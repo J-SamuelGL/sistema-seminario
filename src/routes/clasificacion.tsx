@@ -1,27 +1,15 @@
-import { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { obtenerClasificacion } from '#/server/functions/leaderboard'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { clasificacionQueryOptions } from '#/server/queries/clasificacion'
 import { LeaderboardTable } from '#/components/LeaderboardTable'
 
 export const Route = createFileRoute('/clasificacion')({
-  loader: () => obtenerClasificacion(),
+  loader: ({ context }) => context.queryClient.ensureQueryData(clasificacionQueryOptions()),
   component: LeaderboardPage,
 })
 
 function LeaderboardPage() {
-  const initial = Route.useLoaderData()
-  const [data, setData] = useState(initial)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      obtenerClasificacion()
-        .then(setData)
-        .catch(() => {
-          // Ignore transient polling errors; the next interval tick will retry.
-        })
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
+  const { data } = useSuspenseQuery(clasificacionQueryOptions())
 
   if (!data.iniciado) return <p className="p-8">El torneo aún no ha comenzado.</p>
 
