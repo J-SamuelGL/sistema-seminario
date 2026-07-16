@@ -9,12 +9,15 @@ import { crearCuentaParticipante } from '../participantes/crear'
 import { generarContrasenaAleatoria } from '../auth/password'
 import { enviarCorreoBienvenida } from '../email/brevo'
 import { puedeEliminarParticipante } from '../participantes/eliminar'
+import { validarDatosParticipante } from '../participantes/validar'
+import type { Categoria, Semestre } from '../participantes/validar'
 
 type DatosParticipante = {
   nombre: string
   correo: string
-  categoria: 'invitado' | 'junior' | 'senior'
+  categoria: Categoria
   carnet: string | null
+  semestre: Semestre | null
 }
 
 export const registrarParticipante = createServerFn({ method: 'POST' })
@@ -23,7 +26,19 @@ export const registrarParticipante = createServerFn({ method: 'POST' })
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const { id, contrasenaGenerada } = await crearCuentaParticipante(data)
+    const esInvitado = data.categoria === 'invitado'
+    const datosSaneados = {
+      ...data,
+      carnet: esInvitado ? null : data.carnet,
+      semestre: esInvitado ? null : data.semestre,
+    }
+    const validacion = validarDatosParticipante(datosSaneados)
+    if (!validacion.valido) {
+      throw new Error(validacion.motivo)
+    }
+
+    const { id, contrasenaGenerada } =
+      await crearCuentaParticipante(datosSaneados)
 
     let correoEnviado = true
     try {
@@ -62,7 +77,9 @@ export const reenviarCredenciales = createServerFn({ method: 'POST' })
     await db
       .update(cuentas)
       .set({ password: hash })
-      .where(and(eq(cuentas.userId, data), eq(cuentas.providerId, 'credential')))
+      .where(
+        and(eq(cuentas.userId, data), eq(cuentas.providerId, 'credential')),
+      )
 
     let correoEnviado = true
     try {
@@ -79,27 +96,33 @@ export const reenviarCredenciales = createServerFn({ method: 'POST' })
     return { correoEnviado, contrasenaGenerada }
   })
 
-export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getRequest()
-  await requerirAdmin(request.headers)
+export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
 
-  const filas = await db
-    .select({
-      id: usuarios.id,
-      nombre: usuarios.name,
-      correo: usuarios.email,
-      categoria: usuarios.categoria,
-      carnet: usuarios.carnet,
-      ingresadoEn: usuarios.ingresadoEn,
-      cantidadEnvios: sql<number>`count(${envios.id})`,
-    })
-    .from(usuarios)
-    .leftJoin(envios, eq(envios.usuarioId, usuarios.id))
-    .where(eq(usuarios.rol, 'participante'))
-    .groupBy(usuarios.id)
+    const filas = await db
+      .select({
+        id: usuarios.id,
+        nombre: usuarios.name,
+        correo: usuarios.email,
+        categoria: usuarios.categoria,
+        carnet: usuarios.carnet,
+        semestre: usuarios.semestre,
+        ingresadoEn: usuarios.ingresadoEn,
+        cantidadEnvios: sql<number>`count(${envios.id})`,
+      })
+      .from(usuarios)
+      .leftJoin(envios, eq(envios.usuarioId, usuarios.id))
+      .where(eq(usuarios.rol, 'participante'))
+      .groupBy(usuarios.id)
 
-  return filas.map((f) => ({ ...f, cantidadEnvios: Number(f.cantidadEnvios) }))
-})
+    return filas.map((f) => ({
+      ...f,
+      cantidadEnvios: Number(f.cantidadEnvios),
+    }))
+  },
+)
 
 export const eliminarParticipante = createServerFn({ method: 'POST' })
   .validator((usuarioId: string) => usuarioId)
@@ -111,7 +134,10 @@ export const eliminarParticipante = createServerFn({ method: 'POST' })
     const usuario = filas.length > 0 ? filas[0] : null
     if (!usuario) throw new Error('Participante no encontrado')
 
-    const filasEnvios = await db.select().from(envios).where(eq(envios.usuarioId, data))
+    const filasEnvios = await db
+      .select()
+      .from(envios)
+      .where(eq(envios.usuarioId, data))
     const permiso = puedeEliminarParticipante({
       rol: usuario.rol,
       cantidadEnvios: filasEnvios.length,

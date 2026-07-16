@@ -13,6 +13,7 @@ describe('crearCuentaParticipante', () => {
       correo,
       categoria: 'invitado',
       carnet: '22-1234-2020',
+      semestre: null,
     })
 
     const filasCuenta = await db.select().from(cuentas).where(eq(cuentas.userId, id))

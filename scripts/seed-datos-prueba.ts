@@ -10,6 +10,7 @@ import {
 } from '../src/server/db/schema'
 import { generarContrasenaAleatoria } from '../src/server/auth/password'
 import type { Parametro, TipoDato, Valor } from '../src/server/judge/tipos'
+import type { Semestre } from '../src/server/participantes/validar'
 
 const TABLAS_A_LIMPIAR = [
   'preguntas_ia',
@@ -40,6 +41,7 @@ async function crearCuenta(input: {
   rol: 'participante' | 'admin'
   categoria: 'invitado' | 'junior' | 'senior'
   carnet: string | null
+  semestre?: Semestre | null
   ingresado: boolean
 }) {
   const id = crypto.randomUUID()
@@ -51,6 +53,7 @@ async function crearCuenta(input: {
     rol: input.rol,
     categoria: input.categoria,
     carnet: input.carnet,
+    semestre: input.semestre ?? null,
     ingresadoEn: input.ingresado ? new Date() : null,
   })
   await db.insert(cuentas).values({
@@ -160,6 +163,12 @@ async function main() {
     return 'senior'
   }
 
+  function semestreParticipanteMasivo(i: number): Semestre | null {
+    if (i <= 13) return null // invitado: no aplica
+    if (i <= 26) return String(((i - 14) % 4) + 1) as Semestre // junior: 4to semestre o menos
+    return String(5 + ((i - 27) % 6)) as Semestre // senior: más de 4to semestre
+  }
+
   for (let i = 1; i <= 40; i++) {
     await crearCuenta({
       nombre: `Usuario ${i}`,
@@ -168,6 +177,7 @@ async function main() {
       rol: 'participante',
       categoria: categoriaParticipanteMasivo(i),
       carnet: `carnet-${String(i).padStart(2, '0')}-2026`,
+      semestre: semestreParticipanteMasivo(i),
       ingresado: true,
     })
   }

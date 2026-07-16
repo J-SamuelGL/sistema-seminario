@@ -3,12 +3,14 @@ import { hashPassword } from 'better-auth/crypto'
 import { db } from '../db/client'
 import { usuarios, cuentas } from '../db/schema'
 import { generarContrasenaAleatoria } from '../auth/password'
+import type { Categoria, Semestre } from './validar'
 
 export async function crearCuentaParticipante(input: {
   nombre: string
   correo: string
-  categoria: 'invitado' | 'junior' | 'senior'
+  categoria: Categoria
   carnet: string | null
+  semestre?: Semestre | null
   rol?: 'participante' | 'admin'
 }): Promise<{ id: string; contrasenaGenerada: string }> {
   const existentes = await db.select().from(usuarios).where(eq(usuarios.email, input.correo))
@@ -27,6 +29,7 @@ export async function crearCuentaParticipante(input: {
       email: input.correo,
       categoria: input.categoria,
       carnet: input.carnet,
+      semestre: input.semestre ?? null,
       rol: input.rol ?? 'participante',
     })
     await tx.insert(cuentas).values({

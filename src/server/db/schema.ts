@@ -24,6 +24,18 @@ export const usuarios = mysqlTable('usuario', {
   rol: mysqlEnum('rol', ['participante', 'admin']).notNull().default('participante'),
   categoria: mysqlEnum('categoria', ['invitado', 'junior', 'senior']).notNull(),
   carnet: text('carnet'),
+  semestre: mysqlEnum('semestre', [
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+  ]),
   tokenIngreso: varchar('token_ingreso', { length: 255 })
     .$defaultFn(() => crypto.randomUUID())
     .notNull()
