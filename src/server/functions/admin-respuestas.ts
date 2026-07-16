@@ -120,15 +120,23 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
     const usuario = filasUsuario.length > 0 ? filasUsuario[0] : null
     if (!usuario) throw new Error('Participante no encontrado')
 
-    const { clasificacion, torneoIniciadoEn } = await cargarDatosClasificacion()
+    const { clasificacion, todosUsuarios, torneoIniciadoEn } =
+      await cargarDatosClasificacion()
     const clasificacionCategoria = clasificacion.filter(
       (f) => f.categoria === usuario.categoria,
     )
-    const indice = clasificacionCategoria.findIndex(
-      (f) => f.usuarioId === usuarioId,
-    )
     const filaClasificacion =
-      indice >= 0 ? clasificacionCategoria[indice] : null
+      clasificacionCategoria.find((f) => f.usuarioId === usuarioId) ?? null
+
+    // el puesto se calcula solo sobre participantes que hicieron check-in, igual que listarParticipantesConProgreso
+    const asistieron = new Set(
+      todosUsuarios
+        .filter((u) => u.rol === 'participante' && u.ingresadoEn !== null)
+        .map((u) => u.id),
+    )
+    const indice = clasificacionCategoria
+      .filter((f) => asistieron.has(f.usuarioId))
+      .findIndex((f) => f.usuarioId === usuarioId)
 
     const grupo = grupoDeCategoria(usuario.categoria)
     const [problemasDelGrupo, enviosDelUsuario, corridasDelUsuario] =
