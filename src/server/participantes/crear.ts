@@ -9,6 +9,7 @@ export async function crearCuentaParticipante(input: {
   correo: string
   categoria: 'invitado' | 'junior' | 'senior'
   carnet: string | null
+  rol?: 'participante' | 'admin'
 }): Promise<{ id: string; contrasenaGenerada: string }> {
   const existentes = await db.select().from(usuarios).where(eq(usuarios.email, input.correo))
   if (existentes.length > 0) {
@@ -26,6 +27,7 @@ export async function crearCuentaParticipante(input: {
       email: input.correo,
       categoria: input.categoria,
       carnet: input.carnet,
+      rol: input.rol ?? 'participante',
     })
     await tx.insert(cuentas).values({
       id: crypto.randomUUID(),
