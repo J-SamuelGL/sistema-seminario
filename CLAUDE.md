@@ -63,14 +63,18 @@ Type system for problem I/O lives in `src/server/judge/tipos.ts` (`TipoDato` = s
 `Valor`, `Parametro`) and is shared between the DB schema (`problemas.parametros`/`tipoRetorno` JSON columns),
 the harness generators, and admin-side problem validation (`src/server/problems/validate.ts`).
 
-Two server functions drive submissions and share almost identical grading logic:
-
-- `src/server/functions/run.ts` (`ejecutarCodigo`) — "Run" button, doesn't persist a submission, tracks a
-  per-user/per-problem run counter (`corridas` table) to gate periodic Claude hints for `invitado` users
-  (`src/server/judge/hintCadence.ts`: every 3rd run).
-- `src/server/functions/submit.ts` (`enviarCodigo`) — "Submit" button, persists an `envios` row, requires the
-  tournament to have started (`asegurarIniciado`), and fires an async (non-blocking) Claude feedback comment
-  for `invitado` users via `src/server/claude/feedback.ts`.
+`src/server/functions/run.ts` (`ejecutarCodigo`) — único camino de calificación ("Run" es el único
+botón; no existe "Submit"). Requiere que el torneo haya iniciado y no haya concluido
+(`asegurarIniciado`). En cada corrida hace upsert de un snapshot (código/lenguaje/veredicto/
+resultados/timestamp) en `corridas`, para cualquier categoría — esto es lo que permite reconstruir
+el progreso de un participante aunque nunca haya acertado. Si el veredicto es `aceptado` y todavía
+no existe un `envio` para ese usuario+problema, lo crea automáticamente con
+`estadoProgreso: 'completado'`. Un admin puede además cambiar el `estadoProgreso` de cualquier
+problema manualmente (`pendiente`/`completado`/`aprobado_manual`) desde `/admin/respuestas`
+(`src/server/functions/admin-respuestas.ts`), y `concluirTorneo`
+(`src/server/functions/tournament.ts`) persiste como `envio` en `pendiente` el último código
+conocido de todo lo que alguien llegó a correr pero nunca acertó, para poder revisarlo después de
+que el torneo termina.
 
 ### Claude integration
 
@@ -80,8 +84,9 @@ both `invitado`-category-only:
 - `src/server/claude/assistant.ts` — free-form syntax-help chat widget (`AssistantModal.tsx`), system-prompted
   to refuse revealing problem solutions. Usage is rate-limited per user via `src/server/assistant/limit.ts`
   and `usuario.preguntasIaUsadas`.
-- `src/server/claude/feedback.ts` — auto-generated 2–3 sentence comment/hint on a submission or periodic run,
-  based on verdict + stderr.
+- `src/server/claude/feedback.ts` — comentario/hint periódico cada 3 corridas de `Run`
+  (`src/server/judge/hintCadence.ts`), basado en veredicto + stderr. Ya no se genera al enviar una
+  respuesta (no existe ese flujo).
 
 ### Auth & authorization
 
@@ -104,9 +109,13 @@ admins, where it's semantically meaningless — use `'senior'` as the placeholde
 
 Single-row `estado_torneo` table (id fixed at 1) gates whether submissions are accepted
 (`src/server/tournament/guard.ts`: `asegurarIniciado`/`asegurarNoIniciado`). Once started, it cannot be
-un-started. `src/server/standings/calculate.ts` computes the leaderboard: points come from the _first accepted_
-submission per problem per user (later accepted resubmissions don't add points), with a penalty in minutes
-= (minutes since tournament start at time of AC) + 20 × (failed attempts before the AC). Ranking is by total
+un-started. `src/server/standings/calculate.ts` computes the leaderboard: a problem counts as solved when its
+`envio` has `estadoProgreso` `completado` (auto-detected by `Run`) or `aprobado_manual` (set by an
+admin from `/admin/respuestas`); points come from the first (and only) such `envio` per problem per
+user, with a penalty in minutes equal to the minutes since tournament start at the time it was
+solved (no penalty for prior failed attempts). `src/server/standings/duracion.ts` computes, for the
+admin-facing detail page, how long a participant took on each solved problem (relative to the
+previous solve, or tournament start for the first one). Ranking is by total
 points desc, then penalty asc — not by count of problems solved. `agruparClasificacionPorCategoria` splits
 results into `invitado`/`junior`/`senior` boards.
 
