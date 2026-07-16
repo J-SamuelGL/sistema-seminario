@@ -1,26 +1,14 @@
-import { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { listarTodosLosEnvios } from '#/server/functions/admin-submissions'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { enviosQueryOptions } from '#/server/queries/envios'
 
 export const Route = createFileRoute('/admin/envios')({
-  loader: () => listarTodosLosEnvios(),
+  loader: ({ context }) => context.queryClient.ensureQueryData(enviosQueryOptions()),
   component: AdminSubmissionsPage,
 })
 
 function AdminSubmissionsPage() {
-  const initial = Route.useLoaderData()
-  const [rows, setRows] = useState(initial)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      listarTodosLosEnvios()
-        .then(setRows)
-        .catch(() => {
-          // Ignore transient polling errors; the next interval tick will retry.
-        })
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
+  const { data: rows } = useSuspenseQuery(enviosQueryOptions())
 
   return (
     <div className="p-8">
