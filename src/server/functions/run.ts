@@ -129,7 +129,7 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
                 resultados,
                 creadoEn: ahora,
               })
-              .onDuplicateKeyUpdate({ set: {} })
+              .onDuplicateKeyUpdate({ set: { usuarioId: sql`usuario_id` } })
           }
         }
 
