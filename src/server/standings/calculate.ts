@@ -1,7 +1,7 @@
 export type RegistroEnvio = {
   usuarioId: string
   problemaId: string
-  estado: 'pendiente' | 'aceptado' | 'respuesta_incorrecta' | 'error_ejecucion' | 'tiempo_excedido'
+  estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual'
   creadoEn: Date
 }
 
@@ -30,38 +30,27 @@ export function calcularClasificacion(
 ): FilaClasificacion[] {
   const puntosPorProblema = new Map(problemas.map((p) => [p.id, p.puntos]))
 
-  const porUsuario = new Map<string, RegistroEnvio[]>()
+  const resueltosPorUsuario = new Map<string, RegistroEnvio[]>()
   for (const e of envios) {
-    if (e.estado === 'pendiente') continue
-    if (!porUsuario.has(e.usuarioId)) porUsuario.set(e.usuarioId, [])
-    porUsuario.get(e.usuarioId)!.push(e)
+    if (e.estadoProgreso === 'pendiente') continue
+    if (!resueltosPorUsuario.has(e.usuarioId)) resueltosPorUsuario.set(e.usuarioId, [])
+    resueltosPorUsuario.get(e.usuarioId)!.push(e)
   }
 
   const filas = usuarios.map((usuario): FilaClasificacion => {
-    const enviosUsuario = (porUsuario.get(usuario.id) ?? []).slice().sort(
-      (a, b) => a.creadoEn.getTime() - b.creadoEn.getTime(),
-    )
-    const porProblema = new Map<string, RegistroEnvio[]>()
-    for (const e of enviosUsuario) {
-      if (!porProblema.has(e.problemaId)) porProblema.set(e.problemaId, [])
-      porProblema.get(e.problemaId)!.push(e)
-    }
+    const resueltos = resueltosPorUsuario.get(usuario.id) ?? []
 
     let cantidadResueltos = 0
     let puntosTotales = 0
     let minutosPenalizacionTotal = 0
 
-    for (const [problemaId, enviosProblema] of porProblema) {
-      const indiceAceptado = enviosProblema.findIndex((e) => e.estado === 'aceptado')
-      if (indiceAceptado === -1) continue
+    for (const envio of resueltos) {
       cantidadResueltos += 1
-      puntosTotales += puntosPorProblema.get(problemaId) ?? 0
-      const envioAceptado = enviosProblema[indiceAceptado]
-      const intentosFallidosAntes = indiceAceptado
+      puntosTotales += puntosPorProblema.get(envio.problemaId) ?? 0
       const minutosDesdeInicio = Math.floor(
-        (envioAceptado.creadoEn.getTime() - torneoIniciadoEn.getTime()) / 60000,
+        (envio.creadoEn.getTime() - torneoIniciadoEn.getTime()) / 60000,
       )
-      minutosPenalizacionTotal += minutosDesdeInicio + intentosFallidosAntes * 20
+      minutosPenalizacionTotal += minutosDesdeInicio
     }
 
     return {

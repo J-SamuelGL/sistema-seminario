@@ -27,7 +27,7 @@ export const obtenerClasificacion = createServerFn({ method: 'GET' }).handler(as
     todosEnvios.map((e) => ({
       usuarioId: e.usuarioId,
       problemaId: e.problemaId,
-      estado: e.estado,
+      estadoProgreso: e.estadoProgreso,
       creadoEn: e.creadoEn,
     })),
     problemasConPuntos,

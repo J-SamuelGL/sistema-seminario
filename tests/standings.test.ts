@@ -8,17 +8,17 @@ const problemas = [
 ]
 
 describe('calcularClasificacion', () => {
-  it('returns zero solved and zero points for a user with no submissions', () => {
+  it('returns zero solved and zero points for a user with no envios', () => {
     const filas = calcularClasificacion([{ id: 'u1', nombre: 'Ana', categoria: 'senior' }], [], problemas, start)
     expect(filas).toEqual([
       { usuarioId: 'u1', nombre: 'Ana', categoria: 'senior', cantidadResueltos: 0, puntosTotales: 0, minutosPenalizacionTotal: 0 },
     ])
   })
 
-  it('counts an accepted submission as solved, sums its points, and applies time penalty', () => {
+  it('counts a completado envio as solved, sums its points, and applies time penalty', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:10:00Z') }],
+      [{ usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:10:00Z') }],
       problemas,
       start,
     )
@@ -27,31 +27,42 @@ describe('calcularClasificacion', () => {
     expect(filas[0].minutosPenalizacionTotal).toBe(10)
   })
 
-  it('adds 20 minutes penalty per failed attempt before the accepted one', () => {
+  it('counts an aprobado_manual envio the same as completado', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [
-        { usuarioId: 'u1', problemaId: 'p1', estado: 'respuesta_incorrecta', creadoEn: new Date('2026-07-13T10:02:00Z') },
-        { usuarioId: 'u1', problemaId: 'p1', estado: 'respuesta_incorrecta', creadoEn: new Date('2026-07-13T10:05:00Z') },
-        { usuarioId: 'u1', problemaId: 'p1', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:10:00Z') },
-      ],
+      [{ usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'aprobado_manual', creadoEn: new Date('2026-07-13T10:20:00Z') }],
       problemas,
       start,
     )
     expect(filas[0].cantidadResueltos).toBe(1)
     expect(filas[0].puntosTotales).toBe(10)
-    expect(filas[0].minutosPenalizacionTotal).toBe(10 + 20 * 2)
+    expect(filas[0].minutosPenalizacionTotal).toBe(20)
   })
 
-  it('does not count a problem with no accepted submission as solved', () => {
+  it('does not count a pendiente envio as solved', () => {
     const filas = calcularClasificacion(
       [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estado: 'respuesta_incorrecta', creadoEn: new Date('2026-07-13T10:05:00Z') }],
+      [{ usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'pendiente', creadoEn: new Date('2026-07-13T10:05:00Z') }],
       problemas,
       start,
     )
     expect(filas[0].cantidadResueltos).toBe(0)
     expect(filas[0].puntosTotales).toBe(0)
+  })
+
+  it('sums multiple solved problems for the same user', () => {
+    const filas = calcularClasificacion(
+      [{ id: 'u1', nombre: 'Ana', categoria: 'senior' }],
+      [
+        { usuarioId: 'u1', problemaId: 'p1', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:10:00Z') },
+        { usuarioId: 'u1', problemaId: 'p2', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:30:00Z') },
+      ],
+      problemas,
+      start,
+    )
+    expect(filas[0].cantidadResueltos).toBe(2)
+    expect(filas[0].puntosTotales).toBe(30)
+    expect(filas[0].minutosPenalizacionTotal).toBe(10 + 30)
   })
 
   it('sorts by total points desc, then penalty asc — not by solved count', () => {
@@ -61,26 +72,13 @@ describe('calcularClasificacion', () => {
         { id: 'u2', nombre: 'Beto', categoria: 'senior' },
       ],
       [
-        // Ana resuelve solo p2 (20 pts) — Beto resuelve p1 y p1-otra-vez no aplica, resuelve solo p1 (10 pts).
-        { usuarioId: 'u1', problemaId: 'p2', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:30:00Z') },
-        { usuarioId: 'u2', problemaId: 'p1', estado: 'aceptado', creadoEn: new Date('2026-07-13T10:05:00Z') },
+        { usuarioId: 'u1', problemaId: 'p2', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:30:00Z') },
+        { usuarioId: 'u2', problemaId: 'p1', estadoProgreso: 'completado', creadoEn: new Date('2026-07-13T10:05:00Z') },
       ],
       problemas,
       start,
     )
-    // Ana tiene menos problemas resueltos (1 vs 1, empatados en cantidad) pero más puntos (20 vs 10) — debe ir primero.
     expect(filas.map((f) => f.usuarioId)).toEqual(['u1', 'u2'])
-  })
-
-  it('ignores pending submissions', () => {
-    const filas = calcularClasificacion(
-      [{ id: 'u1', nombre: 'Ana', categoria: 'junior' }],
-      [{ usuarioId: 'u1', problemaId: 'p1', estado: 'pendiente', creadoEn: new Date('2026-07-13T10:05:00Z') }],
-      problemas,
-      start,
-    )
-    expect(filas[0].cantidadResueltos).toBe(0)
-    expect(filas[0].puntosTotales).toBe(0)
   })
 })
 
