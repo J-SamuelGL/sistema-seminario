@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
+import { Spinner } from '#/components/Spinner'
 
 export type TipoDatoFormulario =
   | 'int' | 'float' | 'bool' | 'string' | 'list<int>' | 'list<float>' | 'list<bool>' | 'list<string>'
@@ -42,12 +44,13 @@ export type DatosProblemaEnviado = {
 export function AdminProblemForm({
   initial,
   onSubmit,
+  isPending = false,
 }: {
   initial: ValorFormularioProblema
   onSubmit: (value: DatosProblemaEnviado) => void
+  isPending?: boolean
 }) {
   const [value, setValue] = useState(initial)
-  const [errorParseo, setErrorParseo] = useState<string | null>(null)
 
   function actualizarParametro(index: number, campo: 'nombre' | 'tipo', texto: string) {
     const next = value.parametros.slice()
@@ -105,10 +108,9 @@ export function AdminProblemForm({
         salidaEsperada: JSON.parse(caso.salidaEsperadaTexto),
         visible: caso.visible,
       }))
-      setErrorParseo(null)
       onSubmit({ ...value, casosPrueba })
     } catch {
-      setErrorParseo(
+      toast.error(
         'Algún argumento o salida esperada no es JSON válido (ej. "hola" con comillas, [1,2,3] para listas, true/false para booleanos).',
       )
     }
@@ -208,8 +210,19 @@ export function AdminProblemForm({
         + Agregar caso de prueba
       </button>
 
-      {errorParseo && <p className="text-red-600">{errorParseo}</p>}
-      <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">Guardar</button>
+      <button
+        type="submit"
+        className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
+        disabled={isPending}
+      >
+        {isPending ? (
+          <span className="flex items-center justify-center gap-2">
+            <Spinner /> Guardando...
+          </span>
+        ) : (
+          'Guardar'
+        )}
+      </button>
     </form>
   )
 }

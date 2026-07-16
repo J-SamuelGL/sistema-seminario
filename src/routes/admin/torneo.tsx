@@ -1,30 +1,27 @@
-import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { obtenerEstadoTorneo, iniciarTorneo } from '#/server/functions/tournament'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { iniciarTorneo } from '#/server/functions/tournament'
+import { estadoTorneoQueryOptions } from '#/server/queries/torneo'
+import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/torneo')({
-  loader: () => obtenerEstadoTorneo(),
+  loader: ({ context }) => context.queryClient.ensureQueryData(estadoTorneoQueryOptions()),
   component: TournamentControlPage,
 })
 
 function TournamentControlPage() {
-  const initial = Route.useLoaderData()
-  const [estado, setEstado] = useState(initial)
-  const [error, setError] = useState<string | null>(null)
-  const [iniciando, setIniciando] = useState(false)
+  const queryClient = useQueryClient()
+  const { data: estado } = useSuspenseQuery(estadoTorneoQueryOptions())
 
-  async function handleStart() {
-    setIniciando(true)
-    try {
-      const resultado = await iniciarTorneo()
-      setEstado({ id: 1, iniciadoEn: resultado.iniciadoEn })
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setIniciando(false)
-    }
-  }
+  const iniciar = useMutation({
+    mutationFn: () => iniciarTorneo(),
+    onSuccess: (resultado) => {
+      queryClient.setQueryData(estadoTorneoQueryOptions().queryKey, { id: 1, iniciadoEn: resultado.iniciadoEn })
+      toast.success('Torneo iniciado.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+  })
 
   return (
     <div className="p-8">
@@ -34,13 +31,18 @@ function TournamentControlPage() {
       ) : (
         <button
           className="rounded bg-red-600 px-4 py-2 text-white"
-          onClick={handleStart}
-          disabled={iniciando}
+          onClick={() => iniciar.mutate()}
+          disabled={iniciar.isPending}
         >
-          {iniciando ? 'Iniciando...' : 'Iniciar torneo'}
+          {iniciar.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner /> Iniciando...
+            </span>
+          ) : (
+            'Iniciar torneo'
+          )}
         </button>
       )}
-      {error && <p className="mt-4 text-red-600">{error}</p>}
     </div>
   )
 }

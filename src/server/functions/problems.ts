@@ -4,22 +4,9 @@ import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { problemas, casosPrueba, problemaLenguajes } from '../db/schema'
 import { requerirAdmin, requerirParticipanteIngresado } from '../auth/middleware'
-import { validarDatosProblema } from '../problems/validate'
+import { validarDatosProblema, datosProblemaSchema, datosProblemaConIdSchema } from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
-import type { Parametro, TipoDato, Valor } from '../judge/tipos'
-
-type DatosProblema = {
-  titulo: string
-  descripcion: string
-  dificultad: string
-  orden: number
-  grupo: 'invitado_junior' | 'senior'
-  puntos: number
-  parametros: Parametro[]
-  tipoRetorno: TipoDato
-  lenguajes: { lenguaje: string; nombreFuncion: string; codigoInicial: string }[]
-  casosPrueba: { argumentos: Valor[]; salidaEsperada: Valor; visible: boolean }[]
-}
+import { idSchema } from '../validacion/comun'
 
 export const listarProblemas = createServerFn({ method: 'GET' }).handler(async () => {
   const request = getRequest()
@@ -32,7 +19,7 @@ export const listarProblemas = createServerFn({ method: 'GET' }).handler(async (
 })
 
 export const obtenerProblema = createServerFn({ method: 'GET' })
-  .validator((id: string) => id)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     const user = await requerirParticipanteIngresado(request.headers)
@@ -53,7 +40,7 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
   })
 
 export const crearProblema = createServerFn({ method: 'POST' })
-  .validator((input: DatosProblema) => input)
+  .validator(datosProblemaSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)
@@ -78,7 +65,7 @@ export const crearProblema = createServerFn({ method: 'POST' })
       await db.insert(problemaLenguajes).values(
         data.lenguajes.map((l) => ({
           problemaId: id,
-          lenguaje: l.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php',
+          lenguaje: l.lenguaje,
           nombreFuncion: l.nombreFuncion,
           codigoInicial: l.codigoInicial,
         })),
@@ -100,7 +87,7 @@ export const crearProblema = createServerFn({ method: 'POST' })
   })
 
 export const actualizarProblema = createServerFn({ method: 'POST' })
-  .validator((input: DatosProblema & { id: string }) => input)
+  .validator(datosProblemaConIdSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)
@@ -127,7 +114,7 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
       await db.insert(problemaLenguajes).values(
         data.lenguajes.map((l) => ({
           problemaId: data.id,
-          lenguaje: l.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php',
+          lenguaje: l.lenguaje,
           nombreFuncion: l.nombreFuncion,
           codigoInicial: l.codigoInicial,
         })),
@@ -148,7 +135,7 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
   })
 
 export const eliminarProblema = createServerFn({ method: 'POST' })
-  .validator((id: string) => id)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)

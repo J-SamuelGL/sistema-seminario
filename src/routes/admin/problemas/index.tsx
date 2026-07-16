@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { listarProblemas } from '#/server/functions/problems'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { problemasQueryOptions } from '#/server/queries/problemas'
 
 export const Route = createFileRoute('/admin/problemas/')({
-  loader: () => listarProblemas(),
+  loader: ({ context }) => context.queryClient.ensureQueryData(problemasQueryOptions()),
   component: AdminProblemsList,
 })
 
 function AdminProblemsList() {
-  const problemas = Route.useLoaderData()
+  const { data: problemas } = useSuspenseQuery(problemasQueryOptions())
   return (
     <div className="p-8">
       <h1 className="text-xl font-bold">Problemas</h1>

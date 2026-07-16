@@ -5,9 +5,10 @@ import { db } from '../db/client'
 import { usuarios } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { construirResultadoIngreso } from '../checkin/result'
+import { tokenIngresoSchema } from '../checkin/validar'
 
 export const registrarIngresoPorToken = createServerFn({ method: 'POST' })
-  .validator((token: string) => token)
+  .validator(tokenIngresoSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)

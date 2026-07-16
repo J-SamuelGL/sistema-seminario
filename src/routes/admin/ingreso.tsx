@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { QrScanner } from '#/components/QrScanner'
 import { registrarIngresoPorToken } from '#/server/functions/checkin'
 import { participantesQueryOptions } from '#/server/queries/participantes'
-import type { ResultadoIngreso } from '#/server/checkin/result'
+import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/ingreso')({
   loader: ({ context }) => context.queryClient.ensureQueryData(participantesQueryOptions()),
@@ -14,21 +14,17 @@ export const Route = createFileRoute('/admin/ingreso')({
 function CheckinPage() {
   const queryClient = useQueryClient()
   const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
-  const [ultimoResultado, setUltimoResultado] = useState<ResultadoIngreso | null>(null)
-  const [error, setError] = useState<string | null>(null)
+
+  const escanear = useMutation({
+    mutationFn: (token: string) => registrarIngresoPorToken({ data: token }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: participantesQueryOptions().queryKey })
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+  })
 
   const yaIngresados = participantes.filter((p) => p.ingresadoEn).length
-
-  async function handleScan(token: string) {
-    try {
-      const resultado = await registrarIngresoPorToken({ data: token })
-      setUltimoResultado(resultado)
-      setError(null)
-      queryClient.invalidateQueries({ queryKey: participantesQueryOptions().queryKey })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    }
-  }
+  const ultimoResultado = escanear.data ?? null
 
   return (
     <div className="flex flex-col items-center gap-4 p-8">
@@ -36,7 +32,12 @@ function CheckinPage() {
       <p className="text-sm text-gray-600">
         {yaIngresados} de {participantes.length} participantes ya hicieron check-in
       </p>
-      <QrScanner onScan={handleScan} />
+      <QrScanner onScan={(token) => escanear.mutate(token)} />
+      {escanear.isPending && (
+        <p className="flex items-center gap-2 text-gray-500">
+          <Spinner /> Procesando...
+        </p>
+      )}
       {ultimoResultado?.status === 'ingresado' && (
         <p className="text-green-600">✅ {ultimoResultado.nombreUsuario} presente</p>
       )}
@@ -48,7 +49,6 @@ function CheckinPage() {
       {ultimoResultado?.status === 'no_encontrado' && (
         <p className="text-red-600">❌ Código no reconocido</p>
       )}
-      {error && <p className="mt-4 text-red-600">{error}</p>}
     </div>
   )
 }

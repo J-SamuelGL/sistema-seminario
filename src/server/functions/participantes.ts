@@ -9,36 +9,16 @@ import { crearCuentaParticipante } from '../participantes/crear'
 import { generarContrasenaAleatoria } from '../auth/password'
 import { enviarCorreoBienvenida } from '../email/brevo'
 import { puedeEliminarParticipante } from '../participantes/eliminar'
-import { validarDatosParticipante } from '../participantes/validar'
-import type { Categoria, Semestre } from '../participantes/validar'
-
-type DatosParticipante = {
-  nombre: string
-  correo: string
-  categoria: Categoria
-  carnet: string | null
-  semestre: Semestre | null
-}
+import { datosParticipanteSchema } from '../participantes/validar'
+import { idSchema } from '../validacion/comun'
 
 export const registrarParticipante = createServerFn({ method: 'POST' })
-  .validator((input: DatosParticipante) => input)
+  .validator(datosParticipanteSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const esInvitado = data.categoria === 'invitado'
-    const datosSaneados = {
-      ...data,
-      carnet: esInvitado ? null : data.carnet,
-      semestre: esInvitado ? null : data.semestre,
-    }
-    const validacion = validarDatosParticipante(datosSaneados)
-    if (!validacion.valido) {
-      throw new Error(validacion.motivo)
-    }
-
-    const { id, contrasenaGenerada } =
-      await crearCuentaParticipante(datosSaneados)
+    const { id, contrasenaGenerada } = await crearCuentaParticipante(data)
 
     let correoEnviado = true
     try {
@@ -63,7 +43,7 @@ export const registrarParticipante = createServerFn({ method: 'POST' })
   })
 
 export const reenviarCredenciales = createServerFn({ method: 'POST' })
-  .validator((usuarioId: string) => usuarioId)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)
@@ -125,7 +105,7 @@ export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(
 )
 
 export const eliminarParticipante = createServerFn({ method: 'POST' })
-  .validator((usuarioId: string) => usuarioId)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)

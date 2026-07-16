@@ -5,6 +5,7 @@ import { db } from '../db/client'
 import { envios, usuarios, problemas } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { aplicarAprobacionManual, revertirAprobacionEnvio } from '../envios/aprobacion'
+import { idSchema } from '../validacion/comun'
 
 export const listarTodosLosEnvios = createServerFn({ method: 'GET' }).handler(async () => {
   const request = getRequest()
@@ -27,7 +28,7 @@ export const listarTodosLosEnvios = createServerFn({ method: 'GET' }).handler(as
 })
 
 export const obtenerDetalleEnvio = createServerFn({ method: 'GET' })
-  .validator((id: string) => id)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)
@@ -55,7 +56,7 @@ export const obtenerDetalleEnvio = createServerFn({ method: 'GET' })
   })
 
 export const aprobarEnvioManualmente = createServerFn({ method: 'POST' })
-  .validator((envioId: string) => envioId)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     const admin = await requerirAdmin(request.headers)
@@ -73,7 +74,7 @@ export const aprobarEnvioManualmente = createServerFn({ method: 'POST' })
   })
 
 export const revertirAprobacion = createServerFn({ method: 'POST' })
-  .validator((envioId: string) => envioId)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)

@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { obtenerDetalleEnvio, aprobarEnvioManualmente, revertirAprobacion } from '#/server/functions/admin-submissions'
 import { enviosQueryOptions } from '#/server/queries/envios'
+import { Spinner } from '#/components/Spinner'
 
 function detalleEnvioQueryOptions(envioId: string) {
   return queryOptions({
@@ -26,12 +28,20 @@ function AdminEnvioDetailPage() {
 
   const aprobar = useMutation({
     mutationFn: () => aprobarEnvioManualmente({ data: envioId }),
-    onSuccess: invalidarTodo,
+    onSuccess: () => {
+      invalidarTodo()
+      toast.success('Envío aprobado.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const revertir = useMutation({
     mutationFn: () => revertirAprobacion({ data: envioId }),
-    onSuccess: invalidarTodo,
+    onSuccess: () => {
+      invalidarTodo()
+      toast.success('Veredicto revertido.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   if (!envio) {
@@ -88,7 +98,13 @@ function AdminEnvioDetailPage() {
             disabled={aprobar.isPending}
             onClick={() => aprobar.mutate()}
           >
-            Aprobar manualmente
+            {aprobar.isPending ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner /> Aprobando...
+              </span>
+            ) : (
+              'Aprobar manualmente'
+            )}
           </button>
         )}
         {envio.veredictoOriginal && (
@@ -97,7 +113,13 @@ function AdminEnvioDetailPage() {
             disabled={revertir.isPending}
             onClick={() => revertir.mutate()}
           >
-            Revertir a veredicto original
+            {revertir.isPending ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner /> Revirtiendo...
+              </span>
+            ) : (
+              'Revertir a veredicto original'
+            )}
           </button>
         )}
       </div>

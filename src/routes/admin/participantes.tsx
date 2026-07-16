@@ -5,6 +5,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import {
   registrarParticipante,
   reenviarCredenciales,
@@ -12,8 +13,9 @@ import {
 } from '#/server/functions/participantes'
 import { participantesQueryOptions } from '#/server/queries/participantes'
 import { puedeEliminarParticipante } from '#/server/participantes/eliminar'
-import { validarDatosParticipante } from '#/server/participantes/validar'
+import { datosParticipanteSchema } from '#/server/participantes/validar'
 import type { Categoria, Semestre } from '#/server/participantes/validar'
+import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/participantes')({
   loader: ({ context }) =>
@@ -55,71 +57,80 @@ function AdminParticipantsPage() {
   const [correo, setCorreo] = useState('')
   const [carnet, setCarnet] = useState('')
   const [semestreSalon, setSemestreSalon] = useState<Semestre | ''>('')
-  const [registrando, setRegistrando] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const requiereCarnetYSemestre =
     categoriaSalon === 'junior' || categoriaSalon === 'senior'
   const [registrados, setRegistrados] = useState<ParticipanteRegistrado[]>([])
   const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
   const queryClient = useQueryClient()
-  const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
+
+  const registrar = useMutation({
+    mutationFn: (datos: {
+      nombre: string
+      correo: string
+      categoria: Categoria
+      carnet: string | null
+      semestre: Semestre | null
+    }) => registrarParticipante({ data: datos }),
+    onSuccess: (resultado) => {
+      setRegistrados((prev) => [resultado, ...prev])
+      setNombre('')
+      setCorreo('')
+      setCarnet('')
+      queryClient.invalidateQueries({
+        queryKey: participantesQueryOptions().queryKey,
+      })
+      toast.success('Participante registrado.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+  })
+
+  const reenviar = useMutation({
+    mutationFn: (usuarioId: string) => reenviarCredenciales({ data: usuarioId }),
+    onSuccess: (resultado, usuarioId) => {
+      setRegistrados((prev) =>
+        prev.map((p) =>
+          p.id === usuarioId
+            ? {
+                ...p,
+                correoEnviado: resultado.correoEnviado,
+                contrasenaGenerada: resultado.contrasenaGenerada,
+              }
+            : p,
+        ),
+      )
+      toast.success('Credenciales reenviadas.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+  })
+
   const eliminar = useMutation({
     mutationFn: (usuarioId: string) =>
       eliminarParticipante({ data: usuarioId }),
     onSuccess: () => {
-      setErrorEliminar(null)
       queryClient.invalidateQueries({
         queryKey: participantesQueryOptions().queryKey,
       })
+      toast.success('Participante eliminado.')
     },
-    onError: (err) =>
-      setErrorEliminar(err instanceof Error ? err.message : String(err)),
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
   })
 
-  async function handleRegistrar(e: React.FormEvent) {
+  function handleRegistrar(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
 
-    const datos = {
+    const validacion = datosParticipanteSchema.safeParse({
       nombre,
       correo,
       categoria: categoriaSalon,
       carnet: requiereCarnetYSemestre && carnet.trim() ? carnet.trim() : null,
       semestre: requiereCarnetYSemestre && semestreSalon ? semestreSalon : null,
-    }
-    const validacion = validarDatosParticipante(datos)
-    if (!validacion.valido) {
-      setError(validacion.motivo)
+    })
+    if (!validacion.success) {
+      toast.error(validacion.error.issues[0].message)
       return
     }
 
-    setRegistrando(true)
-    try {
-      const resultado = await registrarParticipante({ data: datos })
-      setRegistrados([resultado, ...registrados])
-      setNombre('')
-      setCorreo('')
-      setCarnet('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setRegistrando(false)
-    }
-  }
-
-  async function handleReenviar(usuarioId: string) {
-    const resultado = await reenviarCredenciales({ data: usuarioId })
-    setRegistrados(
-      registrados.map((p) =>
-        p.id === usuarioId
-          ? {
-              ...p,
-              correoEnviado: resultado.correoEnviado,
-              contrasenaGenerada: resultado.contrasenaGenerada,
-            }
-          : p,
-      ),
-    )
+    registrar.mutate(validacion.data)
   }
 
   return (
@@ -191,6 +202,7 @@ function AdminParticipantsPage() {
           placeholder="Correo"
           value={correo}
           onChange={(e) => setCorreo(e.target.value)}
+          maxLength={255}
           required
         />
         {requiereCarnetYSemestre && (
@@ -205,11 +217,16 @@ function AdminParticipantsPage() {
         <button
           className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
           type="submit"
-          disabled={registrando}
+          disabled={registrar.isPending}
         >
-          {registrando ? 'Registrando...' : `Registrar como ${categoriaSalon}`}
+          {registrar.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner /> Registrando...
+            </span>
+          ) : (
+            `Registrar como ${categoriaSalon}`
+          )}
         </button>
-        {error && <p className="text-red-600">{error}</p>}
       </form>
 
       <ul className="flex flex-col gap-2">
@@ -225,10 +242,17 @@ function AdminParticipantsPage() {
               </span>
             )}
             <button
-              className="ml-2 text-blue-600 underline"
-              onClick={() => handleReenviar(p.id)}
+              className="ml-2 text-blue-600 underline disabled:text-gray-400"
+              disabled={reenviar.isPending}
+              onClick={() => reenviar.mutate(p.id)}
             >
-              Reenviar credenciales
+              {reenviar.isPending ? (
+                <span className="inline-flex items-center gap-1">
+                  <Spinner className="h-3 w-3" /> Reenviando...
+                </span>
+              ) : (
+                'Reenviar credenciales'
+              )}
             </button>
           </li>
         ))}
@@ -268,7 +292,13 @@ function AdminParticipantsPage() {
                     title={permiso.puede ? undefined : permiso.motivo}
                     onClick={() => eliminar.mutate(p.id)}
                   >
-                    Eliminar
+                    {eliminar.isPending && eliminar.variables === p.id ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Spinner className="h-3 w-3" /> Eliminando...
+                      </span>
+                    ) : (
+                      'Eliminar'
+                    )}
                   </button>
                 </td>
               </tr>
@@ -276,7 +306,6 @@ function AdminParticipantsPage() {
           })}
         </tbody>
       </table>
-      {errorEliminar && <p className="text-red-600">{errorEliminar}</p>}
     </div>
   )
 }

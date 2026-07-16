@@ -8,10 +8,12 @@ import { ejecutarCasosPrueba } from '../judge/runTestCases'
 import { ocultarDetalleCasosNoVisibles } from '../judge/resultadoPublico'
 import { generarComentarioEnvio } from '../claude/feedback'
 import { asegurarIniciado } from '../tournament/guard'
+import { datosEjecucionSchema } from '../envios/validar'
+import { idSchema } from '../validacion/comun'
 import type { ResultadoCasoPublico } from '../judge/resultadoPublico'
 
 export const enviarCodigo = createServerFn({ method: 'POST' })
-  .validator((input: { problemaId: string; lenguaje: string; codigo: string }) => input)
+  .validator(datosEjecucionSchema)
   .handler(
     async ({
       data,
@@ -30,7 +32,7 @@ export const enviarCodigo = createServerFn({ method: 'POST' })
       const filasLenguaje = await db
         .select()
         .from(problemaLenguajes)
-        .where(and(eq(problemaLenguajes.problemaId, data.problemaId), eq(problemaLenguajes.lenguaje, data.lenguaje as 'python' | 'javascript' | 'java' | 'csharp' | 'php')))
+        .where(and(eq(problemaLenguajes.problemaId, data.problemaId), eq(problemaLenguajes.lenguaje, data.lenguaje)))
       const filaLenguaje = filasLenguaje.length > 0 ? filasLenguaje[0] : null
       if (!filaLenguaje) throw new Error('Lenguaje no habilitado para este problema')
 
@@ -83,7 +85,7 @@ export const enviarCodigo = createServerFn({ method: 'POST' })
   )
 
 export const obtenerEnvio = createServerFn({ method: 'GET' })
-  .validator((id: string) => id)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirParticipanteIngresado(request.headers)

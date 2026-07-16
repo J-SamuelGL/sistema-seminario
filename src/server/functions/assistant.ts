@@ -6,9 +6,10 @@ import { problemas, preguntasIa, usuarios } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { puedePreguntar } from '../assistant/limit'
 import { responderPreguntaInvitado } from '../claude/assistant'
+import { datosPreguntaAsistenteSchema } from '../assistant/validar'
 
 export const preguntarAsistente = createServerFn({ method: 'POST' })
-  .validator((input: { problemaId: string; pregunta: string }) => input)
+  .validator(datosPreguntaAsistenteSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     const user = await requerirParticipanteIngresado(request.headers)

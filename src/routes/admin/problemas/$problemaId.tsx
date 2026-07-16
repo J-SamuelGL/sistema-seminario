@@ -1,20 +1,64 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { obtenerProblema, crearProblema, actualizarProblema, eliminarProblema } from '#/server/functions/problems'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { crearProblema, actualizarProblema, eliminarProblema } from '#/server/functions/problems'
+import { problemaQueryOptions, problemasQueryOptions } from '#/server/queries/problemas'
 import { AdminProblemForm } from '#/components/AdminProblemForm'
+import { Spinner } from '#/components/Spinner'
 import type { ValorFormularioProblema, DatosProblemaEnviado, TipoDatoFormulario } from '#/components/AdminProblemForm'
 
 export const Route = createFileRoute('/admin/problemas/$problemaId')({
-  loader: async ({ params }) => {
-    if (params.problemaId === 'new') return null
-    return obtenerProblema({ data: params.problemaId })
+  loader: ({ context, params }) => {
+    if (params.problemaId === 'new') return
+    return context.queryClient.ensureQueryData(problemaQueryOptions(params.problemaId))
   },
   component: AdminProblemEditPage,
 })
 
 function AdminProblemEditPage() {
   const { problemaId } = Route.useParams()
-  const data = Route.useLoaderData()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { data } = useQuery({
+    ...problemaQueryOptions(problemaId),
+    enabled: problemaId !== 'new',
+  })
+
+  const invalidarProblemas = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: problemasQueryOptions().queryKey }),
+      queryClient.invalidateQueries({ queryKey: problemaQueryOptions(problemaId).queryKey }),
+    ])
+
+  const crear = useMutation({
+    mutationFn: (value: Parameters<typeof crearProblema>[0]['data']) => crearProblema({ data: value }),
+    onSuccess: async () => {
+      await invalidarProblemas()
+      await navigate({ to: '/admin/problemas' })
+      toast.success('Problema creado.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+  })
+
+  const actualizar = useMutation({
+    mutationFn: (value: Parameters<typeof actualizarProblema>[0]['data']) => actualizarProblema({ data: value }),
+    onSuccess: async () => {
+      await invalidarProblemas()
+      await navigate({ to: '/admin/problemas' })
+      toast.success('Problema actualizado.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+  })
+
+  const eliminar = useMutation({
+    mutationFn: () => eliminarProblema({ data: problemaId }),
+    onSuccess: async () => {
+      await invalidarProblemas()
+      await navigate({ to: '/admin/problemas' })
+      toast.success('Problema eliminado.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
+  })
 
   if (problemaId !== 'new' && !data?.problema) {
     return (
@@ -60,36 +104,42 @@ function AdminProblemEditPage() {
           casosPrueba: [],
         }
 
-  async function handleSubmit(value: DatosProblemaEnviado) {
+  function handleSubmit(value: DatosProblemaEnviado) {
     if (problemaId === 'new') {
-      await crearProblema({ data: value as Parameters<typeof crearProblema>[0]['data'] })
+      crear.mutate(value as Parameters<typeof crearProblema>[0]['data'])
     } else {
-      await actualizarProblema({
-        data: { ...value, id: problemaId } as Parameters<typeof actualizarProblema>[0]['data'],
-      })
+      actualizar.mutate({ ...value, id: problemaId } as Parameters<typeof actualizarProblema>[0]['data'])
     }
-    await navigate({ to: '/admin/problemas' })
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (
       !window.confirm(
         '¿Eliminar este problema? Se borran también sus casos de prueba y su configuración de lenguajes.',
       )
     )
       return
-    await eliminarProblema({ data: problemaId })
-    await navigate({ to: '/admin/problemas' })
+    eliminar.mutate()
   }
 
   return (
     <div>
       {problemaId !== 'new' && (
-        <button className="m-4 rounded bg-red-600 px-4 py-2 text-white" onClick={handleDelete}>
-          Eliminar problema
+        <button
+          className="m-4 rounded bg-red-600 px-4 py-2 text-white disabled:bg-gray-300"
+          disabled={eliminar.isPending}
+          onClick={handleDelete}
+        >
+          {eliminar.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner /> Eliminando...
+            </span>
+          ) : (
+            'Eliminar problema'
+          )}
         </button>
       )}
-      <AdminProblemForm initial={initial} onSubmit={handleSubmit} />
+      <AdminProblemForm initial={initial} onSubmit={handleSubmit} isPending={crear.isPending || actualizar.isPending} />
     </div>
   )
 }

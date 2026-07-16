@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { registrarAdministrador, eliminarAdministrador } from '#/server/functions/administradores'
 import { administradoresQueryOptions } from '#/server/queries/administradores'
+import { datosAdministradorSchema } from '#/server/administradores/validar'
+import { Spinner } from '#/components/Spinner'
 
 export const Route = createFileRoute('/admin/administradores')({
   loader: ({ context }) => context.queryClient.ensureQueryData(administradoresQueryOptions()),
@@ -17,7 +20,6 @@ function AdminAdministradoresPage() {
   const [credenciales, setCredenciales] = useState<
     { correoEnviado: boolean; contrasenaGenerada: string } | null
   >(null)
-  const [error, setError] = useState<string | null>(null)
 
   const crear = useMutation({
     mutationFn: (input: { nombre: string; correo: string }) => registrarAdministrador({ data: input }),
@@ -25,16 +27,19 @@ function AdminAdministradoresPage() {
       setCredenciales(resultado)
       setNombre('')
       setCorreo('')
-      setError(null)
       queryClient.invalidateQueries({ queryKey: administradoresQueryOptions().queryKey })
+      toast.success('Administrador registrado.')
     },
-    onError: (err) => setError(err instanceof Error ? err.message : String(err)),
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const eliminar = useMutation({
     mutationFn: (usuarioId: string) => eliminarAdministrador({ data: usuarioId }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: administradoresQueryOptions().queryKey }),
-    onError: (err) => setError(err instanceof Error ? err.message : String(err)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: administradoresQueryOptions().queryKey })
+      toast.success('Administrador eliminado.')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   return (
@@ -45,7 +50,12 @@ function AdminAdministradoresPage() {
         className="flex flex-col gap-2"
         onSubmit={(e) => {
           e.preventDefault()
-          crear.mutate({ nombre, correo })
+          const validacion = datosAdministradorSchema.safeParse({ nombre, correo })
+          if (!validacion.success) {
+            toast.error(validacion.error.issues[0].message)
+            return
+          }
+          crear.mutate(validacion.data)
         }}
       >
         <input
@@ -61,6 +71,7 @@ function AdminAdministradoresPage() {
           placeholder="Correo"
           value={correo}
           onChange={(e) => setCorreo(e.target.value)}
+          maxLength={255}
           required
         />
         <button
@@ -68,9 +79,14 @@ function AdminAdministradoresPage() {
           type="submit"
           disabled={crear.isPending}
         >
-          {crear.isPending ? 'Registrando...' : 'Registrar administrador'}
+          {crear.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner /> Registrando...
+            </span>
+          ) : (
+            'Registrar administrador'
+          )}
         </button>
-        {error && <p className="text-red-600">{error}</p>}
       </form>
 
       {credenciales && !credenciales.correoEnviado && (
@@ -90,7 +106,13 @@ function AdminAdministradoresPage() {
               disabled={eliminar.isPending}
               onClick={() => eliminar.mutate(a.id)}
             >
-              Eliminar
+              {eliminar.isPending && eliminar.variables === a.id ? (
+                <span className="inline-flex items-center gap-1">
+                  <Spinner className="h-3 w-3" /> Eliminando...
+                </span>
+              ) : (
+                'Eliminar'
+              )}
             </button>
           </li>
         ))}

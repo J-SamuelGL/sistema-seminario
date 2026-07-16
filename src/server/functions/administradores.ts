@@ -6,6 +6,8 @@ import { usuarios } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { crearCuentaParticipante } from '../participantes/crear'
 import { enviarCorreoBienvenida } from '../email/brevo'
+import { datosAdministradorSchema } from '../administradores/validar'
+import { idSchema } from '../validacion/comun'
 
 export const obtenerAdministradores = createServerFn({ method: 'GET' }).handler(async () => {
   const request = getRequest()
@@ -17,7 +19,7 @@ export const obtenerAdministradores = createServerFn({ method: 'GET' }).handler(
 })
 
 export const registrarAdministrador = createServerFn({ method: 'POST' })
-  .validator((input: { nombre: string; correo: string }) => input)
+  .validator(datosAdministradorSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)
@@ -42,7 +44,7 @@ export const registrarAdministrador = createServerFn({ method: 'POST' })
   })
 
 export const eliminarAdministrador = createServerFn({ method: 'POST' })
-  .validator((usuarioId: string) => usuarioId)
+  .validator(idSchema)
   .handler(async ({ data }) => {
     const request = getRequest()
     const administradorActual = await requerirAdmin(request.headers)

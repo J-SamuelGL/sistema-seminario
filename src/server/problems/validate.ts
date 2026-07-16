@@ -1,5 +1,51 @@
+import { z } from 'zod'
 import { valorCoincideConTipo } from '../judge/tipos'
+import { idSchema, textoRequerido } from '../validacion/comun'
 import type { Parametro, TipoDato } from '../judge/tipos'
+
+const tipoDatoSchema = z.enum([
+  'int',
+  'float',
+  'bool',
+  'string',
+  'list<int>',
+  'list<float>',
+  'list<bool>',
+  'list<string>',
+])
+
+const lenguajeProblemaSchema = z.object({
+  lenguaje: z.enum(['python', 'javascript', 'java', 'csharp', 'php']),
+  nombreFuncion: textoRequerido('Falta el nombre de función'),
+  codigoInicial: textoRequerido('Falta el código inicial'),
+})
+
+const casoPruebaSchema = z.object({
+  argumentos: z.array(z.any()),
+  salidaEsperada: z.any(),
+  visible: z.boolean(),
+})
+
+// Forma y longitudes básicas (coinciden con las columnas de `problemas`, todas `text`
+// salvo `orden`/`puntos`, que son `int`). Las reglas de negocio que dependen de los tipos
+// declarados en `parametros` (coincidencia de tipos, variedad de salidas, etc.) se validan
+// aparte en `validarDatosProblema`, ya que no son expresables como un esquema estático.
+export const datosProblemaSchema = z.object({
+  titulo: textoRequerido('El título es requerido'),
+  descripcion: textoRequerido('La descripción es requerida'),
+  dificultad: textoRequerido('La dificultad es requerida'),
+  orden: z.number().int(),
+  grupo: z.enum(['invitado_junior', 'senior']),
+  puntos: z.number().int().positive(),
+  parametros: z.array(
+    z.object({ nombre: textoRequerido('Falta el nombre del parámetro'), tipo: tipoDatoSchema }),
+  ),
+  tipoRetorno: tipoDatoSchema,
+  lenguajes: z.array(lenguajeProblemaSchema),
+  casosPrueba: z.array(casoPruebaSchema),
+})
+
+export const datosProblemaConIdSchema = datosProblemaSchema.extend({ id: idSchema })
 
 export type LenguajeProblema = { lenguaje: string; nombreFuncion: string; codigoInicial: string }
 export type CasoPruebaProblema = { argumentos: unknown[]; salidaEsperada: unknown; visible: boolean }
