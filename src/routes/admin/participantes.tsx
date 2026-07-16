@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { registrarParticipante, reenviarCredenciales } from '#/server/functions/participantes'
+import { participantesQueryOptions } from '#/server/queries/participantes'
 
 export const Route = createFileRoute('/admin/participantes')({
+  loader: ({ context }) => context.queryClient.ensureQueryData(participantesQueryOptions()),
   component: AdminParticipantsPage,
 })
 
@@ -26,6 +29,7 @@ function AdminParticipantsPage() {
   const [registrando, setRegistrando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [registrados, setRegistrados] = useState<ParticipanteRegistrado[]>([])
+  const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
 
   async function handleRegistrar(e: React.FormEvent) {
     e.preventDefault()
@@ -141,6 +145,30 @@ function AdminParticipantsPage() {
           </li>
         ))}
       </ul>
+
+      <h2 className="text-lg font-bold">Todos los participantes registrados</h2>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="border p-2 text-left">Nombre</th>
+            <th className="border p-2 text-left">Correo</th>
+            <th className="border p-2 text-left">Categoría</th>
+            <th className="border p-2 text-left">Check-in</th>
+            <th className="border p-2 text-left">Envíos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {participantes.map((p) => (
+            <tr key={p.id}>
+              <td className="border p-2">{p.nombre}</td>
+              <td className="border p-2">{p.correo}</td>
+              <td className="border p-2">{p.categoria}</td>
+              <td className="border p-2">{p.ingresadoEn ? '✅' : '—'}</td>
+              <td className="border p-2">{p.cantidadEnvios}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

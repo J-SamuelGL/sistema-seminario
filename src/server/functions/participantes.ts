@@ -1,9 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { hashPassword } from 'better-auth/crypto'
 import { db } from '../db/client'
-import { usuarios, cuentas } from '../db/schema'
+import { usuarios, cuentas, envios } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { crearCuentaParticipante } from '../participantes/crear'
 import { generarContrasenaAleatoria } from '../auth/password'
@@ -77,3 +77,25 @@ export const reenviarCredenciales = createServerFn({ method: 'POST' })
 
     return { correoEnviado, contrasenaGenerada }
   })
+
+export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(async () => {
+  const request = getRequest()
+  await requerirAdmin(request.headers)
+
+  const filas = await db
+    .select({
+      id: usuarios.id,
+      nombre: usuarios.name,
+      correo: usuarios.email,
+      categoria: usuarios.categoria,
+      carnet: usuarios.carnet,
+      ingresadoEn: usuarios.ingresadoEn,
+      cantidadEnvios: sql<number>`count(${envios.id})`,
+    })
+    .from(usuarios)
+    .leftJoin(envios, eq(envios.usuarioId, usuarios.id))
+    .where(eq(usuarios.rol, 'participante'))
+    .groupBy(usuarios.id)
+
+  return filas.map((f) => ({ ...f, cantidadEnvios: Number(f.cantidadEnvios) }))
+})
