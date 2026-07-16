@@ -136,42 +136,41 @@ export const casosPrueba = mysqlTable('casos_prueba', {
   visible: boolean('visible').notNull().default(true),
 })
 
-export const envios = mysqlTable('envios', {
-  id: varchar('id', { length: 36 })
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  usuarioId: varchar('usuario_id', { length: 36 })
-    .notNull()
-    .references(() => usuarios.id),
-  problemaId: varchar('problema_id', { length: 36 })
-    .notNull()
-    .references(() => problemas.id),
-  codigo: text('codigo').notNull(),
-  lenguaje: text('lenguaje').notNull(),
-  estado: mysqlEnum('estado', [
-    'pendiente',
-    'aceptado',
-    'respuesta_incorrecta',
-    'error_ejecucion',
-    'tiempo_excedido',
-  ])
-    .notNull()
-    .default('pendiente'),
-  resultados: json('resultados').$type<ResultadoCaso[]>(),
-  veredictoOriginal: mysqlEnum('veredicto_original', [
-    'pendiente',
-    'aceptado',
-    'respuesta_incorrecta',
-    'error_ejecucion',
-    'tiempo_excedido',
-  ]),
-  aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id, {
-    onDelete: 'set null',
-  }),
-  aprobadoEn: timestamp('aprobado_en'),
-  comentarioClaude: text('comentario_claude'),
-  creadoEn: timestamp('creado_en').notNull().defaultNow(),
-})
+export const envios = mysqlTable(
+  'envios',
+  {
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    usuarioId: varchar('usuario_id', { length: 36 })
+      .notNull()
+      .references(() => usuarios.id),
+    problemaId: varchar('problema_id', { length: 36 })
+      .notNull()
+      .references(() => problemas.id),
+    codigo: text('codigo').notNull(),
+    lenguaje: text('lenguaje').notNull(),
+    estado: mysqlEnum('estado', [
+      'pendiente',
+      'aceptado',
+      'respuesta_incorrecta',
+      'error_ejecucion',
+      'tiempo_excedido',
+    ])
+      .notNull()
+      .default('pendiente'),
+    estadoProgreso: mysqlEnum('estado_progreso', ['pendiente', 'completado', 'aprobado_manual'])
+      .notNull()
+      .default('pendiente'),
+    resultados: json('resultados').$type<ResultadoCaso[]>(),
+    aprobadoPorId: varchar('aprobado_por_id', { length: 36 }).references(() => usuarios.id, {
+      onDelete: 'set null',
+    }),
+    aprobadoEn: timestamp('aprobado_en'),
+    creadoEn: timestamp('creado_en').notNull().defaultNow(),
+  },
+  (table) => [unique('envios_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
+)
 
 export const preguntasIa = mysqlTable('preguntas_ia', {
   id: varchar('id', { length: 36 })
@@ -199,6 +198,17 @@ export const corridas = mysqlTable(
       .notNull()
       .references(() => problemas.id, { onDelete: 'cascade' }),
     contador: int('contador').notNull().default(0),
+    ultimoCodigo: text('ultimo_codigo'),
+    ultimoLenguaje: text('ultimo_lenguaje'),
+    ultimoVeredicto: mysqlEnum('ultimo_veredicto', [
+      'pendiente',
+      'aceptado',
+      'respuesta_incorrecta',
+      'error_ejecucion',
+      'tiempo_excedido',
+    ]),
+    ultimosResultados: json('ultimos_resultados').$type<ResultadoCaso[]>(),
+    ultimaEjecucionEn: timestamp('ultima_ejecucion_en'),
   },
   (table) => [unique('corridas_usuario_problema_unico').on(table.usuarioId, table.problemaId)],
 )
