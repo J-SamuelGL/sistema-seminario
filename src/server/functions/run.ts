@@ -2,12 +2,13 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problemas, casosPrueba, problemaLenguajes, corridas } from '../db/schema'
+import { problemas, casosPrueba, problemaLenguajes, corridas, envios, estadoTorneo } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { ejecutarCasosPrueba } from '../judge/runTestCases'
 import { ocultarDetalleCasosNoVisibles } from '../judge/resultadoPublico'
 import { debeMostrarHint } from '../judge/hintCadence'
 import { generarComentarioEnvio } from '../claude/feedback'
+import { asegurarIniciado } from '../tournament/guard'
 import { datosEjecucionSchema } from '../envios/validar'
 import type { ResultadoCasoPublico } from '../judge/resultadoPublico'
 
@@ -19,6 +20,10 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
     }): Promise<{ resultados: ResultadoCasoPublico[]; error: string | null; hint: string | null }> => {
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
+
+      const filasEstado = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
+      const estado = filasEstado.length > 0 ? filasEstado[0] : null
+      asegurarIniciado(estado ?? { iniciadoEn: null, finalizadoEn: null })
 
       const rows = await db.select().from(problemas).where(eq(problemas.id, data.problemaId))
       const problema = rows.length > 0 ? rows[0] : null
@@ -41,14 +46,53 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
           casos.map((c) => ({ argumentos: c.argumentos, salidaEsperada: c.salidaEsperada, visible: c.visible })),
         )
         const resultadosPublicos = ocultarDetalleCasosNoVisibles(resultados)
+        const ahora = new Date()
+
+        await db
+          .insert(corridas)
+          .values({
+            usuarioId: user.id,
+            problemaId: data.problemaId,
+            contador: 1,
+            ultimoCodigo: data.codigo,
+            ultimoLenguaje: data.lenguaje,
+            ultimoVeredicto: veredicto,
+            ultimosResultados: resultados,
+            ultimaEjecucionEn: ahora,
+          })
+          .onDuplicateKeyUpdate({
+            set: {
+              contador: sql`${corridas.contador} + 1`,
+              ultimoCodigo: data.codigo,
+              ultimoLenguaje: data.lenguaje,
+              ultimoVeredicto: veredicto,
+              ultimosResultados: resultados,
+              ultimaEjecucionEn: ahora,
+            },
+          })
+
+        if (veredicto === 'aceptado') {
+          const filasEnvio = await db
+            .select()
+            .from(envios)
+            .where(and(eq(envios.usuarioId, user.id), eq(envios.problemaId, data.problemaId)))
+          if (filasEnvio.length === 0) {
+            await db.insert(envios).values({
+              usuarioId: user.id,
+              problemaId: data.problemaId,
+              codigo: data.codigo,
+              lenguaje: data.lenguaje,
+              estado: veredicto,
+              estadoProgreso: 'completado',
+              resultados,
+              creadoEn: ahora,
+            })
+          }
+        }
 
         let hint: string | null = null
         if (user.categoria === 'invitado') {
           try {
-            await db
-              .insert(corridas)
-              .values({ usuarioId: user.id, problemaId: data.problemaId, contador: 1 })
-              .onDuplicateKeyUpdate({ set: { contador: sql`${corridas.contador} + 1` } })
             const filasCorrida = await db
               .select()
               .from(corridas)
