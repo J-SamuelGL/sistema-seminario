@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ejecutarCodigo } from '#/server/functions/run'
-import { problemaQueryOptions } from '#/server/queries/problemas'
+import {
+  problemaQueryOptions,
+  problemasQueryOptions,
+} from '#/server/queries/problemas'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
@@ -20,6 +23,7 @@ export const Route = createFileRoute('/_app/problemas/$problemaId')({
         problemaQueryOptions(params.problemaId),
       ),
       context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
+      context.queryClient.ensureQueryData(problemasQueryOptions()),
     ]),
   component: ProblemDetailPage,
 })
@@ -30,7 +34,14 @@ function ProblemDetailPage() {
     problemaQueryOptions(problemaId),
   )
   const { data: user } = useSuspenseQuery(usuarioActualOpcionalQueryOptions())
-  const { problema, casosPrueba, lenguajes } = datosProblema
+  const { data: listaProblemas } = useSuspenseQuery(problemasQueryOptions())
+  const { problema, casosPrueba, lenguajes, resuelto } = datosProblema
+  const indice = listaProblemas.findIndex((p) => p.id === problemaId)
+  const anterior = indice > 0 ? listaProblemas[indice - 1] : null
+  const siguiente =
+    indice >= 0 && indice < listaProblemas.length - 1
+      ? listaProblemas[indice + 1]
+      : null
   const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
     lenguajes[0]?.lenguaje ?? 'python',
   )
@@ -78,62 +89,98 @@ function ProblemDetailPage() {
   const hint = ejecutar.data?.hint ?? null
 
   return (
-    <div className="grid grid-cols-2 gap-4 p-4">
-      <ProblemDescription
-        titulo={problema.titulo}
-        descripcion={problema.descripcion}
-        dificultad={problema.dificultad}
-        ejemplos={ejemplos}
-      />
-      <div>
-        <select
-          className="border p-2"
-          value={lenguaje}
-          onChange={(e) =>
-            handleLenguajeChange(e.target.value as LenguajeProgramacion)
-          }
-        >
-          {lenguajes.map((l) => (
-            <option key={l.lenguaje} value={l.lenguaje}>
-              {l.lenguaje}
-            </option>
-          ))}
-        </select>
-        <CodeEditor lenguaje={lenguaje} value={codigo} onChange={setCodigo} />
-        <button
-          className="mt-2 rounded bg-gray-700 px-4 py-2 text-white disabled:bg-gray-300"
-          onClick={() => ejecutar.mutate()}
-          disabled={ejecutar.isPending}
-        >
-          {ejecutar.isPending ? (
-            <span className="flex items-center justify-center gap-2">
-              <Spinner /> Ejecutando...
-            </span>
-          ) : (
-            'Run'
-          )}
-        </button>
-        {errorEjecucion && (
-          <p className="mt-4 text-red-600">{errorEjecucion}</p>
-        )}
-        {!errorEjecucion && resultadosEjecucion && (
-          <RunResults results={resultadosEjecucion} hint={hint} />
-        )}
-        {user && user.categoria === 'invitado' && (
-          <button
-            className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
-            onClick={() => setMostrarAsistente(true)}
+    <div className="p-4">
+      <div className="mb-4 flex items-center justify-between">
+        {anterior ? (
+          <Link
+            to="/problemas/$problemaId"
+            params={{ problemaId: anterior.id }}
+            className="rounded px-3 py-1 text-xl text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+            aria-label="Problema anterior"
+            title={anterior.titulo}
           >
-            Preguntar a Haiku
+            ←
+          </Link>
+        ) : (
+          <span className="w-8" />
+        )}
+        <Link to="/problemas" className="text-sm text-gray-500 hover:text-blue-600">
+          {indice >= 0
+            ? `Problema ${indice + 1} de ${listaProblemas.length}`
+            : 'Ver lista de problemas'}
+        </Link>
+        {siguiente ? (
+          <Link
+            to="/problemas/$problemaId"
+            params={{ problemaId: siguiente.id }}
+            className="rounded px-3 py-1 text-xl text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+            aria-label="Siguiente problema"
+            title={siguiente.titulo}
+          >
+            →
+          </Link>
+        ) : (
+          <span className="w-8" />
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <ProblemDescription
+          titulo={problema.titulo}
+          descripcion={problema.descripcion}
+          dificultad={problema.dificultad}
+          ejemplos={ejemplos}
+          resuelto={resuelto}
+        />
+        <div>
+          <select
+            className="border p-2"
+            value={lenguaje}
+            onChange={(e) =>
+              handleLenguajeChange(e.target.value as LenguajeProgramacion)
+            }
+          >
+            {lenguajes.map((l) => (
+              <option key={l.lenguaje} value={l.lenguaje}>
+                {l.lenguaje}
+              </option>
+            ))}
+          </select>
+          <CodeEditor lenguaje={lenguaje} value={codigo} onChange={setCodigo} />
+          <button
+            className="mt-2 rounded bg-gray-700 px-4 py-2 text-white disabled:bg-gray-300"
+            onClick={() => ejecutar.mutate()}
+            disabled={ejecutar.isPending}
+          >
+            {ejecutar.isPending ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner /> Ejecutando...
+              </span>
+            ) : (
+              'Run'
+            )}
           </button>
-        )}
-        {mostrarAsistente && user && (
-          <AssistantModal
-            problemaId={problemaId}
-            preguntasUsadas={user.preguntasIaUsadas}
-            onClose={() => setMostrarAsistente(false)}
-          />
-        )}
+          {errorEjecucion && (
+            <p className="mt-4 text-red-600">{errorEjecucion}</p>
+          )}
+          {!errorEjecucion && resultadosEjecucion && (
+            <RunResults results={resultadosEjecucion} hint={hint} />
+          )}
+          {user && user.categoria === 'invitado' && (
+            <button
+              className="mt-2 ml-2 rounded bg-purple-600 px-4 py-2 text-white"
+              onClick={() => setMostrarAsistente(true)}
+            >
+              Preguntar a Haiku
+            </button>
+          )}
+          {mostrarAsistente && user && (
+            <AssistantModal
+              problemaId={problemaId}
+              preguntasUsadas={user.preguntasIaUsadas}
+              onClose={() => setMostrarAsistente(false)}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

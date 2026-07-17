@@ -3,16 +3,23 @@ export function ProblemDescription({
   descripcion,
   dificultad,
   ejemplos,
+  resuelto,
 }: {
   titulo: string
   descripcion: string
   dificultad: string
   ejemplos: { argumentos: unknown[]; salidaEsperadaTexto: string }[]
+  resuelto?: { duracionMinutos: number; puntos: number } | null
 }) {
   return (
     <div className="h-[70vh] overflow-y-auto p-4">
       <h1 className="text-xl font-bold">{titulo}</h1>
       <span className="text-sm uppercase text-gray-500">{dificultad}</span>
+      {resuelto && (
+        <p className="mt-1 text-sm font-medium text-green-600">
+          ✅ Resuelto en {resuelto.duracionMinutos} min — {resuelto.puntos} pts
+        </p>
+      )}
       <div className="prose mt-4 whitespace-pre-wrap">{descripcion}</div>
       {ejemplos.length > 0 && (
         <table className="mt-4 w-full border-collapse">

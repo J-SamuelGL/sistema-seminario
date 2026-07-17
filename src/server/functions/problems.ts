@@ -7,6 +7,7 @@ import {
   casosPrueba,
   problemaLenguajes,
   estadoTorneo,
+  envios,
 } from '../db/schema'
 import {
   requerirAdmin,
@@ -19,10 +20,11 @@ import {
 } from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
 import { idSchema } from '../validacion/comun'
+import { calcularDuraciones } from '../standings/duracion'
 
-async function torneoIniciado() {
+async function obtenerEstadoTorneoRow() {
   const filas = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
-  return Boolean(filas[0]?.iniciadoEn)
+  return filas.length > 0 ? filas[0] : null
 }
 
 export const listarProblemas = createServerFn({ method: 'GET' }).handler(
@@ -32,7 +34,8 @@ export const listarProblemas = createServerFn({ method: 'GET' }).handler(
     if (user.rol === 'admin') {
       return db.select().from(problemas).orderBy(problemas.orden)
     }
-    if (!(await torneoIniciado())) return []
+    const estado = await obtenerEstadoTorneoRow()
+    if (!estado?.iniciadoEn) return []
     const grupo = grupoDeCategoria(
       user.categoria as 'invitado' | 'junior' | 'senior',
     )
@@ -51,11 +54,12 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const user = await requerirParticipanteIngresado(request.headers)
     const rows = await db.select().from(problemas).where(eq(problemas.id, data))
     const filaProblema = rows.length > 0 ? rows[0] : null
+    const estado = await obtenerEstadoTorneoRow()
     const puedeVerlo =
       user.rol === 'admin' ||
       (filaProblema?.grupo ===
         grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior') &&
-        (await torneoIniciado()))
+        Boolean(estado?.iniciadoEn))
     const problema = filaProblema && puedeVerlo ? filaProblema : null
     const casosCompletos = problema
       ? await db
@@ -73,8 +77,37 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
           .from(problemaLenguajes)
           .where(eq(problemaLenguajes.problemaId, data))
       : []
-    return { problema, casosPrueba: casos, lenguajes }
+    const resuelto =
+      problema && user.rol !== 'admin' && estado?.iniciadoEn
+        ? await calcularResueltoParaUsuario(user.id, problema, estado.iniciadoEn)
+        : null
+    return { problema, casosPrueba: casos, lenguajes, resuelto }
   })
+
+async function calcularResueltoParaUsuario(
+  usuarioId: string,
+  problema: typeof problemas.$inferSelect,
+  torneoIniciadoEn: Date,
+) {
+  const enviosDelUsuario = await db
+    .select()
+    .from(envios)
+    .where(eq(envios.usuarioId, usuarioId))
+  const envioDeEsteProblema = enviosDelUsuario.find(
+    (e) => e.problemaId === problema.id,
+  )
+  if (!envioDeEsteProblema || envioDeEsteProblema.estadoProgreso === 'pendiente')
+    return null
+
+  const resueltos = enviosDelUsuario
+    .filter((e) => e.estadoProgreso !== 'pendiente')
+    .map((e) => ({ problemaId: e.problemaId, creadoEn: e.creadoEn }))
+  const duraciones = calcularDuraciones(resueltos, torneoIniciadoEn)
+  const duracionMinutos =
+    duraciones.find((d) => d.problemaId === problema.id)?.duracionMinutos ?? 0
+
+  return { duracionMinutos, puntos: problema.puntos }
+}
 
 export const crearProblema = createServerFn({ method: 'POST' })
   .validator(datosProblemaSchema)
