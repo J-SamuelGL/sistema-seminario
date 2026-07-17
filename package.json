@@ -11,6 +11,7 @@
     "piston:install-languages": "bash scripts/install-piston-languages.sh http://localhost:2000",
     "generate-routes": "tsr generate",
     "build": "vite build",
+    "start": "srvx serve --entry dist/server/server.js --static ../client --prod",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
@@ -42,6 +43,7 @@
     "react-syntax-highlighter": "^16.1.1",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
+    "srvx": "^0.11.22",
     "tailwindcss": "^4.1.18",
     "zod": "^4.4.3"
   },

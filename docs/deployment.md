@@ -48,6 +48,15 @@ Note: all five language/version pairs have been confirmed against a real Piston 
 3. Confirm the build command resolves to `npm run build` and the start command to `npm run start`
 4. Adjust in service settings if necessary
 
+Note: `vite build` (this version of `@tanstack/react-start`, which builds on Vite rather than Nitro) does not
+emit a self-starting Node server — `dist/server/server.js` only exports a `{ fetch }` handler. `npm run start`
+runs it through `srvx serve` (an explicit `dependencies` entry, not left to transitive resolution, since a
+production-only install could otherwise drop it), which respects Railway's injected `PORT` and binds all
+interfaces, and also serves the static assets in `dist/client` — without `--static` pointed at it, JS/CSS
+return 404 and the page renders as an unstyled, non-hydrated shell. That flag's path resolves relative to the
+entry file's directory (`dist/server/`), not the working directory, hence `../client` rather than
+`dist/client` — confirmed by reading `node_modules/srvx/dist/cli.mjs`.
+
 ### Step 5: Configure Environment Variables
 
 Set the following environment variables on the app service:
