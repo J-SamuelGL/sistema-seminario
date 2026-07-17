@@ -2,7 +2,12 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { problemas, casosPrueba, problemaLenguajes } from '../db/schema'
+import {
+  problemas,
+  casosPrueba,
+  problemaLenguajes,
+  estadoTorneo,
+} from '../db/schema'
 import {
   requerirAdmin,
   requerirParticipanteIngresado,
@@ -15,6 +20,11 @@ import {
 import { grupoDeCategoria } from '../problems/grupo'
 import { idSchema } from '../validacion/comun'
 
+async function torneoIniciado() {
+  const filas = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
+  return Boolean(filas[0]?.iniciadoEn)
+}
+
 export const listarProblemas = createServerFn({ method: 'GET' }).handler(
   async () => {
     const request = getRequest()
@@ -22,6 +32,7 @@ export const listarProblemas = createServerFn({ method: 'GET' }).handler(
     if (user.rol === 'admin') {
       return db.select().from(problemas).orderBy(problemas.orden)
     }
+    if (!(await torneoIniciado())) return []
     const grupo = grupoDeCategoria(
       user.categoria as 'invitado' | 'junior' | 'senior',
     )
@@ -42,8 +53,9 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const filaProblema = rows.length > 0 ? rows[0] : null
     const puedeVerlo =
       user.rol === 'admin' ||
-      filaProblema?.grupo ===
-        grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior')
+      (filaProblema?.grupo ===
+        grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior') &&
+        (await torneoIniciado()))
     const problema = filaProblema && puedeVerlo ? filaProblema : null
     const casosCompletos = problema
       ? await db

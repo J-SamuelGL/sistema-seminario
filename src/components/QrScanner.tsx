@@ -1,11 +1,20 @@
 import { useEffect, useRef } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 
+// html5-qrcode invoca el callback de éxito en cada frame donde logra
+// decodificar el QR (varias veces por segundo mientras el código sigue
+// frente a la cámara), no una sola vez por código mostrado. Sin este
+// cooldown, cada frame repetido dispara un nuevo onScan y por lo tanto
+// una nueva mutación, así que la UI nunca deja de mostrar "Procesando".
+const COOLDOWN_MISMO_TOKEN_MS = 3000
+
 export function QrScanner({ onScan }: { onScan: (token: string) => void }) {
   const containerId = 'qr-scanner-container'
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const onScanRef = useRef(onScan)
   onScanRef.current = onScan
+  const ultimoTokenRef = useRef<string | null>(null)
+  const ultimoTiempoRef = useRef(0)
 
   useEffect(() => {
     const scanner = new Html5Qrcode(containerId)
@@ -37,7 +46,18 @@ export function QrScanner({ onScan }: { onScan: (token: string) => void }) {
         .start(
           { facingMode: 'environment' },
           { fps: 10, qrbox: 250 },
-          (decodedText) => onScanRef.current(decodedText),
+          (decodedText) => {
+            const ahora = Date.now()
+            if (
+              decodedText === ultimoTokenRef.current &&
+              ahora - ultimoTiempoRef.current < COOLDOWN_MISMO_TOKEN_MS
+            ) {
+              return
+            }
+            ultimoTokenRef.current = decodedText
+            ultimoTiempoRef.current = ahora
+            onScanRef.current(decodedText)
+          },
           () => {},
         )
         .then(() => {

@@ -1,13 +1,25 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { listarProblemas } from '#/server/functions/problems'
+import { estadoTorneoQueryOptions } from '#/server/queries/torneo'
 
 export const Route = createFileRoute('/_app/problemas/')({
-  loader: () => listarProblemas(),
+  loader: ({ context }) =>
+    Promise.all([
+      listarProblemas(),
+      context.queryClient.ensureQueryData(estadoTorneoQueryOptions()),
+    ]),
   component: ProblemsListPage,
 })
 
 function ProblemsListPage() {
-  const problemas = Route.useLoaderData()
+  const [problemas] = Route.useLoaderData()
+  const { data: estado } = useSuspenseQuery(estadoTorneoQueryOptions())
+
+  if (!estado.iniciadoEn) {
+    return <p className="p-8">El torneo aún no ha comenzado.</p>
+  }
+
   return (
     <div className="p-8">
       <h1 className="text-xl font-bold">Problemas</h1>
