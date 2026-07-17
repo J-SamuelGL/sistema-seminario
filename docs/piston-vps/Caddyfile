@@ -1,0 +1,11 @@
+{$SITE_ADDRESS} {
+	@autorizado {
+		header X-Piston-Api-Key {$PISTON_API_KEY}
+	}
+	handle @autorizado {
+		reverse_proxy piston:2000
+	}
+	handle {
+		respond 403
+	}
+}

@@ -6,6 +6,8 @@ This document outlines the steps to deploy the Torneo de Programación applicati
 
 - Railway account and CLI access
 - GitHub repository connected to Railway
+- A separate small VPS with Docker (DigitalOcean/Hetzner/Linode/Vultr/AWS Lightsail) for Piston — see Step 2;
+  Railway cannot host it
 - Environment variables ready (see `.env.example`)
 
 ## Deployment Steps
@@ -16,28 +18,78 @@ This document outlines the steps to deploy the Torneo de Programación applicati
 2. Add a **MySQL** plugin to the project
 3. Note the generated `DATABASE_URL` (Railway exposes it as a reference variable, e.g. `${{MySQL.DATABASE_URL}}`)
 
-### Step 2: Create the Piston Service
+### Step 2: Deploy Piston on a separate VPS (not on Railway)
 
-1. Add a new service to the same Railway project
-2. Choose "Deploy from Docker Image" with image `ghcr.io/engineer-man/piston`
-3. In the service's Networking settings:
-   - Do **not** expose a public domain
-   - Enable private networking only, which provides an internal address like `piston.railway.internal` on port `2000`
-4. Set the environment variable `PISTON_RUN_TIMEOUT=5000` on this service. Piston's default is `3000`ms, but `src/server/piston/client.ts` requests `run_timeout: 5000` on every execution — without this override, Piston rejects every submission with `400 run_timeout cannot exceed the configured limit of 3000`.
+**Piston cannot run as a Railway service.** Its sandbox (`isolate`) needs a `privileged` container to create
+cgroups/namespaces — `docker-compose.yml` at the repo root already runs it with `privileged: true` for local
+dev. Railway categorically prohibits privileged containers and Docker-in-Docker on every plan tier (Trial,
+Hobby, Pro, Enterprise) as a deliberate platform-wide security measure — confirmed against Railway's own
+[open feature request](https://station.railway.com/feedback/allow-services-to-be-run-in-privileged-m-8c66b22b)
+(still unimplemented). Deploying the plain `ghcr.io/engineer-man/piston` image as a Railway Docker-image
+service crash-loops immediately with `mkdir: cannot create directory 'isolate/': Read-only file system`.
+
+Instead, run it on any small VPS with Docker (DigitalOcean, Hetzner, Linode, Vultr, AWS Lightsail — any Ubuntu
+22.04+ image works identically, ~$5–6/mo is plenty):
+
+1. Provision the VPS, SSH in, and install Docker + the Compose plugin (e.g. via Docker's official
+   `get-docker.sh` convenience script).
+2. Copy `docs/piston-vps/` (`docker-compose.yml`, `Caddyfile`, `.env.example`) to the VPS, e.g.:
+   ```bash
+   scp -r docs/piston-vps root@<vps-ip>:/opt/piston
+   ```
+3. On the VPS, `cd /opt/piston`, copy `.env.example` to `.env`, and set:
+   - `PISTON_API_KEY` — a long random secret (e.g. `openssl rand -hex 32`). Piston's own HTTP API has **no
+     authentication**, so this stack puts a [Caddy](https://caddyserver.com/) reverse proxy in front that
+     only forwards requests carrying a matching `X-Piston-Api-Key` header (see `Caddyfile`) — without it,
+     anyone who finds the VPS's IP gets free arbitrary code execution. `docker-compose.yml` in this directory
+     does **not** publish Piston's port 2000 to the host at all (only `expose`s it inside the Docker network),
+     so the proxy is the only way in.
+   - `SITE_ADDRESS` — leave as `:80` to serve over plain HTTP by IP, or set it to a domain name (with DNS
+     already pointed at the VPS) to get automatic HTTPS from Caddy instead.
+4. `docker compose up -d`
+5. Set `PISTON_RUN_TIMEOUT=5000` — already set as a fixed env var on the `piston` service in
+   `docs/piston-vps/docker-compose.yml`, no action needed. (Piston's own default is `3000`ms, but
+   `src/server/piston/client.ts` requests `run_timeout: 5000` on every execution — without this override,
+   Piston rejects every submission with `400 run_timeout cannot exceed the configured limit of 3000`.)
+
+Verified end-to-end on a live DigitalOcean droplet: proxy returns 403 without the header, executes real code
+with it. Do a smoke test from your machine after standing up your own VPS:
+
+```bash
+curl -X POST https://<vps-ip-or-domain>/api/v2/execute \
+  -H "Content-Type: application/json" -H "X-Piston-Api-Key: <your-key>" \
+  -d '{"language":"python","version":"3.10.0","files":[{"content":"print(1)"}]}'
+# should return {"run":{"stdout":"1\n", ...}}; without the header it should 403
+```
 
 ### Step 3: Install Language Runtimes
 
-The `scripts/install-piston-languages.sh` script handles language runtime installation. To use it:
+The `scripts/install-piston-languages.sh` script handles language runtime installation. It talks to Piston's
+`/api/v2/packages` endpoint directly, so it needs the same `X-Piston-Api-Key` header the proxy requires — pass
+it via `curl`'s env-var-friendly `-H` flag by exporting it, or install directly from the VPS bypassing the
+proxy (simplest, since the proxy adds nothing but the auth check):
 
-1. Temporarily expose a public domain on the Piston service
-2. Run the script:
-   ```bash
-   chmod +x scripts/install-piston-languages.sh
-   ./scripts/install-piston-languages.sh https://<piston-temp-public-url>
-   ```
-3. Once complete, disable the public domain on the Piston service
+```bash
+chmod +x scripts/install-piston-languages.sh
+./scripts/install-piston-languages.sh http://localhost:2000   # run this ON the VPS, over SSH
+```
 
 The script installs Python, JavaScript, Java, C# and PHP runtimes (see `scripts/install-piston-languages.sh` for exact pinned versions).
+
+Two gotchas hit when running this for real:
+
+- If `scripts/install-piston-languages.sh` was checked out on Windows and `scp`'d over, it may have CRLF line
+  endings, which breaks its shebang (`/usr/bin/env: 'bash\r': No such file or directory`). Fix with
+  `sed -i 's/\r$//' install-piston-languages.sh` on the VPS, or run it explicitly via `bash install-piston-languages.sh ...`.
+- `http://localhost:2000` only works if Piston's port is published to the host. This directory's
+  `docker-compose.yml` deliberately does **not** do that (`expose`, not `ports` — see Step 2), so
+  `localhost:2000` from the VPS shell gets `Connection refused`. Since the `piston` container itself has no
+  `curl`, install from a throwaway container on the same Docker network instead:
+  ```bash
+  docker run --rm --network piston_default curlimages/curl -sf -X POST http://piston:2000/api/v2/packages \
+    -H "Content-Type: application/json" -d '{"language":"python","version":"3.10.0"}'
+  # repeat per package; see scripts/install-piston-languages.sh for the full list
+  ```
 
 Note: all five language/version pairs have been confirmed against a real Piston instance via `GET /api/v2/packages` and `POST /api/v2/execute`. One quirk to be aware of: the _package_ names used to install JavaScript and C# support are `node` and `mono` respectively (as used by this script); `javascript`/`csharp` are only valid as execution-time aliases in `POST /api/v2/execute`, not as install-time package names.
 
@@ -62,7 +114,10 @@ entry file's directory (`dist/server/`), not the working directory, hence `../cl
 Set the following environment variables on the app service:
 
 - `DATABASE_URL` - Reference to the MySQL plugin: `${{MySQL.DATABASE_URL}}`
-- `PISTON_URL=http://piston.railway.internal:2000` (private network address)
+- `PISTON_URL` - the VPS's public address from Step 2, e.g. `http://<vps-ip>` or `https://<your-domain>`
+  (**not** `piston.railway.internal` — Piston isn't on Railway; see Step 2)
+- `PISTON_API_KEY` - the same secret set in `docs/piston-vps/.env` on the VPS, so `src/server/piston/client.ts`
+  sends the header the Caddy proxy requires
 - `ANTHROPIC_API_KEY` - Your Anthropic API key
 - `BETTER_AUTH_SECRET` - A secure random string for authentication
 - `BREVO_API_KEY` / `BREVO_CORREO_REMITENTE`: credenciales de Brevo (ver Task 4) para enviar el correo de bienvenida con usuario y contraseña a cada participante registrado manualmente.

@@ -18,9 +18,13 @@ export async function ejecutarPiston(
   }
 
   const pistonUrl = process.env.PISTON_URL ?? 'http://localhost:2000'
+  const pistonApiKey = process.env.PISTON_API_KEY
   const response = await fetch(`${pistonUrl}/api/v2/execute`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(pistonApiKey ? { 'X-Piston-Api-Key': pistonApiKey } : {}),
+    },
     body: JSON.stringify({
       language: mapeo.language,
       version: mapeo.version,
