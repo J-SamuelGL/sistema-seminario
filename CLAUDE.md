@@ -74,16 +74,19 @@ problema manualmente (`pendiente`/`completado`/`aprobado_manual`) desde `/admin/
 (`src/server/functions/admin-respuestas.ts`), y `concluirTorneo`
 (`src/server/functions/tournament.ts`) persiste como `envio` en `pendiente` el último código
 conocido de todo lo que alguien llegó a correr pero nunca acertó, para poder revisarlo después de
-que el torneo termina.
+que el torneo termina. Gotcha de Drizzle/MySQL: un `.onDuplicateKeyUpdate({ set: {} })` produce SQL inválido
+(MySQL no acepta un `SET` vacío) — el no-op correcto es autoreferenciar una columna sin cambiarla, p.ej.
+`set: { usuarioId: sql\`usuario_id\` }`.
 
 ### Claude integration
 
 Two independent call sites, both via `@anthropic-ai/sdk` directly (no framework), both `claude-haiku-4-5`,
 both `invitado`-category-only:
 
-- `src/server/claude/assistant.ts` — free-form syntax-help chat widget (`AssistantModal.tsx`), system-prompted
-  to refuse revealing problem solutions. Usage is rate-limited per user via `src/server/assistant/limit.ts`
-  and `usuario.preguntasIaUsadas`.
+- `src/server/claude/assistant.ts` — free-form syntax-help chat widget (`AssistantModal.tsx`). Receives
+  título+descripción of every problem in the participant's group (`invitado_junior`/`senior`), not just the
+  one currently open, and is system-prompted to refuse revealing the solution to any of them. Usage is
+  rate-limited per user via `src/server/assistant/limit.ts` and `usuario.preguntasIaUsadas`.
 - `src/server/claude/feedback.ts` — comentario/hint periódico cada 3 corridas de `Run`
   (`src/server/judge/hintCadence.ts`), basado en veredicto + stderr. Ya no se genera al enviar una
   respuesta (no existe ese flujo).
@@ -104,6 +107,11 @@ one of `src/server/auth/middleware.ts`'s helpers explicitly:
 
 Admin accounts are seeded directly in the DB (not through the app); `usuario.categoria` is `NOT NULL` even for
 admins, where it's semantically meaningless — use `'senior'` as the placeholder (see `docs/deployment.md`).
+
+Route-level `beforeLoad` guards (`src/routes/_app/route.tsx`, `src/routes/admin/route.tsx`) redirect
+unauthenticated users to `/` and non-admins away from `/admin` to `/perfil` — this is a UX-level layer only,
+distinct from the server-function checks above; it does not itself authorize anything, so every server
+function under a guarded route must still call the appropriate `requerir*` helper on its own.
 
 ### Tournament lifecycle & scoring
 
