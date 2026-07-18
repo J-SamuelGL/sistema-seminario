@@ -34,8 +34,8 @@ function ProblemsListPage() {
     <div className="p-8">
       <h1 className="text-xl font-bold">Problemas</h1>
       <p className="text-sm text-gray-500">
-        Puedes resolverlos en cualquier orden y regresar a cualquiera en
-        cualquier momento.
+        Puedes resolverlos en cualquier orden. Una vez resuelto un problema
+        ya no se puede volver a abrir.
       </p>
       {progreso.puesto !== null && (
         <p className="mt-2 text-sm font-medium text-gray-700">
@@ -52,17 +52,21 @@ function ProblemsListPage() {
             estadoProblema.estadoProgreso !== 'pendiente'
           return (
             <li key={p.id}>
-              <Link
-                to="/problemas/$problemaId"
-                params={{ problemaId: p.id }}
-                className="text-blue-600"
-              >
-                {resuelto && '✅ '}
-                {p.titulo} — {p.dificultad}
-                {resuelto &&
-                  estadoProblema.duracionMinutos !== null &&
-                  ` (${estadoProblema.duracionMinutos} min)`}
-              </Link>
+              {resuelto ? (
+                <span className="text-gray-500">
+                  ✅ {p.titulo} — {p.dificultad}
+                  {estadoProblema.duracionMinutos !== null &&
+                    ` (${estadoProblema.duracionMinutos} min)`}
+                </span>
+              ) : (
+                <Link
+                  to="/problemas/$problemaId"
+                  params={{ problemaId: p.id }}
+                  className="text-blue-600"
+                >
+                  {p.titulo} — {p.dificultad}
+                </Link>
+              )}
             </li>
           )
         })}

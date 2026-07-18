@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState } from 'react'
-import { ClientOnly, createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ejecutarCodigo } from '#/server/functions/run'
@@ -10,29 +10,26 @@ import {
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 import { IconoLista } from '#/components/IconoLista'
 import { ProblemDescription } from '#/components/ProblemDescription'
+import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
 import { AssistantModal } from '#/components/AssistantModal'
 import { Spinner } from '#/components/Spinner'
 import { serializarCanonico } from '#/server/judge/serializar'
 import type { LenguajeProgramacion } from '#/server/envios/validar'
 
-// monaco-editor no debe formar parte del bundle de SSR: su entrada ESM
-// importa CSS crudo (codicon.css) que Node no puede resolver en tiempo de
-// ejecución cuando Vite externaliza el paquete para el servidor. Cargarlo
-// solo del lado del cliente evita que ese import llegue a ejecutarse en SSR.
-const CodeEditor = lazy(() =>
-  import('#/components/CodeEditor').then((m) => ({ default: m.CodeEditor })),
-)
-
 export const Route = createFileRoute('/_app/problemas/$problemaId')({
-  loader: ({ context, params }) =>
-    Promise.all([
+  loader: async ({ context, params }) => {
+    const [datosProblema] = await Promise.all([
       context.queryClient.ensureQueryData(
         problemaQueryOptions(params.problemaId),
       ),
       context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
       context.queryClient.ensureQueryData(problemasQueryOptions()),
-    ]),
+    ])
+    // Un problema ya resuelto no se puede volver a ver ni editar: se
+    // redirige a la lista en vez de mostrar el editor bloqueado.
+    if (datosProblema.resuelto) throw redirect({ to: '/problemas' })
+  },
   component: ProblemDetailPage,
 })
 
@@ -50,16 +47,10 @@ function ProblemDetailPage() {
     indice >= 0 && indice < listaProblemas.length - 1
       ? listaProblemas[indice + 1]
       : null
-  const bloqueado = resuelto !== null
-  const lenguajeInicial =
-    lenguajes.length > 0 ? lenguajes[0].lenguaje : 'python'
-  const codigoInicial = lenguajes.length > 0 ? lenguajes[0].codigoInicial : ''
   const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
-    resuelto ? (resuelto.lenguaje as LenguajeProgramacion) : lenguajeInicial,
+    lenguajes[0]?.lenguaje ?? 'python',
   )
-  const [codigo, setCodigo] = useState(
-    resuelto ? resuelto.codigo : codigoInicial,
-  )
+  const [codigo, setCodigo] = useState(lenguajes[0]?.codigoInicial ?? '')
   const [mostrarAsistente, setMostrarAsistente] = useState(false)
 
   const ejecutar = useMutation({
@@ -153,9 +144,8 @@ function ProblemDetailPage() {
         />
         <div>
           <select
-            className="border p-2 disabled:bg-gray-100"
+            className="border p-2"
             value={lenguaje}
-            disabled={bloqueado}
             onChange={(e) =>
               handleLenguajeChange(e.target.value as LenguajeProgramacion)
             }
@@ -166,36 +156,20 @@ function ProblemDetailPage() {
               </option>
             ))}
           </select>
-          <ClientOnly fallback={<Spinner />}>
-            <Suspense fallback={<Spinner />}>
-              <CodeEditor
-                lenguaje={lenguaje}
-                value={codigo}
-                onChange={setCodigo}
-                readOnly={bloqueado}
-              />
-            </Suspense>
-          </ClientOnly>
-          {bloqueado ? (
-            <p className="mt-2 text-sm text-gray-500">
-              🔒 Ya resolviste este problema. Tu respuesta no se puede
-              modificar.
-            </p>
-          ) : (
-            <button
-              className="mt-2 rounded bg-gray-700 px-4 py-2 text-white disabled:bg-gray-300"
-              onClick={() => ejecutar.mutate()}
-              disabled={ejecutar.isPending}
-            >
-              {ejecutar.isPending ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Spinner /> Ejecutando...
-                </span>
-              ) : (
-                'Run'
-              )}
-            </button>
-          )}
+          <CodeEditor lenguaje={lenguaje} value={codigo} onChange={setCodigo} />
+          <button
+            className="mt-2 rounded bg-gray-700 px-4 py-2 text-white disabled:bg-gray-300"
+            onClick={() => ejecutar.mutate()}
+            disabled={ejecutar.isPending}
+          >
+            {ejecutar.isPending ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner /> Ejecutando...
+              </span>
+            ) : (
+              'Run'
+            )}
+          </button>
           {errorEjecucion && (
             <p className="mt-4 text-red-600">{errorEjecucion}</p>
           )}

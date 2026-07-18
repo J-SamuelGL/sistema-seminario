@@ -106,12 +106,7 @@ async function calcularResueltoParaUsuario(
   const duracionMinutos =
     duraciones.find((d) => d.problemaId === problema.id)?.duracionMinutos ?? 0
 
-  return {
-    duracionMinutos,
-    puntos: problema.puntos,
-    codigo: envioDeEsteProblema.codigo,
-    lenguaje: envioDeEsteProblema.lenguaje,
-  }
+  return { duracionMinutos, puntos: problema.puntos }
 }
 
 export const crearProblema = createServerFn({ method: 'POST' })

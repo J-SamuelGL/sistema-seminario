@@ -46,23 +46,6 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
       const problema = rows.length > 0 ? rows[0] : null
       if (!problema) throw new Error('Problema no encontrado')
 
-      const filasEnvioExistente = await db
-        .select()
-        .from(envios)
-        .where(
-          and(
-            eq(envios.usuarioId, user.id),
-            eq(envios.problemaId, data.problemaId),
-          ),
-        )
-      const envioExistente =
-        filasEnvioExistente.length > 0 ? filasEnvioExistente[0] : null
-      if (envioExistente && envioExistente.estadoProgreso !== 'pendiente') {
-        throw new Error(
-          'Ya resolviste este problema; no puedes modificar tu respuesta.',
-        )
-      }
-
       const filasLenguaje = await db
         .select()
         .from(problemaLenguajes)
@@ -122,21 +105,32 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
             },
           })
 
-        // El envio solo se autocrea la primera vez que un Run da aceptado; si un admin lo revierte a 'pendiente', un Run aceptado posterior no lo vuelve a marcar 'completado' (envioExistente ya estaría en 'pendiente' y no se toca).
-        if (veredicto === 'aceptado' && !envioExistente) {
-          await db
-            .insert(envios)
-            .values({
-              usuarioId: user.id,
-              problemaId: data.problemaId,
-              codigo: data.codigo,
-              lenguaje: data.lenguaje,
-              estado: veredicto,
-              estadoProgreso: 'completado',
-              resultados,
-              creadoEn: ahora,
-            })
-            .onDuplicateKeyUpdate({ set: { usuarioId: sql`usuario_id` } })
+        if (veredicto === 'aceptado') {
+          const filasEnvio = await db
+            .select()
+            .from(envios)
+            .where(
+              and(
+                eq(envios.usuarioId, user.id),
+                eq(envios.problemaId, data.problemaId),
+              ),
+            )
+          // El envio solo se autocrea la primera vez que un Run da aceptado; si un admin lo revierte a 'pendiente', un Run aceptado posterior no lo vuelve a marcar 'completado'.
+          if (filasEnvio.length === 0) {
+            await db
+              .insert(envios)
+              .values({
+                usuarioId: user.id,
+                problemaId: data.problemaId,
+                codigo: data.codigo,
+                lenguaje: data.lenguaje,
+                estado: veredicto,
+                estadoProgreso: 'completado',
+                resultados,
+                creadoEn: ahora,
+              })
+              .onDuplicateKeyUpdate({ set: { usuarioId: sql`usuario_id` } })
+          }
         }
 
         let hint: string | null = null

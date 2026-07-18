@@ -1,12 +1,4 @@
-import { Editor, loader } from '@monaco-editor/react'
-import * as monaco from 'monaco-editor'
-
-// Por defecto @monaco-editor/react carga el editor inyectando un <script>
-// hacia cdn.jsdelivr.net en tiempo de ejecución; si esa petición queda
-// colgada (red restringida del venue, firewall, etc.) el editor se queda
-// en "Loading..." para siempre. Apuntar el loader al paquete monaco-editor
-// ya empaquetado localmente evita depender de esa red externa.
-loader.config({ monaco })
+import { Editor } from '@monaco-editor/react'
 
 const MONACO_LANGUAGE: Record<string, string> = {
   python: 'python',
@@ -20,12 +12,10 @@ export function CodeEditor({
   lenguaje,
   value,
   onChange,
-  readOnly,
 }: {
   lenguaje: string
   value: string
   onChange: (value: string) => void
-  readOnly?: boolean
 }) {
   return (
     <Editor
@@ -34,7 +24,7 @@ export function CodeEditor({
       value={value}
       onChange={(v) => onChange(v ?? '')}
       theme="vs-dark"
-      options={{ minimap: { enabled: false }, fontSize: 14, readOnly }}
+      options={{ minimap: { enabled: false }, fontSize: 14 }}
     />
   )
 }
