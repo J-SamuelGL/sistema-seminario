@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
+import { List } from 'lucide-react'
 import { toast } from 'sonner'
 import { ejecutarCodigo } from '#/server/functions/run'
 import {
@@ -42,10 +43,16 @@ function ProblemDetailPage() {
     indice >= 0 && indice < listaProblemas.length - 1
       ? listaProblemas[indice + 1]
       : null
+  const bloqueado = resuelto !== null
+  const lenguajeInicial =
+    lenguajes.length > 0 ? lenguajes[0].lenguaje : 'python'
+  const codigoInicial = lenguajes.length > 0 ? lenguajes[0].codigoInicial : ''
   const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
-    lenguajes[0]?.lenguaje ?? 'python',
+    resuelto ? (resuelto.lenguaje as LenguajeProgramacion) : lenguajeInicial,
   )
-  const [codigo, setCodigo] = useState(lenguajes[0]?.codigoInicial ?? '')
+  const [codigo, setCodigo] = useState(
+    resuelto ? resuelto.codigo : codigoInicial,
+  )
   const [mostrarAsistente, setMostrarAsistente] = useState(false)
 
   const ejecutar = useMutation({
@@ -104,7 +111,13 @@ function ProblemDetailPage() {
         ) : (
           <span className="w-8" />
         )}
-        <Link to="/problemas" className="text-sm text-gray-500 hover:text-blue-600">
+        <Link
+          to="/problemas"
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600"
+          aria-label="Ver lista de problemas"
+          title="Ver lista de problemas"
+        >
+          <List size={16} />
           {indice >= 0
             ? `Problema ${indice + 1} de ${listaProblemas.length}`
             : 'Ver lista de problemas'}
@@ -133,8 +146,9 @@ function ProblemDetailPage() {
         />
         <div>
           <select
-            className="border p-2"
+            className="border p-2 disabled:bg-gray-100"
             value={lenguaje}
+            disabled={bloqueado}
             onChange={(e) =>
               handleLenguajeChange(e.target.value as LenguajeProgramacion)
             }
@@ -145,20 +159,32 @@ function ProblemDetailPage() {
               </option>
             ))}
           </select>
-          <CodeEditor lenguaje={lenguaje} value={codigo} onChange={setCodigo} />
-          <button
-            className="mt-2 rounded bg-gray-700 px-4 py-2 text-white disabled:bg-gray-300"
-            onClick={() => ejecutar.mutate()}
-            disabled={ejecutar.isPending}
-          >
-            {ejecutar.isPending ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner /> Ejecutando...
-              </span>
-            ) : (
-              'Run'
-            )}
-          </button>
+          <CodeEditor
+            lenguaje={lenguaje}
+            value={codigo}
+            onChange={setCodigo}
+            readOnly={bloqueado}
+          />
+          {bloqueado ? (
+            <p className="mt-2 text-sm text-gray-500">
+              🔒 Ya resolviste este problema. Tu respuesta no se puede
+              modificar.
+            </p>
+          ) : (
+            <button
+              className="mt-2 rounded bg-gray-700 px-4 py-2 text-white disabled:bg-gray-300"
+              onClick={() => ejecutar.mutate()}
+              disabled={ejecutar.isPending}
+            >
+              {ejecutar.isPending ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner /> Ejecutando...
+                </span>
+              ) : (
+                'Run'
+              )}
+            </button>
+          )}
           {errorEjecucion && (
             <p className="mt-4 text-red-600">{errorEjecucion}</p>
           )}

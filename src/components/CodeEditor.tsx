@@ -12,10 +12,12 @@ export function CodeEditor({
   lenguaje,
   value,
   onChange,
+  readOnly,
 }: {
   lenguaje: string
   value: string
   onChange: (value: string) => void
+  readOnly?: boolean
 }) {
   return (
     <Editor
@@ -24,7 +26,7 @@ export function CodeEditor({
       value={value}
       onChange={(v) => onChange(v ?? '')}
       theme="vs-dark"
-      options={{ minimap: { enabled: false }, fontSize: 14 }}
+      options={{ minimap: { enabled: false }, fontSize: 14, readOnly }}
     />
   )
 }

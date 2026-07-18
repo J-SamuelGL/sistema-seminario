@@ -22,12 +22,19 @@ export function RunResults({
             {r.aprobado ? '✅' : '❌'} Input:{' '}
             <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code>{' '}
             — Esperado: <code>{r.salidaEsperada}</code> — Obtenido:{' '}
-            <code>{r.salidaObtenida || r.salidaError}</code>
+            <code>{r.salidaObtenida || '—'}</code>
             {i === 0 && r.salidaConsola && (
               <pre className="mt-1 whitespace-pre-wrap rounded bg-gray-50 p-2 text-xs text-gray-700">
                 Consola:
                 {'\n'}
                 {r.salidaConsola}
+              </pre>
+            )}
+            {i === 0 && r.salidaError && (
+              <pre className="mt-1 whitespace-pre-wrap rounded bg-red-50 p-2 text-xs text-red-700">
+                Error:
+                {'\n'}
+                {r.salidaError}
               </pre>
             )}
           </li>
