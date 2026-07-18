@@ -120,6 +120,11 @@ Set the following environment variables on the app service:
   sends the header the Caddy proxy requires
 - `ANTHROPIC_API_KEY` - Your Anthropic API key
 - `BETTER_AUTH_SECRET` - A secure random string for authentication
+- `BETTER_AUTH_URL` - the app's exact public URL (e.g. `https://<your-app>.up.railway.app`, no trailing slash).
+  better-auth reads this env var itself (`node_modules/better-auth/dist/utils/url.mjs`) to compute the origin it
+  trusts; without it, it falls back to the request's internal URL, which doesn't match the public origin the
+  browser sends — every sign-in then fails client-side with a generic "Correo o contraseña incorrectos" while
+  the actual network response is `403 {"message":"Invalid origin","code":"INVALID_ORIGIN"}`.
 - `BREVO_API_KEY` / `BREVO_CORREO_REMITENTE`: credenciales de Brevo (ver Task 4) para enviar el correo de bienvenida con usuario y contraseña a cada participante registrado manualmente.
 - Ya no se usa login OAuth (Google/GitHub): las cuentas las crea el administrador desde `/admin/participantes`, con correo + contraseña generada.
 
