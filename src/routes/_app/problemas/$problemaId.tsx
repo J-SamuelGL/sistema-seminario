@@ -8,6 +8,7 @@ import {
   problemasQueryOptions,
 } from '#/server/queries/problemas'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
+import { miProgresoQueryOptions } from '#/server/queries/progreso'
 import { IconoLista } from '#/components/IconoLista'
 import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
@@ -25,6 +26,7 @@ export const Route = createFileRoute('/_app/problemas/$problemaId')({
       ),
       context.queryClient.ensureQueryData(usuarioActualOpcionalQueryOptions()),
       context.queryClient.ensureQueryData(problemasQueryOptions()),
+      context.queryClient.ensureQueryData(miProgresoQueryOptions()),
     ])
     // Un problema ya resuelto no se puede volver a ver ni editar: se
     // redirige a la lista en vez de mostrar el editor bloqueado.
@@ -49,13 +51,31 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
   )
   const { data: user } = useSuspenseQuery(usuarioActualOpcionalQueryOptions())
   const { data: listaProblemas } = useSuspenseQuery(problemasQueryOptions())
+  const { data: progreso } = useSuspenseQuery(miProgresoQueryOptions())
   const { problema, casosPrueba, lenguajes, resuelto } = datosProblema
+  const resueltosIds = new Set(
+    progreso.problemas
+      .filter((p) => p.estadoProgreso !== 'pendiente')
+      .map((p) => p.problemaId),
+  )
   const indice = listaProblemas.findIndex((p) => p.id === problemaId)
-  const anterior = indice > 0 ? listaProblemas[indice - 1] : null
-  const siguiente =
-    indice >= 0 && indice < listaProblemas.length - 1
-      ? listaProblemas[indice + 1]
-      : null
+  // Los problemas ya resueltos no se pueden volver a abrir (ver loader),
+  // así que la navegación anterior/siguiente los salta en vez de llevar a
+  // un problema al que el participante no puede entrar.
+  let anterior = null
+  for (let i = indice - 1; i >= 0; i--) {
+    if (!resueltosIds.has(listaProblemas[i].id)) {
+      anterior = listaProblemas[i]
+      break
+    }
+  }
+  let siguiente = null
+  for (let i = indice + 1; i < listaProblemas.length; i++) {
+    if (!resueltosIds.has(listaProblemas[i].id)) {
+      siguiente = listaProblemas[i]
+      break
+    }
+  }
   const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
     lenguajes[0]?.lenguaje ?? 'python',
   )
