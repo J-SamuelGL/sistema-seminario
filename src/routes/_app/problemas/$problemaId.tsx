@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { lazy, Suspense, useState } from 'react'
+import { ClientOnly, createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ejecutarCodigo } from '#/server/functions/run'
@@ -10,12 +10,19 @@ import {
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 import { IconoLista } from '#/components/IconoLista'
 import { ProblemDescription } from '#/components/ProblemDescription'
-import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
 import { AssistantModal } from '#/components/AssistantModal'
 import { Spinner } from '#/components/Spinner'
 import { serializarCanonico } from '#/server/judge/serializar'
 import type { LenguajeProgramacion } from '#/server/envios/validar'
+
+// monaco-editor no debe formar parte del bundle de SSR: su entrada ESM
+// importa CSS crudo (codicon.css) que Node no puede resolver en tiempo de
+// ejecución cuando Vite externaliza el paquete para el servidor. Cargarlo
+// solo del lado del cliente evita que ese import llegue a ejecutarse en SSR.
+const CodeEditor = lazy(() =>
+  import('#/components/CodeEditor').then((m) => ({ default: m.CodeEditor })),
+)
 
 export const Route = createFileRoute('/_app/problemas/$problemaId')({
   loader: ({ context, params }) =>
@@ -159,12 +166,16 @@ function ProblemDetailPage() {
               </option>
             ))}
           </select>
-          <CodeEditor
-            lenguaje={lenguaje}
-            value={codigo}
-            onChange={setCodigo}
-            readOnly={bloqueado}
-          />
+          <ClientOnly fallback={<Spinner />}>
+            <Suspense fallback={<Spinner />}>
+              <CodeEditor
+                lenguaje={lenguaje}
+                value={codigo}
+                onChange={setCodigo}
+                readOnly={bloqueado}
+              />
+            </Suspense>
+          </ClientOnly>
           {bloqueado ? (
             <p className="mt-2 text-sm text-gray-500">
               🔒 Ya resolviste este problema. Tu respuesta no se puede
