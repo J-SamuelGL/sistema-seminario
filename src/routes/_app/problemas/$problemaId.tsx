@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import { List } from 'lucide-react'
 import { toast } from 'sonner'
 import { ejecutarCodigo } from '#/server/functions/run'
 import {
@@ -9,6 +8,7 @@ import {
   problemasQueryOptions,
 } from '#/server/queries/problemas'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
+import { IconoLista } from '#/components/IconoLista'
 import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
@@ -117,7 +117,7 @@ function ProblemDetailPage() {
           aria-label="Ver lista de problemas"
           title="Ver lista de problemas"
         >
-          <List size={16} />
+          <IconoLista className="h-4 w-4" />
           {indice >= 0
             ? `Problema ${indice + 1} de ${listaProblemas.length}`
             : 'Ver lista de problemas'}
