@@ -2,8 +2,8 @@
 
 App para correr un torneo/seminario de programación competitiva en vivo, construida con TanStack Start
 (React 19, SSR). Los participantes inician sesión, se registran vía QR ("check-in"), resuelven problemas
-enviando código en uno de cinco lenguajes, son calificados contra casos de prueba ejecutados en una
-instancia sandboxed de [Piston](https://github.com/engineer-man/piston), y aparecen en una tabla de
+enviando código en uno de cinco lenguajes, son calificados contra casos de prueba ejecutados vía la API de
+[Judge0 CE](https://rapidapi.com/judge0-official/api/judge0-ce) (RapidAPI), y aparecen en una tabla de
 posiciones en vivo. La categoría "invitado" recibe pistas/feedback generado con Claude.
 
 Para el detalle de arquitectura (pipeline de calificación, auth, ciclo de vida del torneo, etc.) ver
@@ -12,8 +12,9 @@ Para el detalle de arquitectura (pipeline de calificación, auth, ciclo de vida 
 ## Requisitos previos
 
 - Node.js y npm
-- Docker (para levantar Piston localmente)
 - Un MySQL accesible (local o remoto) para `DATABASE_URL`
+- Una API key de Judge0 CE en RapidAPI (plan Basic, "pay per use", sin costo mensual fijo — ver
+  `docs/deployment.md`)
 
 ## Configuración inicial
 
@@ -24,29 +25,15 @@ Para el detalle de arquitectura (pipeline de calificación, auth, ciclo de vida 
    ```
 
 2. Copiar `.env.example` a `.env` y completar las variables (`DATABASE_URL`, `ANTHROPIC_API_KEY`,
-   `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `BREVO_CORREO_REMITENTE`). `PISTON_URL` ya viene apuntando a
-   `http://localhost:2000`, que es donde queda expuesto el Piston del paso siguiente.
+   `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `BREVO_CORREO_REMITENTE`, `JUDGE0_API_KEY`).
 
-3. Levantar Piston vía Docker Compose:
-
-   ```bash
-   npm run dev:piston
-   ```
-
-4. **Solo la primera vez** (o si se borra el volumen `piston/packages`), instalar los runtimes de lenguaje
-   en esa instancia de Piston:
-
-   ```bash
-   npm run piston:install-languages
-   ```
-
-5. Aplicar el esquema a la base de datos:
+3. Aplicar el esquema a la base de datos:
 
    ```bash
    npx drizzle-kit push
    ```
 
-6. Levantar la webapp:
+4. Levantar la webapp:
 
    ```bash
    npm run dev
@@ -59,25 +46,23 @@ Las cuentas de participantes no se crean por auto-registro: un admin las provisi
 
 ## Scripts disponibles
 
-| Script                             | Descripción                                                                    |
-| ---------------------------------- | ------------------------------------------------------------------------------ |
-| `npm run dev`                      | Levanta la webapp en `:3000`                                                   |
-| `npm run dev:piston`               | Levanta Piston vía Docker Compose (`http://localhost:2000`)                    |
-| `npm run piston:install-languages` | Instala los runtimes de lenguaje en Piston (solo hace falta una vez)           |
-| `npm run build`                    | Build de producción                                                            |
-| `npm run start`                    | Corre el build de producción (usado por Railway)                               |
-| `npm run test`                     | Corre los tests con Vitest                                                     |
-| `npm run lint`                     | Lint con ESLint                                                                |
-| `npm run format`                   | Formatea con Prettier y corrige lint                                           |
-| `npm run check`                    | Verifica formato sin escribir cambios                                          |
-| `npm run generate-routes`          | Regenera `src/routeTree.gen.ts` (normalmente automático vía el plugin de Vite) |
+| Script                    | Descripción                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `npm run dev`             | Levanta la webapp en `:3000`                                                   |
+| `npm run build`           | Build de producción                                                            |
+| `npm run start`           | Corre el build de producción (usado por Railway)                               |
+| `npm run test`            | Corre los tests con Vitest                                                     |
+| `npm run lint`            | Lint con ESLint                                                                |
+| `npm run format`          | Formatea con Prettier y corrige lint                                           |
+| `npm run check`           | Verifica formato sin escribir cambios                                          |
+| `npm run generate-routes` | Regenera `src/routeTree.gen.ts` (normalmente automático vía el plugin de Vite) |
 
 ## Testing
 
-Los tests de harness/judge (`tests/harness-*.test.ts`, `tests/judge*.test.ts`, `tests/piston-*.test.ts`)
-corren contra un MySQL y un Piston reales — `DATABASE_URL` y `PISTON_URL` deben apuntar a servicios
-levantados (con Piston ya con los runtimes instalados, ver arriba). El comportamiento de UI no se prueba
-con automatización de navegador; eso se valida manualmente.
+Los tests que tocan la base de datos corren contra un MySQL real — `DATABASE_URL` debe apuntar a un MySQL
+levantado. Los tests de `tests/judge0-*.test.ts` y `tests/judge.test.ts` mockean `fetch`/`ejecutarJudge0`, no
+necesitan una key real de Judge0. El comportamiento de UI no se prueba con automatización de navegador; eso
+se valida manualmente.
 
 ```bash
 npm run test

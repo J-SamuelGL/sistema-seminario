@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Torneo de Programación" — a TanStack Start (React 19, SSR) app for running a live competitive-programming
 tournament/seminar. Participants log in, get checked in via QR, solve problems by submitting code in one of
-five languages, get graded against test cases executed through a sandboxed Piston instance, and appear on a
+five languages, get graded against test cases executed through the hosted Judge0 CE API, and appear on a
 live leaderboard. An "invitado" (guest) category gets Claude-generated hints/feedback; other categories don't.
 
 **All code, identifiers, DB columns/tables, commit messages, and branch names are in Spanish.** Follow this
@@ -26,29 +26,35 @@ npm run check             # prettier --check .
 npm run generate-routes    # regenerate src/routeTree.gen.ts (tsr generate) — usually automatic via the vite plugin
 ```
 
-Tests run against a real MySQL and a real Piston instance for the harness/judge tests (see `tests/harness-*.test.ts`,
-`tests/judge.test.ts`, `tests/piston-*.test.ts`) — `DATABASE_URL` and `PISTON_URL` must point to running local
-services (`.env` is loaded via `dotenv/config` in `vitest.config.ts`). Do not test UI behavior via browser
-automation — the user drives that manually.
+Tests that touch the database run against a real MySQL (`DATABASE_URL` must point to a running instance;
+`.env` is loaded via `dotenv/config` in `vitest.config.ts`). The harness/judge tests (`tests/harness-*.test.ts`,
+`tests/judge.test.ts`, `tests/judge0-*.test.ts`) mock `fetch`/`ejecutarJudge0` rather than hitting a real
+Judge0 instance. Do not test UI behavior via browser automation — the user drives that manually.
 
 ## Architecture
 
 ### Grading pipeline (the core of the app)
 
-Submitted code is never `eval`'d directly — it's wrapped into a full program and shipped to an external
-[Piston](https://github.com/engineer-man/piston) execution service (`PISTON_URL`, default
-`http://localhost:2000`) over HTTP. Flow, per test case:
+Submitted code is never `eval`'d directly — it's wrapped into a full program and shipped to the hosted
+[Judge0 CE](https://rapidapi.com/judge0-official/api/judge0-ce) execution API over HTTP (`JUDGE0_URL`,
+default `https://judge0-ce.p.rapidapi.com`). This replaced a self-hosted Piston instance: under real
+tournament concurrency (~30 concurrent Java/C# submissions), Piston took 15–55s per submission even on a
+4 vCPU/8GB VPS, while Judge0 handles the same load in 1–3.5s (load-tested with sustained bursts of 40
+concurrent requests, zero errors). Flow, per test case:
 
 1. `src/server/judge/harness/*.ts` — one file per supported language (`python`, `javascript`, `java`, `csharp`,
    `php`), each exporting a `generarPrograma*` function that renders the participant's function body plus a
    small driver that calls it with the case's arguments and prints a canonical stdout representation.
    `harness/index.ts` dispatches by language name.
-2. `src/server/piston/client.ts` (`ejecutarPiston`) — POSTs the generated program to Piston's
-   `/api/v2/execute`, with a **5000ms `run_timeout`** (Piston's server-side must be configured with
-   `PISTON_RUN_TIMEOUT=5000` or greater, or every submission is rejected — see `docs/deployment.md`).
-   `src/server/piston/languages.ts` maps our language names to Piston's `language`/`version` pairs; the code
-   comment there documents a real gotcha: the _install-time package name_ differs from the _execution-time
-   language alias_ for `javascript` (package `node`) and `csharp` (package `mono`).
+2. `src/server/judge0/client.ts` (`ejecutarJudge0`) — POSTs the generated program's source (base64-encoded) to
+   Judge0's `POST /submissions?base64_encoded=true&wait=true`. Uses `wait=true` (synchronous response) rather
+   than Judge0's recommended submit-then-poll flow — simpler, and validated fine at this app's scale (max ~30
+   participants); would need to switch to polling if concurrency needs ever grew much beyond that.
+   `src/server/judge0/languages.ts` maps our language names to Judge0's numeric `language_id`s (verified
+   against a real `GET /languages` call); no `expected_output` is sent, so Judge0 is used purely as a runner —
+   `status_id` is only read to detect compilation errors, runtime errors, and timeouts (`status_id === 5`), and
+   `compararSalidas` (below) does the actual comparison, so the float-tolerant logic stays in our code rather
+   than Judge0's stricter string diff.
 3. `src/server/judge/serializar.ts` — serializes expected output to a canonical string per return type and
    compares it against actual stdout (`compararSalidas`); float comparison is tolerant, not exact-string.
 4. `src/server/judge/verdict.ts` (`determinarVeredicto`) — reduces all per-case results to one of `aceptado`,
@@ -152,9 +158,9 @@ and get imported by the function files, never re-exported from them. Enforced by
 
 ### Local dev dependencies
 
-The app expects a local MySQL (`DATABASE_URL`) and a local Piston instance (`PISTON_URL`, defaults to
-`localhost:2000`) — Piston is not bundled; run it separately (e.g. via its Docker image) and install language
-runtimes with `scripts/install-piston-languages.sh <piston-url>` before grading will work for a given language.
+The app expects a local MySQL (`DATABASE_URL`) and a Judge0 CE API key (`JUDGE0_API_KEY`, from RapidAPI's
+Basic/pay-per-use plan — see `docs/deployment.md`); there is no local sandbox to run or language runtimes to
+install, since grading calls the hosted Judge0 API directly in both dev and production.
 `scripts/seed-datos-prueba.ts` seeds local test data.
 
 ## Design docs

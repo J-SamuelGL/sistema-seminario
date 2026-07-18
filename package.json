@@ -7,8 +7,6 @@
   },
   "scripts": {
     "dev": "vite dev --port 3000",
-    "dev:piston": "docker compose up -d piston",
-    "piston:install-languages": "bash scripts/install-piston-languages.sh http://localhost:2000",
     "generate-routes": "tsr generate",
     "build": "vite build",
     "start": "srvx serve --entry dist/server/server.js --static ../client --prod",

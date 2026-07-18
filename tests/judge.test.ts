@@ -1,16 +1,16 @@
 import { describe, it, expect, vi } from 'vitest'
 import { ejecutarCasosPrueba } from '../src/server/judge/runTestCases'
-import { ejecutarPiston } from '../src/server/piston/client'
+import { ejecutarJudge0 } from '../src/server/judge0/client'
 import { MARCADOR_RESULTADO_JUEZ } from '../src/server/judge/harness/marcador'
 
-vi.mock('../src/server/piston/client', () => ({
-  ejecutarPiston: vi.fn(),
+vi.mock('../src/server/judge0/client', () => ({
+  ejecutarJudge0: vi.fn(),
 }))
 
 describe('ejecutarCasosPrueba', () => {
   it('genera un programa por caso, compara contra el texto canónico y agrega el veredicto', async () => {
-    vi.mocked(ejecutarPiston).mockImplementation(
-      async (_lenguaje, _archivo, contenido) => ({
+    vi.mocked(ejecutarJudge0).mockImplementation(
+      async (_lenguaje, contenido) => ({
         salidaEstandar: contenido.includes('"hola"')
           ? `${MARCADOR_RESULTADO_JUEZ}2`
           : `${MARCADOR_RESULTADO_JUEZ}5`,
@@ -53,7 +53,7 @@ describe('ejecutarCasosPrueba', () => {
   })
 
   it('marca respuesta_incorrecta si algún caso no coincide', async () => {
-    vi.mocked(ejecutarPiston).mockResolvedValue({
+    vi.mocked(ejecutarJudge0).mockResolvedValue({
       salidaEstandar: `${MARCADOR_RESULTADO_JUEZ}0`,
       salidaError: '',
       codigoSalida: 0,
@@ -76,7 +76,7 @@ describe('ejecutarCasosPrueba', () => {
   })
 
   it('separa los prints del participante del resultado comparado, sin que rompan el veredicto', async () => {
-    vi.mocked(ejecutarPiston).mockResolvedValue({
+    vi.mocked(ejecutarJudge0).mockResolvedValue({
       salidaEstandar: `depurando\nmas depuracion\n${MARCADOR_RESULTADO_JUEZ}1`,
       salidaError: '',
       codigoSalida: 0,

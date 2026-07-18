@@ -1,7 +1,7 @@
 import { generarPrograma } from './harness'
 import { serializarCanonico, compararSalidas } from './serializar'
 import { separarSalidaConsola } from './consola'
-import { ejecutarPiston } from '../piston/client'
+import { ejecutarJudge0 } from '../judge0/client'
 import { determinarVeredicto } from './verdict'
 import type { ResultadoCaso, Veredicto } from './verdict'
 import type { Parametro, TipoDato, Valor } from './tipos'
@@ -26,7 +26,7 @@ export async function ejecutarCasosPrueba(
 ): Promise<{ resultados: ResultadoCaso[]; veredicto: Veredicto }> {
   const resultados = await Promise.all(
     casosPrueba.map(async (casoPrueba) => {
-      const { archivo, contenido } = generarPrograma(
+      const { contenido } = generarPrograma(
         lenguaje,
         codigo,
         firma.nombreFuncion,
@@ -34,7 +34,7 @@ export async function ejecutarCasosPrueba(
         firma.tipoRetorno,
         casoPrueba.argumentos,
       )
-      const salida = await ejecutarPiston(lenguaje, archivo, contenido)
+      const salida = await ejecutarJudge0(lenguaje, contenido)
       const { salidaConsola, salidaResultado } = separarSalidaConsola(
         salida.salidaEstandar,
       )
