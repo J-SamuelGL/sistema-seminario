@@ -1,5 +1,10 @@
 import { useState } from 'react'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ejecutarCodigo } from '#/server/functions/run'
@@ -14,6 +19,7 @@ import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
 import { AssistantModal } from '#/components/AssistantModal'
+import { ProblemSolvedModal } from '#/components/ProblemSolvedModal'
 import { Spinner } from '#/components/Spinner'
 import { serializarCanonico } from '#/server/judge/serializar'
 import type { LenguajeProgramacion } from '#/server/envios/validar'
@@ -46,6 +52,7 @@ function ProblemDetailPage() {
 }
 
 function ProblemDetailContent({ problemaId }: { problemaId: string }) {
+  const navigate = useNavigate()
   const { data: datosProblema } = useSuspenseQuery(
     problemaQueryOptions(problemaId),
   )
@@ -62,14 +69,14 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
   // Los problemas ya resueltos no se pueden volver a abrir (ver loader),
   // así que la navegación anterior/siguiente los salta en vez de llevar a
   // un problema al que el participante no puede entrar.
-  let anterior = null
+  let anterior: (typeof listaProblemas)[number] | null = null
   for (let i = indice - 1; i >= 0; i--) {
     if (!resueltosIds.has(listaProblemas[i].id)) {
       anterior = listaProblemas[i]
       break
     }
   }
-  let siguiente = null
+  let siguiente: (typeof listaProblemas)[number] | null = null
   for (let i = indice + 1; i < listaProblemas.length; i++) {
     if (!resueltosIds.has(listaProblemas[i].id)) {
       siguiente = listaProblemas[i]
@@ -114,6 +121,17 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
     setLenguaje(nuevoLenguaje)
     const config = lenguajes.find((l) => l.lenguaje === nuevoLenguaje)
     setCodigo(config?.codigoInicial ?? '')
+  }
+
+  function handleAceptarResuelto() {
+    if (siguiente) {
+      navigate({
+        to: '/problemas/$problemaId',
+        params: { problemaId: siguiente.id },
+      })
+    } else {
+      navigate({ to: '/problemas' })
+    }
   }
 
   const errorEjecucion = ejecutar.data?.error ?? null
@@ -223,6 +241,13 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
           )}
         </div>
       </div>
+      {ejecutar.data?.resuelto && (
+        <ProblemSolvedModal
+          duracionMinutos={ejecutar.data.resuelto.duracionMinutos}
+          puntos={ejecutar.data.resuelto.puntos}
+          onAceptar={handleAceptarResuelto}
+        />
+      )}
     </div>
   )
 }

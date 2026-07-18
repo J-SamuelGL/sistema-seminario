@@ -7,7 +7,6 @@ import {
   casosPrueba,
   problemaLenguajes,
   estadoTorneo,
-  envios,
 } from '../db/schema'
 import {
   requerirAdmin,
@@ -20,10 +19,13 @@ import {
 } from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
 import { idSchema } from '../validacion/comun'
-import { calcularDuraciones } from '../standings/duracion'
+import { calcularResueltoParaUsuario } from '../envios/resuelto'
 
 async function obtenerEstadoTorneoRow() {
-  const filas = await db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))
+  const filas = await db
+    .select()
+    .from(estadoTorneo)
+    .where(eq(estadoTorneo.id, 1))
   return filas.length > 0 ? filas[0] : null
 }
 
@@ -79,35 +81,14 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
       : []
     const resuelto =
       problema && user.rol !== 'admin' && estado?.iniciadoEn
-        ? await calcularResueltoParaUsuario(user.id, problema, estado.iniciadoEn)
+        ? await calcularResueltoParaUsuario(
+            user.id,
+            problema,
+            estado.iniciadoEn,
+          )
         : null
     return { problema, casosPrueba: casos, lenguajes, resuelto }
   })
-
-async function calcularResueltoParaUsuario(
-  usuarioId: string,
-  problema: typeof problemas.$inferSelect,
-  torneoIniciadoEn: Date,
-) {
-  const enviosDelUsuario = await db
-    .select()
-    .from(envios)
-    .where(eq(envios.usuarioId, usuarioId))
-  const envioDeEsteProblema = enviosDelUsuario.find(
-    (e) => e.problemaId === problema.id,
-  )
-  if (!envioDeEsteProblema || envioDeEsteProblema.estadoProgreso === 'pendiente')
-    return null
-
-  const resueltos = enviosDelUsuario
-    .filter((e) => e.estadoProgreso !== 'pendiente')
-    .map((e) => ({ problemaId: e.problemaId, creadoEn: e.creadoEn }))
-  const duraciones = calcularDuraciones(resueltos, torneoIniciadoEn)
-  const duracionMinutos =
-    duraciones.find((d) => d.problemaId === problema.id)?.duracionMinutos ?? 0
-
-  return { duracionMinutos, puntos: problema.puntos }
-}
 
 export const crearProblema = createServerFn({ method: 'POST' })
   .validator(datosProblemaSchema)

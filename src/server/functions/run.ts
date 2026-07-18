@@ -17,6 +17,7 @@ import { debeMostrarHint } from '../judge/hintCadence'
 import { generarComentarioEnvio } from '../claude/feedback'
 import { asegurarIniciado } from '../tournament/guard'
 import { datosEjecucionSchema } from '../envios/validar'
+import { calcularResueltoParaUsuario } from '../envios/resuelto'
 import type { ResultadoCasoPublico } from '../judge/resultadoPublico'
 
 export const ejecutarCodigo = createServerFn({ method: 'POST' })
@@ -28,6 +29,7 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
       resultados: ResultadoCasoPublico[]
       error: string | null
       hint: string | null
+      resuelto: { duracionMinutos: number; puntos: number } | null
     }> => {
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
@@ -105,6 +107,7 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
             },
           })
 
+        let resuelto: { duracionMinutos: number; puntos: number } | null = null
         if (veredicto === 'aceptado') {
           const filasEnvio = await db
             .select()
@@ -130,6 +133,16 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
                 creadoEn: ahora,
               })
               .onDuplicateKeyUpdate({ set: { usuarioId: sql`usuario_id` } })
+            // Solo se avisa "recién resuelto" la primera vez que se crea el
+            // envio en esta misma corrida, no en corridas posteriores sobre
+            // un problema que ya estaba completado.
+            resuelto = estado?.iniciadoEn
+              ? await calcularResueltoParaUsuario(
+                  user.id,
+                  problema,
+                  estado.iniciadoEn,
+                )
+              : null
           }
         }
 
@@ -166,13 +179,14 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
           }
         }
 
-        return { resultados: resultadosPublicos, error: null, hint }
+        return { resultados: resultadosPublicos, error: null, hint, resuelto }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         return {
           resultados: [],
           error: `No se pudo ejecutar el código. Intenta de nuevo. (${message})`,
           hint: null,
+          resuelto: null,
         }
       }
     },
