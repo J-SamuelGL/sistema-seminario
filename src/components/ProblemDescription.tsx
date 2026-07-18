@@ -1,20 +1,30 @@
+const ETIQUETAS_CATEGORIA: Record<string, string> = {
+  debugging: 'Debugging',
+  normal: 'Normal',
+}
+
 export function ProblemDescription({
   titulo,
   descripcion,
   dificultad,
+  categoriaProblema,
   ejemplos,
   resuelto,
 }: {
   titulo: string
   descripcion: string
   dificultad: string
+  categoriaProblema: string
   ejemplos: { argumentos: unknown[]; salidaEsperadaTexto: string }[]
   resuelto?: { duracionMinutos: number; puntos: number } | null
 }) {
   return (
     <div className="h-[70vh] overflow-y-auto p-4">
       <h1 className="text-xl font-bold">{titulo}</h1>
-      <span className="text-sm uppercase text-gray-500">{dificultad}</span>
+      <span className="text-sm uppercase text-gray-500">
+        {dificultad} ·{' '}
+        {ETIQUETAS_CATEGORIA[categoriaProblema] ?? categoriaProblema}
+      </span>
       {resuelto && (
         <p className="mt-1 text-sm font-medium text-green-600">
           ✅ Resuelto en {resuelto.duracionMinutos} min — {resuelto.puntos} pts

@@ -35,6 +35,15 @@ export const Route = createFileRoute('/_app/problemas/$problemaId')({
 
 function ProblemDetailPage() {
   const { problemaId } = Route.useParams()
+  // key={problemaId} fuerza un remount completo al navegar entre problemas:
+  // sin esto, TanStack Router reutiliza la misma instancia del componente
+  // (solo cambia el param de la misma ruta), y el useState de `codigo`/
+  // `lenguaje` de abajo nunca se vuelve a inicializar con los datos del
+  // nuevo problema.
+  return <ProblemDetailContent key={problemaId} problemaId={problemaId} />
+}
+
+function ProblemDetailContent({ problemaId }: { problemaId: string }) {
   const { data: datosProblema } = useSuspenseQuery(
     problemaQueryOptions(problemaId),
   )
@@ -139,6 +148,7 @@ function ProblemDetailPage() {
           titulo={problema.titulo}
           descripcion={problema.descripcion}
           dificultad={problema.dificultad}
+          categoriaProblema={problema.categoriaProblema}
           ejemplos={ejemplos}
           resuelto={resuelto}
         />

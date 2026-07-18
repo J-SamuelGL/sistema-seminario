@@ -14,6 +14,11 @@ export const Route = createFileRoute('/_app/problemas/')({
   component: ProblemsListPage,
 })
 
+const ETIQUETAS_CATEGORIA: Record<string, string> = {
+  debugging: 'Debugging',
+  normal: 'Normal',
+}
+
 function ProblemsListPage() {
   const [problemas] = Route.useLoaderData()
   const { data: estado } = useSuspenseQuery(estadoTorneoQueryOptions())
@@ -34,8 +39,8 @@ function ProblemsListPage() {
     <div className="p-8">
       <h1 className="text-xl font-bold">Problemas</h1>
       <p className="text-sm text-gray-500">
-        Puedes resolverlos en cualquier orden. Una vez resuelto un problema
-        ya no se puede volver a abrir.
+        Puedes resolverlos en cualquier orden. Una vez resuelto un problema ya
+        no se puede volver a abrir.
       </p>
       {progreso.puesto !== null && (
         <p className="mt-2 text-sm font-medium text-gray-700">
@@ -50,11 +55,13 @@ function ProblemsListPage() {
           const resuelto =
             estadoProblema !== undefined &&
             estadoProblema.estadoProgreso !== 'pendiente'
+          const etiquetaCategoria =
+            ETIQUETAS_CATEGORIA[p.categoriaProblema] ?? p.categoriaProblema
           return (
             <li key={p.id}>
               {resuelto ? (
                 <span className="text-gray-500">
-                  ✅ {p.titulo} — {p.dificultad}
+                  ✅ {p.titulo} — {p.dificultad} · {etiquetaCategoria}
                   {estadoProblema.duracionMinutos !== null &&
                     ` (${estadoProblema.duracionMinutos} min)`}
                 </span>
@@ -64,7 +71,7 @@ function ProblemsListPage() {
                   params={{ problemaId: p.id }}
                   className="text-blue-600"
                 >
-                  {p.titulo} — {p.dificultad}
+                  {p.titulo} — {p.dificultad} · {etiquetaCategoria}
                 </Link>
               )}
             </li>
