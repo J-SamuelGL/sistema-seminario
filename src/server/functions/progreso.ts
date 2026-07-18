@@ -6,7 +6,7 @@ import { problemas, envios } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { grupoDeCategoria } from '../problems/grupo'
 import { calcularDuraciones } from '../standings/duracion'
-import { cargarDatosClasificacion } from './admin-respuestas'
+import { cargarDatosClasificacion } from '../standings/datos'
 
 export const obtenerMiProgreso = createServerFn({ method: 'GET' }).handler(
   async () => {

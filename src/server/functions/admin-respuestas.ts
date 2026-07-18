@@ -2,18 +2,10 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import {
-  usuarios,
-  envios,
-  problemas,
-  estadoTorneo,
-  corridas,
-} from '../db/schema'
+import { usuarios, envios, problemas, corridas } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
-import {
-  calcularClasificacion,
-  agruparClasificacionPorCategoria,
-} from '../standings/calculate'
+import { agruparClasificacionPorCategoria } from '../standings/calculate'
+import { cargarDatosClasificacion } from '../standings/datos'
 import { calcularDuraciones } from '../standings/duracion'
 import { grupoDeCategoria } from '../problems/grupo'
 import {
@@ -21,51 +13,6 @@ import {
   actualizarEstadoProgresoSchema,
 } from '../envios/progreso'
 import { idSchema } from '../validacion/comun'
-import type {
-  RegistroUsuario,
-  RegistroEnvio,
-  RegistroProblema,
-} from '../standings/calculate'
-
-export async function cargarDatosClasificacion() {
-  const filasEstado = await db
-    .select()
-    .from(estadoTorneo)
-    .where(eq(estadoTorneo.id, 1))
-  const torneoIniciadoEn =
-    filasEstado.length > 0 ? filasEstado[0].iniciadoEn : null
-
-  const [todosUsuarios, todosEnvios, todosProblemas] = await Promise.all([
-    db.select().from(usuarios),
-    db.select().from(envios),
-    db.select().from(problemas),
-  ])
-
-  const usuariosElegibles: RegistroUsuario[] = todosUsuarios
-    .filter((u) => u.rol === 'participante')
-    .map((u) => ({ id: u.id, nombre: u.name, categoria: u.categoria }))
-
-  const registrosEnvios: RegistroEnvio[] = todosEnvios.map((e) => ({
-    usuarioId: e.usuarioId,
-    problemaId: e.problemaId,
-    estadoProgreso: e.estadoProgreso,
-    creadoEn: e.creadoEn,
-  }))
-
-  const registrosProblemas: RegistroProblema[] = todosProblemas.map((p) => ({
-    id: p.id,
-    puntos: p.puntos,
-  }))
-
-  const clasificacion = calcularClasificacion(
-    usuariosElegibles,
-    registrosEnvios,
-    registrosProblemas,
-    torneoIniciadoEn ?? new Date(),
-  )
-
-  return { clasificacion, todosUsuarios, todosProblemas, torneoIniciadoEn }
-}
 
 export const listarParticipantesConProgreso = createServerFn({
   method: 'GET',

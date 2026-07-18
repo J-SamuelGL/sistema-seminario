@@ -142,6 +142,14 @@ no separate REST/tRPC layer. DB access is Drizzle ORM against MySQL (`src/server
 
 Path alias: both `#/*` and `@/*` map to `./src/*` (see `tsconfig.json` / `package.json#imports`).
 
+**`src/server/functions/*.ts` must export ONLY `createServerFn` values.** These files are imported by
+client code, and the compiler only stubs out server-function exports — a plain `export function`
+keeps its real body (and its `db/client` → mysql2 import chain) in the browser bundle, which crashes
+production with `Cannot read properties of undefined (reading 'prototype')` (safer-buffer touching
+`Buffer` in the browser). Shared helpers go in plain server modules (`standings/`, `envios/`, etc.)
+and get imported by the function files, never re-exported from them. Enforced by
+`tests/funciones-solo-server-fn.test.ts`.
+
 ### Local dev dependencies
 
 The app expects a local MySQL (`DATABASE_URL`) and a local Piston instance (`PISTON_URL`, defaults to
