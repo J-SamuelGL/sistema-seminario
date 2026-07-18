@@ -27,7 +27,7 @@ import type {
   RegistroProblema,
 } from '../standings/calculate'
 
-async function cargarDatosClasificacion() {
+export async function cargarDatosClasificacion() {
   const filasEstado = await db
     .select()
     .from(estadoTorneo)
