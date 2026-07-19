@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   crearProblema,
@@ -11,7 +11,8 @@ import {
   problemasQueryOptions,
 } from '#/server/queries/problemas'
 import { AdminProblemForm } from '#/components/AdminProblemForm'
-import { Spinner } from '#/components/Spinner'
+import { LoadingButton } from '#/components/LoadingButton'
+import { useToastMutation } from '#/components/useToastMutation'
 import type {
   ValorFormularioProblema,
   DatosProblemaEnviado,
@@ -31,6 +32,9 @@ function AdminProblemEditPage() {
   const { problemaId } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  // useQuery + enabled (no useSuspenseQuery + loader) a propósito: el loader
+  // no puede pedir datos para el caso 'new' (no hay problema que cargar), así
+  // que esta es la única ruta donde el fetch se salta condicionalmente.
   const { data } = useQuery({
     ...problemaQueryOptions(problemaId),
     enabled: problemaId !== 'new',
@@ -46,39 +50,32 @@ function AdminProblemEditPage() {
       }),
     ])
 
-  const crear = useMutation({
-    mutationFn: (value: Parameters<typeof crearProblema>[0]['data']) =>
-      crearProblema({ data: value }),
+  const crear = useToastMutation({
+    mutationFn: (value: DatosProblemaEnviado) => crearProblema({ data: value }),
     onSuccess: async () => {
       await invalidarProblemas()
       await navigate({ to: '/admin/problemas' })
       toast.success('Problema creado.')
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
-  const actualizar = useMutation({
-    mutationFn: (value: Parameters<typeof actualizarProblema>[0]['data']) =>
+  const actualizar = useToastMutation({
+    mutationFn: (value: DatosProblemaEnviado & { id: string }) =>
       actualizarProblema({ data: value }),
     onSuccess: async () => {
       await invalidarProblemas()
       await navigate({ to: '/admin/problemas' })
       toast.success('Problema actualizado.')
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
-  const eliminar = useMutation({
+  const eliminar = useToastMutation({
     mutationFn: () => eliminarProblema({ data: problemaId }),
     onSuccess: async () => {
       await invalidarProblemas()
       await navigate({ to: '/admin/problemas' })
       toast.success('Problema eliminado.')
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   if (problemaId !== 'new' && !data?.problema) {
@@ -133,11 +130,9 @@ function AdminProblemEditPage() {
 
   function handleSubmit(value: DatosProblemaEnviado) {
     if (problemaId === 'new') {
-      crear.mutate(value as Parameters<typeof crearProblema>[0]['data'])
+      crear.mutate(value)
     } else {
-      actualizar.mutate({ ...value, id: problemaId } as Parameters<
-        typeof actualizarProblema
-      >[0]['data'])
+      actualizar.mutate({ ...value, id: problemaId })
     }
   }
 
@@ -154,19 +149,13 @@ function AdminProblemEditPage() {
   return (
     <div>
       {problemaId !== 'new' && (
-        <button
+        <LoadingButton
           className="m-4 rounded bg-red-600 px-4 py-2 text-white disabled:bg-gray-300"
-          disabled={eliminar.isPending}
           onClick={handleDelete}
-        >
-          {eliminar.isPending ? (
-            <span className="flex items-center justify-center gap-2">
-              <Spinner /> Eliminando...
-            </span>
-          ) : (
-            'Eliminar problema'
-          )}
-        </button>
+          isPending={eliminar.isPending}
+          label="Eliminar problema"
+          pendingLabel="Eliminando..."
+        />
       )}
       <AdminProblemForm
         initial={initial}

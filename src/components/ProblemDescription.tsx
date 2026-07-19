@@ -1,7 +1,4 @@
-const ETIQUETAS_CATEGORIA: Record<string, string> = {
-  debugging: 'Debugging',
-  normal: 'Normal',
-}
+import { ETIQUETAS_CATEGORIA, formatearArgumentos } from '#/components/labels'
 
 export function ProblemDescription({
   titulo,
@@ -43,9 +40,7 @@ export function ProblemDescription({
             {ejemplos.map((ej, i) => (
               <tr key={i}>
                 <td className="border p-2">
-                  <code>
-                    {ej.argumentos.map((a) => JSON.stringify(a)).join(', ')}
-                  </code>
+                  <code>{formatearArgumentos(ej.argumentos)}</code>
                 </td>
                 <td className="border p-2">
                   <code>{ej.salidaEsperadaTexto}</code>

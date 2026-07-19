@@ -1,14 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { QrScanner } from '#/components/QrScanner'
 import { registrarIngresoPorToken } from '#/server/functions/checkin'
 import { participantesQueryOptions } from '#/server/queries/participantes'
 import { Spinner } from '#/components/Spinner'
+import { useToastMutation } from '#/components/useToastMutation'
 
 export const Route = createFileRoute('/admin/ingreso')({
   loader: ({ context }) =>
@@ -20,15 +16,13 @@ function CheckinPage() {
   const queryClient = useQueryClient()
   const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
 
-  const escanear = useMutation({
+  const escanear = useToastMutation({
     mutationFn: (token: string) => registrarIngresoPorToken({ data: token }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: participantesQueryOptions().queryKey,
       })
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   const yaIngresados = participantes.filter((p) => p.ingresadoEn).length

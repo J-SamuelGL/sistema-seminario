@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { puedeEliminarParticipante } from '../src/server/participantes/eliminar'
+import { puedeEliminarParticipante } from '../src/shared/participantes'
 
 describe('puedeEliminarParticipante', () => {
   it('permite eliminar a un participante sin envíos', () => {

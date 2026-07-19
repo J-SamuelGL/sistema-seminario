@@ -38,3 +38,17 @@ export async function enviarCorreoBienvenida(input: {
     throw new Error(`La solicitud a Brevo falló: ${response.status}`)
   }
 }
+
+export async function enviarCorreoBienvenidaSeguro(input: {
+  nombre: string
+  correo: string
+  contrasena: string
+}): Promise<boolean> {
+  try {
+    await enviarCorreoBienvenida(input)
+    return true
+  } catch (err) {
+    console.error('No se pudo enviar el correo de bienvenida', err)
+    return false
+  }
+}

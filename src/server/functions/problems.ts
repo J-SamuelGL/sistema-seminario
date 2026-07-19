@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
+import { obtenerUnaFila } from '../db/uno'
 import {
   problemas,
   casosPrueba,
@@ -22,11 +23,9 @@ import { idSchema } from '../validacion/comun'
 import { calcularResueltoParaUsuario } from '../envios/resuelto'
 
 async function obtenerEstadoTorneoRow() {
-  const filas = await db
-    .select()
-    .from(estadoTorneo)
-    .where(eq(estadoTorneo.id, 1))
-  return filas.length > 0 ? filas[0] : null
+  return obtenerUnaFila(
+    db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1)),
+  )
 }
 
 export const listarProblemas = createServerFn({ method: 'GET' }).handler(
@@ -54,8 +53,9 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
   .handler(async ({ data }) => {
     const request = getRequest()
     const user = await requerirParticipanteIngresado(request.headers)
-    const rows = await db.select().from(problemas).where(eq(problemas.id, data))
-    const filaProblema = rows.length > 0 ? rows[0] : null
+    const filaProblema = await obtenerUnaFila(
+      db.select().from(problemas).where(eq(problemas.id, data)),
+    )
     const estado = await obtenerEstadoTorneoRow()
     const puedeVerlo =
       user.rol === 'admin' ||

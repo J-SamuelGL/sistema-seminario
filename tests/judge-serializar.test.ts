@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  serializarCanonico,
-  compararSalidas,
-} from '../src/server/judge/serializar'
+import { compararSalidas } from '../src/server/judge/serializar'
+import { serializarCanonico } from '../src/shared/serializar'
 
 describe('serializarCanonico', () => {
   it('serializa escalares', () => {

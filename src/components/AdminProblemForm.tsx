@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Spinner } from '#/components/Spinner'
+import { LoadingButton } from '#/components/LoadingButton'
+import { SegmentedControl } from '#/components/SegmentedControl'
+import type { LenguajeProgramacion } from '#/server/envios/validar'
+
+function updateAt<T>(array: T[], index: number, updater: (item: T) => T): T[] {
+  const next = array.slice()
+  next[index] = updater(next[index])
+  return next
+}
 
 export type TipoDatoFormulario =
   | 'int'
@@ -23,7 +31,13 @@ const TIPOS_DATO: TipoDatoFormulario[] = [
   'list<string>',
 ]
 
-const LENGUAJES_DISPONIBLES = ['python', 'javascript', 'java', 'csharp', 'php']
+const LENGUAJES_DISPONIBLES: LenguajeProgramacion[] = [
+  'python',
+  'javascript',
+  'java',
+  'csharp',
+  'php',
+]
 
 export type DificultadFormulario = 'Fácil' | 'Intermedio' | 'Difícil'
 
@@ -50,7 +64,7 @@ const CATEGORIAS_PROBLEMA: {
 
 export type ParametroFormulario = { nombre: string; tipo: TipoDatoFormulario }
 export type LenguajeFormulario = {
-  lenguaje: string
+  lenguaje: LenguajeProgramacion
   nombreFuncion: string
   codigoInicial: string
 }
@@ -108,9 +122,13 @@ export function AdminProblemForm({
     campo: 'nombre' | 'tipo',
     texto: string,
   ) {
-    const next = value.parametros.slice()
-    next[index] = { ...next[index], [campo]: texto }
-    setValue({ ...value, parametros: next })
+    setValue({
+      ...value,
+      parametros: updateAt(value.parametros, index, (p) => ({
+        ...p,
+        [campo]: texto,
+      })),
+    })
   }
 
   function agregarParametro() {
@@ -125,12 +143,16 @@ export function AdminProblemForm({
     campo: 'nombreFuncion' | 'codigoInicial',
     texto: string,
   ) {
-    const next = value.lenguajes.slice()
-    next[index] = { ...next[index], [campo]: texto }
-    setValue({ ...value, lenguajes: next })
+    setValue({
+      ...value,
+      lenguajes: updateAt(value.lenguajes, index, (l) => ({
+        ...l,
+        [campo]: texto,
+      })),
+    })
   }
 
-  function alternarLenguaje(lenguaje: string) {
+  function alternarLenguaje(lenguaje: LenguajeProgramacion) {
     const existe = value.lenguajes.some((l) => l.lenguaje === lenguaje)
     if (existe) {
       setValue({
@@ -153,12 +175,13 @@ export function AdminProblemForm({
     campo: 'salidaEsperadaTexto' | 'visible',
     valorCampo: string | boolean,
   ) {
-    const next = value.casosPrueba.slice()
-    next[index] = {
-      ...next[index],
-      [campo]: valorCampo,
-    }
-    setValue({ ...value, casosPrueba: next })
+    setValue({
+      ...value,
+      casosPrueba: updateAt(value.casosPrueba, index, (c) => ({
+        ...c,
+        [campo]: valorCampo,
+      })),
+    })
   }
 
   function actualizarArgumento(
@@ -166,11 +189,17 @@ export function AdminProblemForm({
     indexArgumento: number,
     texto: string,
   ) {
-    const next = value.casosPrueba.slice()
-    const argumentos = next[indexCaso].argumentosTexto.slice()
-    argumentos[indexArgumento] = texto
-    next[indexCaso] = { ...next[indexCaso], argumentosTexto: argumentos }
-    setValue({ ...value, casosPrueba: next })
+    setValue({
+      ...value,
+      casosPrueba: updateAt(value.casosPrueba, indexCaso, (caso) => ({
+        ...caso,
+        argumentosTexto: updateAt(
+          caso.argumentosTexto,
+          indexArgumento,
+          () => texto,
+        ),
+      })),
+    })
   }
 
   function agregarCasoPrueba() {
@@ -230,23 +259,11 @@ export function AdminProblemForm({
       </label>
       <div>
         <span className="mb-2 block font-bold">Dificultad</span>
-        <div className="flex gap-2">
-          {DIFICULTADES.map((d) => (
-            <button
-              key={d.valor}
-              type="button"
-              onClick={() => setValue({ ...value, dificultad: d.valor })}
-              className={
-                'rounded-full px-4 py-1.5 text-sm font-medium ' +
-                (value.dificultad === d.valor
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-              }
-            >
-              {d.etiqueta}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={DIFICULTADES}
+          value={value.dificultad}
+          onChange={(dificultad) => setValue({ ...value, dificultad })}
+        />
       </div>
       <label className="flex flex-col gap-1">
         Puntos
@@ -262,43 +279,21 @@ export function AdminProblemForm({
       </label>
       <div>
         <span className="mb-2 block font-bold">Grupo</span>
-        <div className="flex gap-2">
-          {GRUPOS.map((g) => (
-            <button
-              key={g.valor}
-              type="button"
-              onClick={() => setValue({ ...value, grupo: g.valor })}
-              className={
-                'rounded-full px-4 py-1.5 text-sm font-medium ' +
-                (value.grupo === g.valor
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-              }
-            >
-              {g.etiqueta}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={GRUPOS}
+          value={value.grupo}
+          onChange={(grupo) => setValue({ ...value, grupo })}
+        />
       </div>
       <div>
         <span className="mb-2 block font-bold">Categoría</span>
-        <div className="flex gap-2">
-          {CATEGORIAS_PROBLEMA.map((c) => (
-            <button
-              key={c.valor}
-              type="button"
-              onClick={() => setValue({ ...value, categoriaProblema: c.valor })}
-              className={
-                'rounded-full px-4 py-1.5 text-sm font-medium ' +
-                (value.categoriaProblema === c.valor
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-              }
-            >
-              {c.etiqueta}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={CATEGORIAS_PROBLEMA}
+          value={value.categoriaProblema}
+          onChange={(categoriaProblema) =>
+            setValue({ ...value, categoriaProblema })
+          }
+        />
       </div>
 
       <h3 className="font-bold">Parámetros de la función</h3>
@@ -446,19 +441,13 @@ export function AdminProblemForm({
         + Agregar caso de prueba
       </button>
 
-      <button
+      <LoadingButton
         type="submit"
         className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
-        disabled={isPending}
-      >
-        {isPending ? (
-          <span className="flex items-center justify-center gap-2">
-            <Spinner /> Guardando...
-          </span>
-        ) : (
-          'Guardar'
-        )}
-      </button>
+        isPending={isPending}
+        label="Guardar"
+        pendingLabel="Guardando..."
+      />
     </form>
   )
 }

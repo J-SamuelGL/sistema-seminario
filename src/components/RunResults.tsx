@@ -1,4 +1,5 @@
 import type { ResultadoCasoPublico } from '#/server/judge/resultadoPublico'
+import { formatearArgumentos } from '#/components/labels'
 
 export function RunResults({
   results,
@@ -20,8 +21,8 @@ export function RunResults({
             className={r.aprobado ? 'text-green-600' : 'text-red-600'}
           >
             {r.aprobado ? '✅' : '❌'} Input:{' '}
-            <code>{r.argumentos.map((a) => JSON.stringify(a)).join(', ')}</code>{' '}
-            — Esperado: <code>{r.salidaEsperada}</code> — Obtenido:{' '}
+            <code>{formatearArgumentos(r.argumentos)}</code> — Esperado:{' '}
+            <code>{r.salidaEsperada}</code> — Obtenido:{' '}
             <code>{r.salidaObtenida || '—'}</code>
             {i === 0 && r.salidaConsola && (
               <pre className="mt-1 whitespace-pre-wrap rounded bg-gray-50 p-2 text-xs text-gray-700">

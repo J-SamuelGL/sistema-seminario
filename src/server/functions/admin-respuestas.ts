@@ -2,11 +2,16 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client'
+import { obtenerUnaFila } from '../db/uno'
 import { usuarios, envios, problemas, corridas } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { agruparClasificacionPorCategoria } from '../standings/calculate'
 import { cargarDatosClasificacion } from '../standings/datos'
 import { calcularDuraciones } from '../standings/duracion'
+import {
+  filtrarAsistentes,
+  calcularPuestoEntreAsistentes,
+} from '../standings/asistentes'
 import { grupoDeCategoria } from '../problems/grupo'
 import {
   aplicarCambioEstadoManual,
@@ -29,14 +34,8 @@ export const listarParticipantesConProgreso = createServerFn({
     senior: todosProblemas.filter((p) => p.grupo === 'senior').length,
   }
 
-  const asistieron = new Set(
-    todosUsuarios
-      .filter((u) => u.rol === 'participante' && u.ingresadoEn !== null)
-      .map((u) => u.id),
-  )
-
   const agrupado = agruparClasificacionPorCategoria(
-    clasificacion.filter((f) => asistieron.has(f.usuarioId)),
+    filtrarAsistentes(clasificacion, todosUsuarios),
   )
 
   return (['invitado', 'junior', 'senior'] as const).flatMap((categoria) =>
@@ -60,11 +59,9 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const filasUsuario = await db
-      .select()
-      .from(usuarios)
-      .where(eq(usuarios.id, usuarioId))
-    const usuario = filasUsuario.length > 0 ? filasUsuario[0] : null
+    const usuario = await obtenerUnaFila(
+      db.select().from(usuarios).where(eq(usuarios.id, usuarioId)),
+    )
     if (!usuario) throw new Error('Participante no encontrado')
 
     const { clasificacion, todosUsuarios, torneoIniciadoEn } =
@@ -75,15 +72,11 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
     const filaClasificacion =
       clasificacionCategoria.find((f) => f.usuarioId === usuarioId) ?? null
 
-    // el puesto se calcula solo sobre participantes que hicieron check-in, igual que listarParticipantesConProgreso
-    const asistieron = new Set(
-      todosUsuarios
-        .filter((u) => u.rol === 'participante' && u.ingresadoEn !== null)
-        .map((u) => u.id),
+    const puesto = calcularPuestoEntreAsistentes(
+      clasificacionCategoria,
+      todosUsuarios,
+      usuarioId,
     )
-    const indice = clasificacionCategoria
-      .filter((f) => asistieron.has(f.usuarioId))
-      .findIndex((f) => f.usuarioId === usuarioId)
 
     const grupo = grupoDeCategoria(usuario.categoria)
     const [problemasDelGrupo, enviosDelUsuario, corridasDelUsuario] =
@@ -138,7 +131,7 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
         categoria: usuario.categoria,
       },
       puntosTotales: filaClasificacion?.puntosTotales ?? 0,
-      puesto: indice >= 0 ? indice + 1 : null,
+      puesto,
       problemas: problemasConEstado,
     }
   })
@@ -149,16 +142,17 @@ export const actualizarEstadoProgreso = createServerFn({ method: 'POST' })
     const request = getRequest()
     const admin = await requerirAdmin(request.headers)
 
-    const filasCorrida = await db
-      .select()
-      .from(corridas)
-      .where(
-        and(
-          eq(corridas.usuarioId, data.usuarioId),
-          eq(corridas.problemaId, data.problemaId),
+    const corrida = await obtenerUnaFila(
+      db
+        .select()
+        .from(corridas)
+        .where(
+          and(
+            eq(corridas.usuarioId, data.usuarioId),
+            eq(corridas.problemaId, data.problemaId),
+          ),
         ),
-      )
-    const corrida = filasCorrida.length > 0 ? filasCorrida[0] : null
+    )
 
     const campos = aplicarCambioEstadoManual(
       data.estadoProgreso,
@@ -167,16 +161,17 @@ export const actualizarEstadoProgreso = createServerFn({ method: 'POST' })
       corrida?.ultimaEjecucionEn ?? null,
     )
 
-    const filasEnvio = await db
-      .select()
-      .from(envios)
-      .where(
-        and(
-          eq(envios.usuarioId, data.usuarioId),
-          eq(envios.problemaId, data.problemaId),
+    const envioExistente = await obtenerUnaFila(
+      db
+        .select()
+        .from(envios)
+        .where(
+          and(
+            eq(envios.usuarioId, data.usuarioId),
+            eq(envios.problemaId, data.problemaId),
+          ),
         ),
-      )
-    const envioExistente = filasEnvio.length > 0 ? filasEnvio[0] : null
+    )
 
     if (envioExistente) {
       await db

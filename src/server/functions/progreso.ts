@@ -7,6 +7,7 @@ import { requerirParticipanteIngresado } from '../auth/middleware'
 import { grupoDeCategoria } from '../problems/grupo'
 import { calcularDuraciones } from '../standings/duracion'
 import { cargarDatosClasificacion } from '../standings/datos'
+import { calcularPuestoEntreAsistentes } from '../standings/asistentes'
 
 export const obtenerMiProgreso = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -25,15 +26,11 @@ export const obtenerMiProgreso = createServerFn({ method: 'GET' }).handler(
     const filaClasificacion =
       clasificacionCategoria.find((f) => f.usuarioId === user.id) ?? null
 
-    // el puesto se calcula solo sobre participantes que hicieron check-in, igual que en /admin/respuestas
-    const asistieron = new Set(
-      todosUsuarios
-        .filter((u) => u.rol === 'participante' && u.ingresadoEn !== null)
-        .map((u) => u.id),
+    const puesto = calcularPuestoEntreAsistentes(
+      clasificacionCategoria,
+      todosUsuarios,
+      user.id,
     )
-    const indice = clasificacionCategoria
-      .filter((f) => asistieron.has(f.usuarioId))
-      .findIndex((f) => f.usuarioId === user.id)
 
     const grupo = grupoDeCategoria(
       user.categoria as 'invitado' | 'junior' | 'senior',
@@ -71,7 +68,7 @@ export const obtenerMiProgreso = createServerFn({ method: 'GET' }).handler(
 
     return {
       puntosTotales: filaClasificacion?.puntosTotales ?? 0,
-      puesto: indice >= 0 ? indice + 1 : null,
+      puesto,
       problemas: problemasConEstado,
     }
   },

@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
-import { createAuthClient } from 'better-auth/react'
-import { toast } from 'sonner'
-import { Spinner } from '#/components/Spinner'
-
-const authClient = createAuthClient()
+import { authClient } from '#/components/authClient'
+import { LoadingButton } from '#/components/LoadingButton'
+import { useToastMutation } from '#/components/useToastMutation'
 
 export const Route = createFileRoute('/')({ component: Home })
 
@@ -14,18 +11,16 @@ function Home() {
   const [correo, setCorreo] = useState('')
   const [contrasena, setContrasena] = useState('')
 
-  const iniciarSesion = useMutation({
+  const iniciarSesion = useToastMutation({
     mutationFn: async (credenciales: { email: string; password: string }) => {
       const { data, error } = await authClient.signIn.email(credenciales)
       if (error) throw new Error('Correo o contraseña incorrectos.')
       return data
     },
     onSuccess: (data) => {
-      const esAdmin = (data.user as { rol?: string }).rol === 'admin'
+      const esAdmin = data.user.rol === 'admin'
       navigate({ to: esAdmin ? '/admin/participantes' : '/perfil' })
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   function handleLogin(e: React.FormEvent) {
@@ -58,19 +53,13 @@ function Home() {
           onChange={(e) => setContrasena(e.target.value)}
           required
         />
-        <button
+        <LoadingButton
           className="rounded bg-blue-600 px-6 py-3 text-white disabled:bg-gray-300"
           type="submit"
-          disabled={iniciarSesion.isPending}
-        >
-          {iniciarSesion.isPending ? (
-            <span className="flex items-center justify-center gap-2">
-              <Spinner /> Ingresando...
-            </span>
-          ) : (
-            'Iniciar sesión'
-          )}
-        </button>
+          isPending={iniciarSesion.isPending}
+          label="Iniciar sesión"
+          pendingLabel="Ingresando..."
+        />
       </form>
     </div>
   )

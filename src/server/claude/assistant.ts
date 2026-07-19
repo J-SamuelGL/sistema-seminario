@@ -1,6 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { anthropic } from './client'
 
 const SYSTEM_PROMPT = `Eres un asistente para participantes de categoría Invitados en un torneo de programación.
 Solo puedes responder preguntas generales de sintaxis o uso de funciones/estructuras estándar

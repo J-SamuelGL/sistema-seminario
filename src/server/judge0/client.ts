@@ -1,4 +1,13 @@
+import { z } from 'zod'
 import { MAPA_LENGUAJES } from './languages'
+
+const respuestaJudge0Schema = z.object({
+  status_id: z.number(),
+  stdout: z.string().nullable().optional(),
+  stderr: z.string().nullable().optional(),
+  compile_output: z.string().nullable().optional(),
+  exit_code: z.number().nullable().optional(),
+})
 
 export type ResultadoEjecucion = {
   salidaEstandar: string
@@ -60,7 +69,13 @@ export async function ejecutarJudge0(
     throw new Error(`La solicitud a Judge0 falló: ${response.status}`)
   }
 
-  const data = await response.json()
+  const parseo = respuestaJudge0Schema.safeParse(await response.json())
+  if (!parseo.success) {
+    throw new Error(
+      `Respuesta de Judge0 con forma inesperada: ${parseo.error.message}`,
+    )
+  }
+  const data = parseo.data
 
   return {
     salidaEstandar: decodificarBase64(data.stdout),

@@ -1,5 +1,6 @@
 import { generarPrograma } from './harness'
-import { serializarCanonico, compararSalidas } from './serializar'
+import { compararSalidas } from './serializar'
+import { serializarCanonico } from '../../shared/serializar'
 import { separarSalidaConsola } from './consola'
 import { ejecutarJudge0 } from '../judge0/client'
 import { determinarVeredicto } from './verdict'

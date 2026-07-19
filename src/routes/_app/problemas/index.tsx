@@ -3,6 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { listarProblemas } from '#/server/functions/problems'
 import { estadoTorneoQueryOptions } from '#/server/queries/torneo'
 import { miProgresoQueryOptions } from '#/server/queries/progreso'
+import { ETIQUETAS_CATEGORIA } from '#/components/labels'
 
 export const Route = createFileRoute('/_app/problemas/')({
   loader: ({ context }) =>
@@ -13,11 +14,6 @@ export const Route = createFileRoute('/_app/problemas/')({
     ]),
   component: ProblemsListPage,
 })
-
-const ETIQUETAS_CATEGORIA: Record<string, string> = {
-  debugging: 'Debugging',
-  normal: 'Normal',
-}
 
 function ProblemsListPage() {
   const [problemas] = Route.useLoaderData()

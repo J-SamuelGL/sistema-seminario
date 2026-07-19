@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
+import { obtenerUnaFila } from '../db/uno'
 import { usuarios } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { construirResultadoIngreso } from '../checkin/result'
@@ -13,11 +14,9 @@ export const registrarIngresoPorToken = createServerFn({ method: 'POST' })
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const rows = await db
-      .select()
-      .from(usuarios)
-      .where(eq(usuarios.tokenIngreso, data))
-    const user = rows.length > 0 ? rows[0] : null
+    const user = await obtenerUnaFila(
+      db.select().from(usuarios).where(eq(usuarios.tokenIngreso, data)),
+    )
     const resultado = construirResultadoIngreso(user)
     if (resultado.status === 'ingresado' && user) {
       await db

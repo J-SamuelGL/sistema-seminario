@@ -5,8 +5,7 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { ejecutarCodigo } from '#/server/functions/run'
 import {
   problemaQueryOptions,
@@ -20,8 +19,10 @@ import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
 import { AssistantModal } from '#/components/AssistantModal'
 import { ProblemSolvedModal } from '#/components/ProblemSolvedModal'
-import { Spinner } from '#/components/Spinner'
-import { serializarCanonico } from '#/server/judge/serializar'
+import { LoadingButton } from '#/components/LoadingButton'
+import { useToastMutation } from '#/components/useToastMutation'
+import { usePrevNextProblema } from '#/components/usePrevNextProblema'
+import { serializarCanonico } from '#/shared/serializar'
 import type { LenguajeProgramacion } from '#/server/envios/validar'
 
 export const Route = createFileRoute('/_app/problemas/$problemaId')({
@@ -65,35 +66,23 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
       .filter((p) => p.estadoProgreso !== 'pendiente')
       .map((p) => p.problemaId),
   )
-  const indice = listaProblemas.findIndex((p) => p.id === problemaId)
   // Los problemas ya resueltos no se pueden volver a abrir (ver loader),
   // así que la navegación anterior/siguiente los salta en vez de llevar a
   // un problema al que el participante no puede entrar.
-  let anterior: (typeof listaProblemas)[number] | null = null
-  for (let i = indice - 1; i >= 0; i--) {
-    if (!resueltosIds.has(listaProblemas[i].id)) {
-      anterior = listaProblemas[i]
-      break
-    }
-  }
-  let siguiente: (typeof listaProblemas)[number] | null = null
-  for (let i = indice + 1; i < listaProblemas.length; i++) {
-    if (!resueltosIds.has(listaProblemas[i].id)) {
-      siguiente = listaProblemas[i]
-      break
-    }
-  }
+  const { anterior, siguiente, indice } = usePrevNextProblema(
+    listaProblemas,
+    resueltosIds,
+    problemaId,
+  )
   const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
     lenguajes[0]?.lenguaje ?? 'python',
   )
   const [codigo, setCodigo] = useState(lenguajes[0]?.codigoInicial ?? '')
   const [mostrarAsistente, setMostrarAsistente] = useState(false)
 
-  const ejecutar = useMutation({
+  const ejecutar = useToastMutation({
     mutationFn: () =>
       ejecutarCodigo({ data: { problemaId, lenguaje, codigo } }),
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   if (!problema) {
@@ -205,19 +194,13 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
             ))}
           </select>
           <CodeEditor lenguaje={lenguaje} value={codigo} onChange={setCodigo} />
-          <button
+          <LoadingButton
             className="mt-2 rounded bg-gray-700 px-4 py-2 text-white disabled:bg-gray-300"
             onClick={() => ejecutar.mutate()}
-            disabled={ejecutar.isPending}
-          >
-            {ejecutar.isPending ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner /> Ejecutando...
-              </span>
-            ) : (
-              'Run'
-            )}
-          </button>
+            isPending={ejecutar.isPending}
+            label="Run"
+            pendingLabel="Ejecutando..."
+          />
           {errorEjecucion && (
             <p className="mt-4 text-red-600">{errorEjecucion}</p>
           )}

@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db/client'
+import { obtenerUnaFila } from '../db/uno'
 import {
   problemas,
   casosPrueba,
@@ -34,30 +35,27 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
 
-      const filasEstado = await db
-        .select()
-        .from(estadoTorneo)
-        .where(eq(estadoTorneo.id, 1))
-      const estado = filasEstado.length > 0 ? filasEstado[0] : null
+      const estado = await obtenerUnaFila(
+        db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1)),
+      )
       asegurarIniciado(estado ?? { iniciadoEn: null, finalizadoEn: null })
 
-      const rows = await db
-        .select()
-        .from(problemas)
-        .where(eq(problemas.id, data.problemaId))
-      const problema = rows.length > 0 ? rows[0] : null
+      const problema = await obtenerUnaFila(
+        db.select().from(problemas).where(eq(problemas.id, data.problemaId)),
+      )
       if (!problema) throw new Error('Problema no encontrado')
 
-      const filasLenguaje = await db
-        .select()
-        .from(problemaLenguajes)
-        .where(
-          and(
-            eq(problemaLenguajes.problemaId, data.problemaId),
-            eq(problemaLenguajes.lenguaje, data.lenguaje),
+      const filaLenguaje = await obtenerUnaFila(
+        db
+          .select()
+          .from(problemaLenguajes)
+          .where(
+            and(
+              eq(problemaLenguajes.problemaId, data.problemaId),
+              eq(problemaLenguajes.lenguaje, data.lenguaje),
+            ),
           ),
-        )
-      const filaLenguaje = filasLenguaje.length > 0 ? filasLenguaje[0] : null
+      )
       if (!filaLenguaje)
         throw new Error('Lenguaje no habilitado para este problema')
 

@@ -2,9 +2,10 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, lt, sql } from 'drizzle-orm'
 import { db } from '../db/client'
+import { obtenerUnaFila } from '../db/uno'
 import { problemas, preguntasIa, usuarios } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
-import { puedePreguntar } from '../assistant/limit'
+import { puedePreguntar, LIMITE_PREGUNTAS_IA } from '../assistant/limit'
 import { responderPreguntaInvitado } from '../claude/assistant'
 import { datosPreguntaAsistenteSchema } from '../assistant/validar'
 import { grupoDeCategoria } from '../problems/grupo'
@@ -31,21 +32,22 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
     const resultado = await db
       .update(usuarios)
       .set({ preguntasIaUsadas: sql`${usuarios.preguntasIaUsadas} + 1` })
-      .where(and(eq(usuarios.id, user.id), lt(usuarios.preguntasIaUsadas, 3)))
+      .where(
+        and(
+          eq(usuarios.id, user.id),
+          lt(usuarios.preguntasIaUsadas, LIMITE_PREGUNTAS_IA),
+        ),
+      )
     if (resultado[0].affectedRows === 0) throw new Error('AI_LIMIT_REACHED')
 
-    const filasUsuario = await db
-      .select()
-      .from(usuarios)
-      .where(eq(usuarios.id, user.id))
-    const usuarioActualizado = filasUsuario.length > 0 ? filasUsuario[0] : null
+    const usuarioActualizado = await obtenerUnaFila(
+      db.select().from(usuarios).where(eq(usuarios.id, user.id)),
+    )
     if (!usuarioActualizado) throw new Error('AI_LIMIT_REACHED')
 
-    const filasProblema = await db
-      .select()
-      .from(problemas)
-      .where(eq(problemas.id, data.problemaId))
-    const problema = filasProblema.length > 0 ? filasProblema[0] : null
+    const problema = await obtenerUnaFila(
+      db.select().from(problemas).where(eq(problemas.id, data.problemaId)),
+    )
     if (!problema) throw new Error('Problema no encontrado')
 
     const problemasDelGrupo = await db
@@ -73,6 +75,7 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
 
     return {
       respuesta,
-      preguntasRestantes: 3 - usuarioActualizado.preguntasIaUsadas,
+      preguntasRestantes:
+        LIMITE_PREGUNTAS_IA - usuarioActualizado.preguntasIaUsadas,
     }
   })

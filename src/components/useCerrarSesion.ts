@@ -1,7 +1,5 @@
-import { createAuthClient } from 'better-auth/react'
 import { useNavigate } from '@tanstack/react-router'
-
-const authClient = createAuthClient()
+import { authClient } from '#/components/authClient'
 
 export function useCerrarSesion() {
   const navigate = useNavigate()

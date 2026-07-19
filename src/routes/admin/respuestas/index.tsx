@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { participantesConProgresoQueryOptions } from '#/server/queries/respuestas'
+import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
 
 export const Route = createFileRoute('/admin/respuestas/')({
   loader: ({ context }) =>
@@ -28,9 +29,9 @@ function AdminRespuestasPage() {
             <h2 className="text-lg font-bold">
               {ETIQUETAS_CATEGORIA[categoria]}
             </h2>
-            <table className="mt-2 w-full border-collapse text-left">
+            <table className={`mt-2 ${CLASE_TABLA}`}>
               <thead>
-                <tr className="border-b">
+                <tr className={CLASE_FILA}>
                   <th className="p-2">Puesto</th>
                   <th className="p-2">Nombre</th>
                   <th className="p-2">Completados</th>
@@ -40,7 +41,7 @@ function AdminRespuestasPage() {
               </thead>
               <tbody>
                 {filas.map((f) => (
-                  <tr key={f.usuarioId} className="border-b">
+                  <tr key={f.usuarioId} className={CLASE_FILA}>
                     <td className="p-2">{f.puesto}</td>
                     <td className="p-2">
                       <Link

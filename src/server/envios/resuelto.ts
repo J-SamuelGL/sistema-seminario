@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import type { problemas } from '../db/schema';
+import type { problemas } from '../db/schema'
 import { envios } from '../db/schema'
 import { calcularDuraciones } from '../standings/duracion'
 

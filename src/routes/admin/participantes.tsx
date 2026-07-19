@@ -1,10 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  useSuspenseQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { useSuspenseQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   registrarParticipante,
@@ -12,10 +8,14 @@ import {
   eliminarParticipante,
 } from '#/server/functions/participantes'
 import { participantesQueryOptions } from '#/server/queries/participantes'
-import { puedeEliminarParticipante } from '#/server/participantes/eliminar'
+import { puedeEliminarParticipante } from '#/shared/participantes'
 import { datosParticipanteSchema } from '#/server/participantes/validar'
 import type { Categoria, Semestre } from '#/server/participantes/validar'
-import { Spinner } from '#/components/Spinner'
+import { LoadingButton } from '#/components/LoadingButton'
+import { SegmentedControl } from '#/components/SegmentedControl'
+import { useRegistroConCredenciales } from '#/components/useRegistroConCredenciales'
+import { useToastMutation } from '#/components/useToastMutation'
+import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
 
 export const Route = createFileRoute('/admin/participantes')({
   loader: ({ context }) =>
@@ -42,15 +42,6 @@ const CATEGORIAS: { valor: Categoria; etiqueta: string }[] = [
   { valor: 'senior', etiqueta: 'Senior' },
 ]
 
-type ParticipanteRegistrado = {
-  id: string
-  nombre: string
-  correo: string
-  categoria: Categoria
-  correoEnviado: boolean
-  contrasenaGenerada: string
-}
-
 function AdminParticipantsPage() {
   const [categoriaSalon, setCategoriaSalon] = useState<Categoria>('invitado')
   const [nombre, setNombre] = useState('')
@@ -59,64 +50,39 @@ function AdminParticipantsPage() {
   const [semestreSalon, setSemestreSalon] = useState<Semestre | ''>('')
   const requiereCarnetYSemestre =
     categoriaSalon === 'junior' || categoriaSalon === 'senior'
-  const [registrados, setRegistrados] = useState<ParticipanteRegistrado[]>([])
   const { data: participantes } = useSuspenseQuery(participantesQueryOptions())
   const queryClient = useQueryClient()
 
-  const registrar = useMutation({
-    mutationFn: (datos: {
-      nombre: string
-      correo: string
-      categoria: Categoria
-      carnet: string | null
-      semestre: Semestre | null
-    }) => registrarParticipante({ data: datos }),
-    onSuccess: (resultado) => {
-      setRegistrados((prev) => [resultado, ...prev])
+  const {
+    registrados,
+    crear: registrar,
+    eliminar,
+    actualizarRegistro,
+    estaEliminando,
+  } = useRegistroConCredenciales({
+    crearFn: registrarParticipante,
+    eliminarFn: eliminarParticipante,
+    queryClient,
+    queryKey: participantesQueryOptions().queryKey,
+    mensajeRegistrado: 'Participante registrado.',
+    mensajeEliminado: 'Participante eliminado.',
+    alRegistrar: () => {
       setNombre('')
       setCorreo('')
       setCarnet('')
-      queryClient.invalidateQueries({
-        queryKey: participantesQueryOptions().queryKey,
-      })
-      toast.success('Participante registrado.')
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
-  const reenviar = useMutation({
+  const reenviar = useToastMutation({
     mutationFn: (usuarioId: string) =>
       reenviarCredenciales({ data: usuarioId }),
     onSuccess: (resultado, usuarioId) => {
-      setRegistrados((prev) =>
-        prev.map((p) =>
-          p.id === usuarioId
-            ? {
-                ...p,
-                correoEnviado: resultado.correoEnviado,
-                contrasenaGenerada: resultado.contrasenaGenerada,
-              }
-            : p,
-        ),
-      )
+      actualizarRegistro(usuarioId, {
+        correoEnviado: resultado.correoEnviado,
+        contrasenaGenerada: resultado.contrasenaGenerada,
+      })
       toast.success('Credenciales reenviadas.')
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
-  })
-
-  const eliminar = useMutation({
-    mutationFn: (usuarioId: string) =>
-      eliminarParticipante({ data: usuarioId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: participantesQueryOptions().queryKey,
-      })
-      toast.success('Participante eliminado.')
-    },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   function handleRegistrar(e: React.FormEvent) {
@@ -146,26 +112,14 @@ function AdminParticipantsPage() {
           <label className="mb-2 block font-bold">
             Categoría de este salón:
           </label>
-          <div className="flex gap-2">
-            {CATEGORIAS.map((c) => (
-              <button
-                key={c.valor}
-                type="button"
-                onClick={() => {
-                  setCategoriaSalon(c.valor)
-                  setSemestreSalon('')
-                }}
-                className={
-                  'rounded-full px-4 py-1.5 text-sm font-medium ' +
-                  (categoriaSalon === c.valor
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-                }
-              >
-                {c.etiqueta}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={CATEGORIAS}
+            value={categoriaSalon}
+            onChange={(valor) => {
+              setCategoriaSalon(valor)
+              setSemestreSalon('')
+            }}
+          />
         </div>
 
         {requiereCarnetYSemestre && (
@@ -218,19 +172,13 @@ function AdminParticipantsPage() {
             required
           />
         )}
-        <button
+        <LoadingButton
           className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
           type="submit"
-          disabled={registrar.isPending}
-        >
-          {registrar.isPending ? (
-            <span className="flex items-center justify-center gap-2">
-              <Spinner /> Registrando...
-            </span>
-          ) : (
-            `Registrar como ${categoriaSalon}`
-          )}
-        </button>
+          isPending={registrar.isPending}
+          label={`Registrar como ${categoriaSalon}`}
+          pendingLabel="Registrando..."
+        />
       </form>
 
       <ul className="flex flex-col gap-2">
@@ -245,34 +193,31 @@ function AdminParticipantsPage() {
                 {p.contrasenaGenerada}
               </span>
             )}
-            <button
+            <LoadingButton
               className="ml-2 text-blue-600 underline disabled:text-gray-400"
               disabled={reenviar.isPending}
               onClick={() => reenviar.mutate(p.id)}
-            >
-              {reenviar.isPending ? (
-                <span className="inline-flex items-center gap-1">
-                  <Spinner className="h-3 w-3" /> Reenviando...
-                </span>
-              ) : (
-                'Reenviar credenciales'
-              )}
-            </button>
+              isPending={reenviar.isPending && reenviar.variables === p.id}
+              label="Reenviar credenciales"
+              pendingLabel="Reenviando..."
+              wrapperClassName="inline-flex items-center gap-1"
+              spinnerClassName="h-3 w-3"
+            />
           </li>
         ))}
       </ul>
 
       <h2 className="text-lg font-bold">Todos los participantes registrados</h2>
-      <table className="w-full border-collapse">
+      <table className={CLASE_TABLA}>
         <thead>
-          <tr>
-            <th className="border p-2 text-left">Nombre</th>
-            <th className="border p-2 text-left">Correo</th>
-            <th className="border p-2 text-left">Categoría</th>
-            <th className="border p-2 text-left">Semestre</th>
-            <th className="border p-2 text-left">Check-in</th>
-            <th className="border p-2 text-left">Envíos</th>
-            <th className="border p-2 text-left">Acciones</th>
+          <tr className={CLASE_FILA}>
+            <th className="p-2">Nombre</th>
+            <th className="p-2">Correo</th>
+            <th className="p-2">Categoría</th>
+            <th className="p-2">Semestre</th>
+            <th className="p-2">Check-in</th>
+            <th className="p-2">Envíos</th>
+            <th className="p-2">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -282,28 +227,25 @@ function AdminParticipantsPage() {
               cantidadEnvios: p.cantidadEnvios,
             })
             return (
-              <tr key={p.id}>
-                <td className="border p-2">{p.nombre}</td>
-                <td className="border p-2">{p.correo}</td>
-                <td className="border p-2">{p.categoria}</td>
-                <td className="border p-2">{p.semestre ?? '—'}</td>
-                <td className="border p-2">{p.ingresadoEn ? '✅' : '—'}</td>
-                <td className="border p-2">{p.cantidadEnvios}</td>
-                <td className="border p-2">
-                  <button
+              <tr key={p.id} className={CLASE_FILA}>
+                <td className="p-2">{p.nombre}</td>
+                <td className="p-2">{p.correo}</td>
+                <td className="p-2">{p.categoria}</td>
+                <td className="p-2">{p.semestre ?? '—'}</td>
+                <td className="p-2">{p.ingresadoEn ? '✅' : '—'}</td>
+                <td className="p-2">{p.cantidadEnvios}</td>
+                <td className="p-2">
+                  <LoadingButton
                     className="text-red-600 underline disabled:text-gray-400 disabled:no-underline"
                     disabled={!permiso.puede || eliminar.isPending}
                     title={permiso.puede ? undefined : permiso.motivo}
                     onClick={() => eliminar.mutate(p.id)}
-                  >
-                    {eliminar.isPending && eliminar.variables === p.id ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Spinner className="h-3 w-3" /> Eliminando...
-                      </span>
-                    ) : (
-                      'Eliminar'
-                    )}
-                  </button>
+                    isPending={estaEliminando(p.id)}
+                    label="Eliminar"
+                    pendingLabel="Eliminando..."
+                    wrapperClassName="inline-flex items-center gap-1"
+                    spinnerClassName="h-3 w-3"
+                  />
                 </td>
               </tr>
             )

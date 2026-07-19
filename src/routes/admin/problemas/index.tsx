@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { problemasQueryOptions } from '#/server/queries/problemas'
+import { ETIQUETAS_CATEGORIA } from '#/components/labels'
+import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
 
 export const Route = createFileRoute('/admin/problemas/')({
   loader: ({ context }) =>
@@ -11,11 +13,6 @@ export const Route = createFileRoute('/admin/problemas/')({
 const ETIQUETAS_GRUPO: Record<string, string> = {
   invitado_junior: 'Invitados + Junior',
   senior: 'Senior',
-}
-
-const ETIQUETAS_CATEGORIA: Record<string, string> = {
-  debugging: 'Debugging',
-  normal: 'Normal',
 }
 
 function AdminProblemsList() {
@@ -30,9 +27,9 @@ function AdminProblemsList() {
       >
         + Nuevo problema
       </Link>
-      <table className="mt-4 w-full border-collapse text-left">
+      <table className={`mt-4 ${CLASE_TABLA}`}>
         <thead>
-          <tr className="border-b">
+          <tr className={CLASE_FILA}>
             <th className="p-2">Título</th>
             <th className="p-2">Descripción</th>
             <th className="p-2">Dificultad</th>
@@ -43,7 +40,7 @@ function AdminProblemsList() {
         </thead>
         <tbody>
           {problemas.map((p) => (
-            <tr key={p.id} className="border-b">
+            <tr key={p.id} className={CLASE_FILA}>
               <td className="p-2">
                 <Link
                   to="/admin/problemas/$problemaId"

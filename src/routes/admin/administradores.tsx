@@ -1,10 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from '@tanstack/react-query'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   registrarAdministrador,
@@ -12,7 +8,8 @@ import {
 } from '#/server/functions/administradores'
 import { administradoresQueryOptions } from '#/server/queries/administradores'
 import { datosAdministradorSchema } from '#/server/administradores/validar'
-import { Spinner } from '#/components/Spinner'
+import { LoadingButton } from '#/components/LoadingButton'
+import { useRegistroConCredenciales } from '#/components/useRegistroConCredenciales'
 
 export const Route = createFileRoute('/admin/administradores')({
   loader: ({ context }) =>
@@ -27,39 +24,21 @@ function AdminAdministradoresPage() {
   )
   const [nombre, setNombre] = useState('')
   const [correo, setCorreo] = useState('')
-  const [credenciales, setCredenciales] = useState<{
-    correoEnviado: boolean
-    contrasenaGenerada: string
-  } | null>(null)
 
-  const crear = useMutation({
-    mutationFn: (input: { nombre: string; correo: string }) =>
-      registrarAdministrador({ data: input }),
-    onSuccess: (resultado) => {
-      setCredenciales(resultado)
-      setNombre('')
-      setCorreo('')
-      queryClient.invalidateQueries({
-        queryKey: administradoresQueryOptions().queryKey,
-      })
-      toast.success('Administrador registrado.')
-    },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
-  })
-
-  const eliminar = useMutation({
-    mutationFn: (usuarioId: string) =>
-      eliminarAdministrador({ data: usuarioId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: administradoresQueryOptions().queryKey,
-      })
-      toast.success('Administrador eliminado.')
-    },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
-  })
+  const { registrados, crear, eliminar, estaEliminando } =
+    useRegistroConCredenciales({
+      crearFn: registrarAdministrador,
+      eliminarFn: eliminarAdministrador,
+      queryClient,
+      queryKey: administradoresQueryOptions().queryKey,
+      mensajeRegistrado: 'Administrador registrado.',
+      mensajeEliminado: 'Administrador eliminado.',
+      alRegistrar: () => {
+        setNombre('')
+        setCorreo('')
+      },
+    })
+  const credenciales = registrados.at(0) ?? null
 
   return (
     <div className="flex flex-col gap-6 p-8">
@@ -96,19 +75,13 @@ function AdminAdministradoresPage() {
           maxLength={255}
           required
         />
-        <button
+        <LoadingButton
           className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
           type="submit"
-          disabled={crear.isPending}
-        >
-          {crear.isPending ? (
-            <span className="flex items-center justify-center gap-2">
-              <Spinner /> Registrando...
-            </span>
-          ) : (
-            'Registrar administrador'
-          )}
-        </button>
+          isPending={crear.isPending}
+          label="Registrar administrador"
+          pendingLabel="Registrando..."
+        />
       </form>
 
       {credenciales && !credenciales.correoEnviado && (
@@ -127,19 +100,16 @@ function AdminAdministradoresPage() {
             <span>
               <strong>{a.nombre}</strong> — {a.correo}
             </span>
-            <button
+            <LoadingButton
               className="text-red-600 underline disabled:text-gray-400"
               disabled={eliminar.isPending}
               onClick={() => eliminar.mutate(a.id)}
-            >
-              {eliminar.isPending && eliminar.variables === a.id ? (
-                <span className="inline-flex items-center gap-1">
-                  <Spinner className="h-3 w-3" /> Eliminando...
-                </span>
-              ) : (
-                'Eliminar'
-              )}
-            </button>
+              isPending={estaEliminando(a.id)}
+              label="Eliminar"
+              pendingLabel="Eliminando..."
+              wrapperClassName="inline-flex items-center gap-1"
+              spinnerClassName="h-3 w-3"
+            />
           </li>
         ))}
       </ul>

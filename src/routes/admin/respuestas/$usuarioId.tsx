@@ -1,10 +1,6 @@
 import { Fragment, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from '@tanstack/react-query'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { actualizarEstadoProgreso } from '#/server/functions/admin-respuestas'
 import {
@@ -12,6 +8,9 @@ import {
   progresoParticipanteQueryOptions,
 } from '#/server/queries/respuestas'
 import { Spinner } from '#/components/Spinner'
+import { useToastMutation } from '#/components/useToastMutation'
+import { formatearArgumentos } from '#/components/labels'
+import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
 
 export const Route = createFileRoute('/admin/respuestas/$usuarioId')({
   loader: ({ context, params }) =>
@@ -33,7 +32,7 @@ function AdminRespuestaDetallePage() {
   const { data } = useSuspenseQuery(progresoParticipanteQueryOptions(usuarioId))
   const [expandido, setExpandido] = useState<string | null>(null)
 
-  const cambiarEstado = useMutation({
+  const cambiarEstado = useToastMutation({
     mutationFn: (vars: {
       problemaId: string
       estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual'
@@ -54,8 +53,6 @@ function AdminRespuestaDetallePage() {
       })
       toast.success('Estado actualizado.')
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : String(err)),
   })
 
   return (
@@ -64,9 +61,9 @@ function AdminRespuestaDetallePage() {
         {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
         {data.puesto ?? '—'}
       </h1>
-      <table className="w-full border-collapse text-left">
+      <table className={CLASE_TABLA}>
         <thead>
-          <tr className="border-b">
+          <tr className={CLASE_FILA}>
             <th className="p-2">Problema</th>
             <th className="p-2">Dificultad</th>
             <th className="p-2">Categoría</th>
@@ -79,7 +76,7 @@ function AdminRespuestaDetallePage() {
         <tbody>
           {data.problemas.map((p) => (
             <Fragment key={p.problemaId}>
-              <tr className="border-b">
+              <tr className={CLASE_FILA}>
                 <td className="p-2">
                   {p.codigo && (
                     <button
@@ -129,7 +126,7 @@ function AdminRespuestaDetallePage() {
                 </td>
               </tr>
               {expandido === p.problemaId && p.codigo && (
-                <tr className="border-b bg-gray-50">
+                <tr className={`${CLASE_FILA} bg-gray-50`}>
                   <td colSpan={7} className="p-2">
                     <p className="text-sm text-gray-600">
                       Lenguaje: {p.lenguaje}
@@ -141,12 +138,8 @@ function AdminRespuestaDetallePage() {
                       <ul className="mt-2 flex flex-col gap-1 text-sm">
                         {p.resultados.map((r, i) => (
                           <li key={i}>
-                            <code>
-                              {r.argumentos
-                                .map((a) => JSON.stringify(a))
-                                .join(', ')}
-                            </code>{' '}
-                            — Esperado: <code>{r.salidaEsperada}</code> —
+                            <code>{formatearArgumentos(r.argumentos)}</code> —
+                            Esperado: <code>{r.salidaEsperada}</code> —
                             Obtenido:{' '}
                             <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
                             {r.aprobado ? '✅' : '❌'}

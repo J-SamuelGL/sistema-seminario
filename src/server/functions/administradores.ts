@@ -5,7 +5,7 @@ import { db } from '../db/client'
 import { usuarios } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { crearCuentaParticipante } from '../participantes/crear'
-import { enviarCorreoBienvenida } from '../email/brevo'
+import { enviarCorreoBienvenidaSeguro } from '../email/brevo'
 import { datosAdministradorSchema } from '../administradores/validar'
 import { idSchema } from '../validacion/comun'
 
@@ -38,17 +38,11 @@ export const registrarAdministrador = createServerFn({ method: 'POST' })
       rol: 'admin',
     })
 
-    let correoEnviado = true
-    try {
-      await enviarCorreoBienvenida({
-        nombre: data.nombre,
-        correo: data.correo,
-        contrasena: contrasenaGenerada,
-      })
-    } catch (err) {
-      console.error('No se pudo enviar el correo de bienvenida', err)
-      correoEnviado = false
-    }
+    const correoEnviado = await enviarCorreoBienvenidaSeguro({
+      nombre: data.nombre,
+      correo: data.correo,
+      contrasena: contrasenaGenerada,
+    })
 
     return {
       id,

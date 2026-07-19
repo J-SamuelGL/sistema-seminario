@@ -1,3 +1,9 @@
+// Vive en `src/shared` (no en `src/server`) porque `puedeEliminarParticipante`
+// se usa tanto en el servidor (`src/server/functions/participantes.ts`, para
+// autorizar de verdad el borrado) como en el cliente (`admin/participantes.tsx`,
+// para deshabilitar el botón y mostrar el motivo sin esperar un roundtrip). Es
+// una función pura — no depende de `db/client` ni de ningún otro módulo
+// server-only — por lo que puede vivir fuera de la convención server-fn.
 export function puedeEliminarParticipante(input: {
   rol: 'participante' | 'admin'
   cantidadEnvios: number
