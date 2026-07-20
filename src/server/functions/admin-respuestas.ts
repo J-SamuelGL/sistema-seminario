@@ -18,16 +18,18 @@ import {
   actualizarEstadoProgresoSchema,
 } from '../envios/progreso'
 import { idSchema } from '../validacion/comun'
-import { obtenerTorneoActual, asegurarEsTorneoActual } from '../tournament/actual'
+import {
+  obtenerTorneoActual,
+  asegurarEsTorneoActual,
+} from '../tournament/actual'
 
 async function construirListaConProgreso(torneoId: string) {
   const { clasificacion, todosUsuarios, todosProblemas } =
     await cargarDatosClasificacion(torneoId)
 
   const totalPorGrupo = {
-    invitado_junior: todosProblemas.filter(
-      (p) => p.grupo === 'invitado_junior',
-    ).length,
+    invitado_junior: todosProblemas.filter((p) => p.grupo === 'invitado_junior')
+      .length,
     senior: todosProblemas.filter((p) => p.grupo === 'senior').length,
   }
 
