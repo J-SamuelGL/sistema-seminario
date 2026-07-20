@@ -12,6 +12,7 @@ import { enviarCorreoBienvenidaSeguro } from '../email/brevo'
 import { puedeEliminarParticipante } from '../../shared/participantes'
 import { datosParticipanteSchema } from '../participantes/validar'
 import { idSchema } from '../validacion/comun'
+import { obtenerTorneoActual } from '../tournament/actual'
 
 export const registrarParticipante = createServerFn({ method: 'POST' })
   .validator(datosParticipanteSchema)
@@ -19,7 +20,17 @@ export const registrarParticipante = createServerFn({ method: 'POST' })
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const { id, contrasenaGenerada } = await crearCuentaParticipante(data)
+    const torneo = await obtenerTorneoActual()
+    if (!torneo) {
+      throw new Error(
+        'No hay ningún torneo actual; crea un torneo antes de registrar participantes.',
+      )
+    }
+
+    const { id, contrasenaGenerada } = await crearCuentaParticipante({
+      ...data,
+      torneoId: torneo.id,
+    })
 
     const correoEnviado = await enviarCorreoBienvenidaSeguro({
       nombre: data.nombre,

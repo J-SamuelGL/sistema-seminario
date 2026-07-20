@@ -12,6 +12,7 @@ export async function crearCuentaParticipante(input: {
   carnet: string | null
   semestre?: Semestre | null
   rol?: 'participante' | 'admin'
+  torneoId?: string | null
 }): Promise<{ id: string; contrasenaGenerada: string }> {
   const existentes = await db
     .select()
@@ -34,6 +35,7 @@ export async function crearCuentaParticipante(input: {
       carnet: input.carnet,
       semestre: input.semestre ?? null,
       rol: input.rol ?? 'participante',
+      torneoId: input.torneoId ?? null,
     })
     await tx.insert(cuentas).values({
       id: crypto.randomUUID(),
