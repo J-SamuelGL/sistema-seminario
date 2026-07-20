@@ -15,3 +15,9 @@ export function asegurarIniciado(estado: {
     throw new Error('El torneo ya concluyó')
   }
 }
+
+export function asegurarFinalizado(estado: { finalizadoEn: Date | null }) {
+  if (!estado.finalizadoEn) {
+    throw new Error('El torneo actual debe concluir antes de crear uno nuevo')
+  }
+}

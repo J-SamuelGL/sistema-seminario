@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   asegurarNoIniciado,
   asegurarIniciado,
+  asegurarFinalizado,
 } from '../src/server/tournament/guard'
 
 describe('asegurarNoIniciado', () => {
@@ -31,5 +32,19 @@ describe('asegurarIniciado', () => {
     expect(() =>
       asegurarIniciado({ iniciadoEn: new Date(), finalizadoEn: new Date() }),
     ).toThrow('El torneo ya concluyó')
+  })
+})
+
+describe('asegurarFinalizado', () => {
+  it('no lanza si el torneo concluyó', () => {
+    expect(() =>
+      asegurarFinalizado({ finalizadoEn: new Date() }),
+    ).not.toThrow()
+  })
+
+  it('lanza si el torneo no ha concluido', () => {
+    expect(() => asegurarFinalizado({ finalizadoEn: null })).toThrow(
+      'El torneo actual debe concluir antes de crear uno nuevo',
+    )
   })
 })
