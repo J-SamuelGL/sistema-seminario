@@ -5,6 +5,7 @@ import {
   usuarios,
   problemas,
   corridas,
+  torneos,
 } from '../src/server/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
 
@@ -90,5 +91,17 @@ describe('categorías y corridas', () => {
         ),
       )
     expect(rows[0]?.contador).toBe(2)
+  })
+})
+
+describe('torneos', () => {
+  it('inserta y lee un torneo por año', async () => {
+    const id = crypto.randomUUID()
+    const anio = 2000 + Math.floor(Math.random() * 1000) // año único por test
+    await db.insert(torneos).values({ id, anio })
+    const rows = await db.select().from(torneos).where(eq(torneos.id, id))
+    expect(rows[0]?.anio).toBe(anio)
+    expect(rows[0]?.iniciadoEn).toBeNull()
+    expect(rows[0]?.finalizadoEn).toBeNull()
   })
 })

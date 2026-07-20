@@ -12,6 +12,16 @@ import {
 import type { Parametro, Valor } from '../judge/tipos'
 import type { ResultadoCaso } from '../judge/verdict'
 
+export const torneos = mysqlTable('torneos', {
+  id: varchar('id', { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  anio: int('anio').notNull().unique(),
+  iniciadoEn: timestamp('iniciado_en'),
+  finalizadoEn: timestamp('finalizado_en'),
+  creadoEn: timestamp('creado_en').notNull().defaultNow(),
+})
+
 // Tablas centrales de Better Auth
 export const usuarios = mysqlTable('usuario', {
   id: varchar('id', { length: 36 }).primaryKey(),
@@ -44,6 +54,8 @@ export const usuarios = mysqlTable('usuario', {
     .unique(),
   ingresadoEn: timestamp('ingresado_en'),
   preguntasIaUsadas: int('preguntas_ia_usadas').notNull().default(0),
+  torneoId: varchar('torneo_id', { length: 36 }).references(() => torneos.id),
+  correoOriginal: text('correo_original'),
 })
 
 export const sesiones = mysqlTable('sesion', {
@@ -90,6 +102,7 @@ export const problemas = mysqlTable('problemas', {
   id: varchar('id', { length: 36 })
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  torneoId: varchar('torneo_id', { length: 36 }).references(() => torneos.id),
   titulo: text('titulo').notNull(),
   descripcion: text('descripcion').notNull(),
   dificultad: mysqlEnum('dificultad', [

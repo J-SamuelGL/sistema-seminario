@@ -44,6 +44,7 @@ export const auth = betterAuth({
       rol: { type: 'string', defaultValue: 'participante', input: false },
       categoria: { type: 'string', required: true, input: false },
       carnet: { type: 'string', required: false, input: false },
+      torneoId: { type: 'string', required: false, input: false },
       tokenIngreso: { type: 'string', input: false },
       ingresadoEn: { type: 'date', required: false, input: false },
       preguntasIaUsadas: { type: 'number', defaultValue: 0, input: false },
