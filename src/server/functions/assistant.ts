@@ -49,12 +49,18 @@ export const preguntarAsistente = createServerFn({ method: 'POST' })
       db.select().from(problemas).where(eq(problemas.id, data.problemaId)),
     )
     if (!problema) throw new Error('Problema no encontrado')
+    if (problema.torneoId !== usuarioActualizado.torneoId) {
+      throw new Error('Problema no encontrado')
+    }
 
     const problemasDelGrupo = await db
       .select()
       .from(problemas)
       .where(
-        eq(problemas.grupo, grupoDeCategoria(usuarioActualizado.categoria)),
+        and(
+          eq(problemas.grupo, grupoDeCategoria(usuarioActualizado.categoria)),
+          eq(problemas.torneoId, usuarioActualizado.torneoId ?? ''),
+        ),
       )
       .orderBy(problemas.orden)
 
