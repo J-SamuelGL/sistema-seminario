@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client'
-import { usuarios, cuentas } from '../db/schema'
+import { usuarios, cuentas, sesiones } from '../db/schema'
 
 // El correo se mangla con el sufijo reservado por RFC 2606 (`.invalid`), que
 // nunca resuelve a un dominio real — así el correo queda liberado para que el
@@ -33,6 +33,10 @@ export async function archivarParticipantesDeTorneo(
             eq(cuentas.providerId, 'credential'),
           ),
         )
+      // Cierra sesiones activas: sin esto, un token de sesión vigente sigue
+      // pasando requerirParticipanteIngresado (que solo valida la sesión, no
+      // la contraseña) y podría seguir leyendo el torneo ya concluido.
+      await tx.delete(sesiones).where(eq(sesiones.userId, participante.id))
     })
   }
 }

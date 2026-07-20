@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../src/server/db/client'
-import { torneos, usuarios, cuentas } from '../src/server/db/schema'
+import { torneos, usuarios, cuentas, sesiones } from '../src/server/db/schema'
 import { archivarParticipantesDeTorneo } from '../src/server/participantes/archivar'
 
 describe('archivarParticipantesDeTorneo', () => {
@@ -28,6 +28,12 @@ describe('archivarParticipantesDeTorneo', () => {
       providerId: 'credential',
       password: 'hash-original',
     })
+    await db.insert(sesiones).values({
+      id: crypto.randomUUID(),
+      userId: usuarioId,
+      token: crypto.randomUUID(),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+    })
 
     await archivarParticipantesDeTorneo(torneoId)
 
@@ -46,6 +52,12 @@ describe('archivarParticipantesDeTorneo', () => {
         and(eq(cuentas.userId, usuarioId), eq(cuentas.providerId, 'credential')),
       )
     expect(cuenta.password).toBeNull()
+
+    const sesionesRestantes = await db
+      .select()
+      .from(sesiones)
+      .where(eq(sesiones.userId, usuarioId))
+    expect(sesionesRestantes).toHaveLength(0)
   })
 
   it('no toca administradores (torneoId null)', async () => {
