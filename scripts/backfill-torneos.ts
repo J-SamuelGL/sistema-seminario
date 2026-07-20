@@ -1,12 +1,11 @@
+// Script de un solo uso, corrido durante la migración a soporte multi-torneo
+// (2026-07). Lee la fila legacy de `estado_torneo` para crear el primer
+// `torneos` — ya no es ejecutable tal cual porque `estadoTorneo` se quitó de
+// schema.ts en el mismo cambio; se conserva como referencia del proceso.
 import 'dotenv/config'
 import { eq } from 'drizzle-orm'
 import { db } from '../src/server/db/client'
-import {
-  torneos,
-  usuarios,
-  problemas,
-  estadoTorneo,
-} from '../src/server/db/schema'
+import { torneos, usuarios, problemas } from '../src/server/db/schema'
 
 async function main() {
   const torneosExistentes = await db.select().from(torneos)
@@ -23,17 +22,16 @@ async function main() {
   }
   const anio = Number(anioArg)
 
-  const [estadoPrevio] = await db
-    .select()
-    .from(estadoTorneo)
-    .where(eq(estadoTorneo.id, 1))
+  // Originalmente aquí se leía la fila legacy `estado_torneo` (id fijo 1) vía
+  // `db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1))` y se
+  // copiaban sus columnas `iniciado_en`/`finalizado_en` al nuevo `torneos`,
+  // para no perder el estado del torneo en curso al migrar. Esa tabla ya no
+  // existe en el esquema (ver comentario de cabecera).
 
   const id = crypto.randomUUID()
   await db.insert(torneos).values({
     id,
     anio,
-    iniciadoEn: estadoPrevio?.iniciadoEn ?? null,
-    finalizadoEn: estadoPrevio?.finalizadoEn ?? null,
   })
   console.log(`Torneo ${anio} creado con id ${id}.`)
 
@@ -46,9 +44,7 @@ async function main() {
     participantesActualizados[0].affectedRows,
   )
 
-  const problemasActualizados = await db
-    .update(problemas)
-    .set({ torneoId: id })
+  const problemasActualizados = await db.update(problemas).set({ torneoId: id })
   console.log('Problemas actualizados:', problemasActualizados[0].affectedRows)
 
   console.log('Backfill completo.')

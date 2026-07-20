@@ -111,6 +111,34 @@ These checks confirm:
 - Judge0 connectivity (code execution)
 - Anthropic API integration (feedback generation)
 
+## Migración a soporte multi-torneo (paso único, manual)
+
+Este runbook aplica **una sola vez**, al desplegar la versión del sistema que agrega soporte para
+múltiples torneos anuales (ver `docs/superpowers/specs/2026-07-19-torneos-multiples-design.md`).
+Después de correrlo, los deploys normales (`npx drizzle-kit push && npm run start`) vuelven a ser
+completamente automáticos.
+
+**Por qué es manual:** el deploy command normal correría `drizzle-kit push` con el esquema final
+(sin `estado_torneo`), lo que dropearía esa tabla — y con ella los datos del torneo en curso —
+antes de que el script de backfill pueda leerlos. Este runbook evita ese orden.
+
+1. Con `DATABASE_URL` apuntando a la base de datos de **producción** (no local), y usando el
+   commit **anterior** al que elimina `estadoTorneo` de `src/server/db/schema.ts` (el que solo
+   agrega `torneos`/`torneoId`/`correoOriginal` mantiene `estado_torneo` intacto):
+   ```bash
+   DATABASE_URL="<url de producción>" npx drizzle-kit push
+   ```
+   Confirmar el prompt — agrega tabla y columnas nuevas, no borra nada.
+2. Correr el backfill contra producción, con el año del torneo actualmente en curso:
+   ```bash
+   DATABASE_URL="<url de producción>" npx tsx scripts/backfill-torneos.ts 2026
+   ```
+3. Verificar en la consola de MySQL de Railway que la tabla `torneos` tiene una fila, y que
+   `usuarios`/`problemas` tienen `torneo_id` poblado.
+4. Recién ahora, desplegar el commit final (el que elimina `estadoTorneo` de `schema.ts`) de la
+   forma normal — su `drizzle-kit push` automático dropeará `estado_torneo`, que para este punto
+   ya no tiene ningún dato que no se haya copiado a `torneos`.
+
 ## Creating Admin Accounts Manually
 
 Admin accounts (`usuario.rol = 'admin'`) are created directly in the database, not through the registration screen. Since `usuario.categoria` is `NOT NULL` (values: `invitado`, `junior`, `senior`), you must still supply a value even though `categoria` has no real meaning for an admin — it only drives participant-facing grouping (e.g. problem filtering by `problemas.grupo`). Use `'senior'` as the conventional placeholder value for admin rows.

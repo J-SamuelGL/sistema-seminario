@@ -260,9 +260,3 @@ export const corridas = mysqlTable(
     ),
   ],
 )
-
-export const estadoTorneo = mysqlTable('estado_torneo', {
-  id: int('id').primaryKey().default(1),
-  iniciadoEn: timestamp('iniciado_en'),
-  finalizadoEn: timestamp('finalizado_en'),
-})
