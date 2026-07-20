@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { problemas, envios } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
@@ -14,12 +14,12 @@ export const obtenerMiProgreso = createServerFn({ method: 'GET' }).handler(
     const request = getRequest()
     const user = await requerirParticipanteIngresado(request.headers)
 
-    if (user.rol === 'admin') {
+    if (user.rol === 'admin' || !user.torneoId) {
       return { puntosTotales: 0, puesto: null, problemas: [] }
     }
 
     const { clasificacion, todosUsuarios, torneoIniciadoEn } =
-      await cargarDatosClasificacion()
+      await cargarDatosClasificacion(user.torneoId)
     const clasificacionCategoria = clasificacion.filter(
       (f) => f.categoria === user.categoria,
     )
@@ -39,7 +39,12 @@ export const obtenerMiProgreso = createServerFn({ method: 'GET' }).handler(
       db
         .select()
         .from(problemas)
-        .where(eq(problemas.grupo, grupo))
+        .where(
+          and(
+            eq(problemas.grupo, grupo),
+            eq(problemas.torneoId, user.torneoId),
+          ),
+        )
         .orderBy(problemas.orden),
       db.select().from(envios).where(eq(envios.usuarioId, user.id)),
     ])

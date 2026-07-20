@@ -1,6 +1,7 @@
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { db } from '../db/client'
-import { usuarios, envios, problemas, estadoTorneo } from '../db/schema'
+import { obtenerUnaFila } from '../db/uno'
+import { usuarios, envios, problemas, torneos } from '../db/schema'
 import { calcularClasificacion } from './calculate'
 import type {
   RegistroUsuario,
@@ -8,19 +9,22 @@ import type {
   RegistroProblema,
 } from './calculate'
 
-export async function cargarDatosClasificacion() {
-  const filasEstado = await db
-    .select()
-    .from(estadoTorneo)
-    .where(eq(estadoTorneo.id, 1))
-  const torneoIniciadoEn =
-    filasEstado.length > 0 ? filasEstado[0].iniciadoEn : null
-
-  const [todosUsuarios, todosEnvios, todosProblemas] = await Promise.all([
-    db.select().from(usuarios),
-    db.select().from(envios),
-    db.select().from(problemas),
+export async function cargarDatosClasificacion(torneoId: string) {
+  const [torneo, todosUsuarios, todosProblemas] = await Promise.all([
+    obtenerUnaFila(db.select().from(torneos).where(eq(torneos.id, torneoId))),
+    db.select().from(usuarios).where(eq(usuarios.torneoId, torneoId)),
+    db.select().from(problemas).where(eq(problemas.torneoId, torneoId)),
   ])
+  const torneoIniciadoEn = torneo?.iniciadoEn ?? null
+
+  const idsUsuarios = todosUsuarios.map((u) => u.id)
+  const todosEnvios =
+    idsUsuarios.length > 0
+      ? await db
+          .select()
+          .from(envios)
+          .where(inArray(envios.usuarioId, idsUsuarios))
+      : []
 
   const usuariosElegibles: RegistroUsuario[] = todosUsuarios
     .filter((u) => u.rol === 'participante')
