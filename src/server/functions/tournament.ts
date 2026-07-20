@@ -1,18 +1,23 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
+import { z } from 'zod'
 import { db } from '../db/client'
 import { obtenerUnaFila } from '../db/uno'
-import { estadoTorneo, corridas, envios } from '../db/schema'
+import { torneos } from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
-import { asegurarNoIniciado, asegurarIniciado } from '../tournament/guard'
+import {
+  asegurarNoIniciado,
+  asegurarIniciado,
+  asegurarFinalizado,
+} from '../tournament/guard'
+import { obtenerTorneoActual } from '../tournament/actual'
+import { archivarParticipantesDeTorneo } from '../participantes/archivar'
+import { guardarProgresoPendiente } from '../tournament/progresoPendiente'
 
 export const obtenerEstadoTorneo = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const estado = await obtenerUnaFila(
-      db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1)),
-    )
-    return estado ?? { id: 1, iniciadoEn: null, finalizadoEn: null }
+    return obtenerTorneoActual()
   },
 )
 
@@ -21,16 +26,15 @@ export const iniciarTorneo = createServerFn({ method: 'POST' }).handler(
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const existente = await obtenerUnaFila(
-      db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1)),
-    )
-    asegurarNoIniciado(existente ?? { iniciadoEn: null })
+    const torneo = await obtenerTorneoActual()
+    if (!torneo) throw new Error('No hay ningún torneo creado todavía')
+    asegurarNoIniciado(torneo)
 
     const iniciadoEn = new Date()
     await db
-      .insert(estadoTorneo)
-      .values({ id: 1, iniciadoEn })
-      .onDuplicateKeyUpdate({ set: { iniciadoEn } })
+      .update(torneos)
+      .set({ iniciadoEn })
+      .where(eq(torneos.id, torneo.id))
 
     return { iniciadoEn }
   },
@@ -41,45 +45,56 @@ export const concluirTorneo = createServerFn({ method: 'POST' }).handler(
     const request = getRequest()
     await requerirAdmin(request.headers)
 
-    const existente = await obtenerUnaFila(
-      db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1)),
-    )
-    asegurarIniciado(existente ?? { iniciadoEn: null, finalizadoEn: null })
+    const torneo = await obtenerTorneoActual()
+    if (!torneo) throw new Error('No hay ningún torneo creado todavía')
+    asegurarIniciado(torneo)
 
     const finalizadoEn = new Date()
     await db
-      .update(estadoTorneo)
+      .update(torneos)
       .set({ finalizadoEn })
-      .where(eq(estadoTorneo.id, 1))
+      .where(eq(torneos.id, torneo.id))
 
-    await guardarProgresoPendiente(finalizadoEn)
+    await guardarProgresoPendiente(torneo.id, finalizadoEn)
 
     return { finalizadoEn }
   },
 )
 
-async function guardarProgresoPendiente(finalizadoEn: Date) {
-  const todasLasCorridas = await db.select().from(corridas)
-  const enviosExistentes = await db
-    .select({ usuarioId: envios.usuarioId, problemaId: envios.problemaId })
-    .from(envios)
-  const clavesExistentes = new Set(
-    enviosExistentes.map((e) => `${e.usuarioId}:${e.problemaId}`),
-  )
+const crearTorneoSchema = z.object({
+  anio: z.number().int().min(2000).max(2100),
+})
 
-  for (const corrida of todasLasCorridas) {
-    const clave = `${corrida.usuarioId}:${corrida.problemaId}`
-    if (clavesExistentes.has(clave)) continue
+export const crearTorneo = createServerFn({ method: 'POST' })
+  .validator(crearTorneoSchema)
+  .handler(async ({ data }) => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
 
-    await db.insert(envios).values({
-      usuarioId: corrida.usuarioId,
-      problemaId: corrida.problemaId,
-      codigo: corrida.ultimoCodigo ?? '',
-      lenguaje: corrida.ultimoLenguaje ?? '',
-      estado: corrida.ultimoVeredicto ?? 'pendiente',
-      estadoProgreso: 'pendiente',
-      resultados: corrida.ultimosResultados,
-      creadoEn: corrida.ultimaEjecucionEn ?? finalizadoEn,
-    })
-  }
-}
+    const torneoActual = await obtenerTorneoActual()
+    if (torneoActual) {
+      asegurarFinalizado(torneoActual)
+    }
+
+    const existente = await obtenerUnaFila(
+      db.select().from(torneos).where(eq(torneos.anio, data.anio)),
+    )
+    if (existente) throw new Error('Ya existe un torneo con ese año')
+
+    const id = crypto.randomUUID()
+    await db.insert(torneos).values({ id, anio: data.anio })
+
+    if (torneoActual) {
+      await archivarParticipantesDeTorneo(torneoActual.id)
+    }
+
+    return { id, anio: data.anio }
+  })
+
+export const listarTorneos = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
+    return db.select().from(torneos).orderBy(desc(torneos.creadoEn))
+  },
+)
