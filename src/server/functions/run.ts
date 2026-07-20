@@ -31,6 +31,9 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
 
       const torneoActual = await obtenerTorneoActual()
       asegurarIniciado(torneoActual ?? { iniciadoEn: null, finalizadoEn: null })
+      if (user.torneoId !== torneoActual?.id) {
+        throw new Error('Tu cuenta no pertenece al torneo actual')
+      }
 
       const problema = await obtenerUnaFila(
         db.select().from(problemas).where(eq(problemas.id, data.problemaId)),
