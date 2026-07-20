@@ -2341,6 +2341,8 @@ git commit -m "feat: acotar respuestas de admin al torneo actual y exponer varia
 ## Task 12: UI de historial de torneos
 
 **Files:**
+- Create: `src/components/ProgresoParticipanteTabla.tsx`
+- Modify: `src/routes/admin/respuestas/$usuarioId.tsx`
 - Modify: `src/components/NavbarAdmin.tsx`
 - Modify: `src/server/queries/torneo.ts`
 - Create: `src/server/queries/historial.ts`
@@ -2350,16 +2352,269 @@ git commit -m "feat: acotar respuestas de admin al torneo actual y exponer varia
 
 **Interfaces:**
 - Consumes: `listarTorneos`, `obtenerEstadoTorneo` (Task 4);
-  `listarParticipantesConProgresoDeTorneo`, `obtenerProgresoParticipante` (Task 11).
-- Produces: rutas `/admin/historial`, `/admin/historial/$torneoId`,
-  `/admin/historial/$torneoId/$usuarioId`, todas de solo lectura (sin controles de edición).
+  `listarParticipantesConProgresoDeTorneo`, `obtenerProgresoParticipante` (Task 11). Both
+  `/admin/respuestas/$usuarioId.tsx` and the new historial detail route call
+  `obtenerProgresoParticipante`, so they consume the exact same data shape — this is what makes a
+  single shared table component possible.
+- Produces: `ProgresoParticipanteTabla` component (props: `problemas: ProblemaConProgreso[]`,
+  `modoEdicion: boolean`, `onCambiarEstado?`, `cambiandoEstadoProblemaId?: string | null`), used by
+  both `/admin/respuestas/$usuarioId` (`modoEdicion={true}`) and the new
+  `/admin/historial/$torneoId/$usuarioId` (`modoEdicion={false}`); rutas `/admin/historial`,
+  `/admin/historial/$torneoId`, `/admin/historial/$torneoId/$usuarioId`, todas de solo lectura.
 
-- [ ] **Step 1: Agregar `torneosQueryOptions` si no quedó de Task 4**
+- [ ] **Step 1: Extraer `src/components/ProgresoParticipanteTabla.tsx`**
+
+Este componente reemplaza la tabla que hoy vive inline en
+`src/routes/admin/respuestas/$usuarioId.tsx`, parametrizada por `modoEdicion` para que la reutilice
+también la vista de historial (Step 6) sin duplicar el JSX de la tabla/expansión de código.
+
+```tsx
+import { Fragment, useState } from 'react'
+import { formatearArgumentos } from '#/components/labels'
+import { Spinner } from '#/components/Spinner'
+import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
+
+const ETIQUETAS_ESTADO: Record<string, string> = {
+  pendiente: 'Pendiente',
+  completado: 'Completado',
+  aprobado_manual: 'Aprobado manual',
+}
+
+export type ProblemaConProgreso = {
+  problemaId: string
+  titulo: string
+  dificultad: string
+  categoriaProblema: string
+  estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual'
+  creadoEn: string | Date | null
+  duracionMinutos: number | null
+  codigo: string | null
+  lenguaje: string | null
+  resultados: Array<{
+    argumentos: unknown[]
+    salidaEsperada: unknown
+    salidaObtenida?: string
+    salidaError?: string
+    aprobado: boolean
+  }> | null
+}
+
+export function ProgresoParticipanteTabla(props: {
+  problemas: ProblemaConProgreso[]
+  modoEdicion: boolean
+  onCambiarEstado?: (
+    problemaId: string,
+    estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual',
+  ) => void
+  cambiandoEstadoProblemaId?: string | null
+}) {
+  const [expandido, setExpandido] = useState<string | null>(null)
+  const columnas = props.modoEdicion ? 7 : 6
+
+  return (
+    <table className={CLASE_TABLA}>
+      <thead>
+        <tr className={CLASE_FILA}>
+          <th className="p-2">Problema</th>
+          <th className="p-2">Dificultad</th>
+          <th className="p-2">Categoría</th>
+          <th className="p-2">Estado</th>
+          <th className="p-2">Duración</th>
+          <th className="p-2">Enviado en</th>
+          {props.modoEdicion && <th className="p-2">Acciones</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {props.problemas.map((p) => (
+          <Fragment key={p.problemaId}>
+            <tr className={CLASE_FILA}>
+              <td className="p-2">
+                {p.codigo && (
+                  <button
+                    className="mr-2 text-blue-600 underline"
+                    onClick={() =>
+                      setExpandido(
+                        expandido === p.problemaId ? null : p.problemaId,
+                      )
+                    }
+                  >
+                    {expandido === p.problemaId ? '▾' : '▸'}
+                  </button>
+                )}
+                {p.titulo}
+              </td>
+              <td className="p-2">{p.dificultad}</td>
+              <td className="p-2">{p.categoriaProblema}</td>
+              <td className="p-2">{ETIQUETAS_ESTADO[p.estadoProgreso]}</td>
+              <td className="p-2">
+                {p.duracionMinutos !== null ? `${p.duracionMinutos} min` : '—'}
+              </td>
+              <td className="p-2">
+                {p.creadoEn ? new Date(p.creadoEn).toLocaleString() : '—'}
+              </td>
+              {props.modoEdicion && (
+                <td className="p-2">
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="border p-1 text-sm"
+                      value={p.estadoProgreso}
+                      disabled={props.cambiandoEstadoProblemaId === p.problemaId}
+                      onChange={(e) =>
+                        props.onCambiarEstado?.(
+                          p.problemaId,
+                          e.target.value as
+                            | 'pendiente'
+                            | 'completado'
+                            | 'aprobado_manual',
+                        )
+                      }
+                    >
+                      <option value="pendiente">Pendiente</option>
+                      <option value="completado">Completado</option>
+                      <option value="aprobado_manual">Aprobado manual</option>
+                    </select>
+                    {props.cambiandoEstadoProblemaId === p.problemaId && (
+                      <Spinner />
+                    )}
+                  </div>
+                </td>
+              )}
+            </tr>
+            {expandido === p.problemaId && p.codigo && (
+              <tr className={`${CLASE_FILA} bg-gray-50`}>
+                <td colSpan={columnas} className="p-2">
+                  <p className="text-sm text-gray-600">Lenguaje: {p.lenguaje}</p>
+                  <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">
+                    {p.codigo}
+                  </pre>
+                  {p.resultados && (
+                    <ul className="mt-2 flex flex-col gap-1 text-sm">
+                      {p.resultados.map((r, i) => (
+                        <li key={i}>
+                          <code>{formatearArgumentos(r.argumentos)}</code> —
+                          Esperado: <code>{String(r.salidaEsperada)}</code> —
+                          Obtenido:{' '}
+                          <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
+                          {r.aprobado ? '✅' : '❌'}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </td>
+              </tr>
+            )}
+          </Fragment>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+```
+
+- [ ] **Step 2: Refactorizar `src/routes/admin/respuestas/$usuarioId.tsx` para usar el componente compartido**
+
+Reemplazar el archivo completo:
+
+```tsx
+import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { actualizarEstadoProgreso } from '#/server/functions/admin-respuestas'
+import {
+  participantesConProgresoQueryOptions,
+  progresoParticipanteQueryOptions,
+} from '#/server/queries/respuestas'
+import { useToastMutation } from '#/components/useToastMutation'
+import { ProgresoParticipanteTabla } from '#/components/ProgresoParticipanteTabla'
+
+export const Route = createFileRoute('/admin/respuestas/$usuarioId')({
+  loader: ({ context, params }) =>
+    context.queryClient.ensureQueryData(
+      progresoParticipanteQueryOptions(params.usuarioId),
+    ),
+  component: AdminRespuestaDetallePage,
+})
+
+function AdminRespuestaDetallePage() {
+  const { usuarioId } = Route.useParams()
+  const queryClient = useQueryClient()
+  const { data } = useSuspenseQuery(progresoParticipanteQueryOptions(usuarioId))
+
+  const cambiarEstado = useToastMutation({
+    mutationFn: (vars: {
+      problemaId: string
+      estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual'
+    }) =>
+      actualizarEstadoProgreso({
+        data: {
+          usuarioId,
+          problemaId: vars.problemaId,
+          estadoProgreso: vars.estadoProgreso,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: progresoParticipanteQueryOptions(usuarioId).queryKey,
+      })
+      queryClient.invalidateQueries({
+        queryKey: participantesConProgresoQueryOptions().queryKey,
+      })
+      toast.success('Estado actualizado.')
+    },
+  })
+
+  return (
+    <div className="flex flex-col gap-4 p-8">
+      <h1 className="text-xl font-bold">
+        {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
+        {data.puesto ?? '—'}
+      </h1>
+      <ProgresoParticipanteTabla
+        problemas={data.problemas}
+        modoEdicion
+        cambiandoEstadoProblemaId={
+          cambiarEstado.isPending
+            ? (cambiarEstado.variables?.problemaId ?? null)
+            : null
+        }
+        onCambiarEstado={(problemaId, estadoProgreso) =>
+          cambiarEstado.mutate({ problemaId, estadoProgreso })
+        }
+      />
+    </div>
+  )
+}
+```
+
+Nota: el import de `useState` de arriba queda sin uso tras este refactor (el estado de
+`expandido` ahora vive dentro de `ProgresoParticipanteTabla`) — quítalo del import si tu editor no
+lo marca automáticamente como error de lint.
+
+- [ ] **Step 3: Ejecutar lint sobre los dos archivos tocados**
+
+```bash
+npx eslint src/components/ProgresoParticipanteTabla.tsx src/routes/admin/respuestas/\$usuarioId.tsx
+```
+
+Expected: sin errores (en particular, sin imports sin usar).
+
+- [ ] **Step 4: Verificación manual de `/admin/respuestas/$usuarioId`**
+
+```bash
+npm run dev
+```
+
+Confirmar que la página de detalle de un participante del torneo actual se ve y se comporta
+exactamente igual que antes del refactor: expandir/colapsar código, cambiar estado con el
+`<select>`, columna Categoría presente.
+
+- [ ] **Step 5: Agregar `torneosQueryOptions` si no quedó de Task 4**
 
 Confirmar que `src/server/queries/torneo.ts` ya exporta `torneosQueryOptions` (agregado en Task 4,
 Step 7). Si por algún motivo no quedó, agregarlo ahora tal como se especificó ahí.
 
-- [ ] **Step 2: Crear `src/server/queries/historial.ts`**
+- [ ] **Step 6: Crear `src/server/queries/historial.ts`**
 
 ```ts
 import { queryOptions } from '@tanstack/react-query'
@@ -2383,7 +2638,7 @@ export function historialParticipanteDetalleQueryOptions(usuarioId: string) {
 }
 ```
 
-- [ ] **Step 3: Crear `src/routes/admin/historial/index.tsx`**
+- [ ] **Step 7: Crear `src/routes/admin/historial/index.tsx`**
 
 ```tsx
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -2450,7 +2705,7 @@ function HistorialIndexPage() {
 }
 ```
 
-- [ ] **Step 4: Crear `src/routes/admin/historial/$torneoId/index.tsx`**
+- [ ] **Step 8: Crear `src/routes/admin/historial/$torneoId/index.tsx`**
 
 ```tsx
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -2525,15 +2780,16 @@ function HistorialTorneoPage() {
 }
 ```
 
-- [ ] **Step 5: Crear `src/routes/admin/historial/$torneoId/$usuarioId.tsx`**
+- [ ] **Step 9: Crear `src/routes/admin/historial/$torneoId/$usuarioId.tsx`**
+
+Igual que `/admin/respuestas/$usuarioId.tsx` (Step 2), pero con `modoEdicion={false}` y sin
+mutación — reutiliza el mismo `ProgresoParticipanteTabla` de Step 1.
 
 ```tsx
-import { Fragment, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { historialParticipanteDetalleQueryOptions } from '#/server/queries/historial'
-import { formatearArgumentos } from '#/components/labels'
-import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
+import { ProgresoParticipanteTabla } from '#/components/ProgresoParticipanteTabla'
 
 export const Route = createFileRoute('/admin/historial/$torneoId/$usuarioId')({
   loader: ({ context, params }) =>
@@ -2543,18 +2799,11 @@ export const Route = createFileRoute('/admin/historial/$torneoId/$usuarioId')({
   component: HistorialParticipanteDetallePage,
 })
 
-const ETIQUETAS_ESTADO: Record<string, string> = {
-  pendiente: 'Pendiente',
-  completado: 'Completado',
-  aprobado_manual: 'Aprobado manual',
-}
-
 function HistorialParticipanteDetallePage() {
   const { usuarioId } = Route.useParams()
   const { data } = useSuspenseQuery(
     historialParticipanteDetalleQueryOptions(usuarioId),
   )
-  const [expandido, setExpandido] = useState<string | null>(null)
 
   return (
     <div className="flex flex-col gap-4 p-8">
@@ -2562,81 +2811,13 @@ function HistorialParticipanteDetallePage() {
         {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
         {data.puesto ?? '—'}
       </h1>
-      <table className={CLASE_TABLA}>
-        <thead>
-          <tr className={CLASE_FILA}>
-            <th className="p-2">Problema</th>
-            <th className="p-2">Dificultad</th>
-            <th className="p-2">Estado</th>
-            <th className="p-2">Duración</th>
-            <th className="p-2">Enviado en</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.problemas.map((p) => (
-            <Fragment key={p.problemaId}>
-              <tr className={CLASE_FILA}>
-                <td className="p-2">
-                  {p.codigo && (
-                    <button
-                      className="mr-2 text-blue-600 underline"
-                      onClick={() =>
-                        setExpandido(
-                          expandido === p.problemaId ? null : p.problemaId,
-                        )
-                      }
-                    >
-                      {expandido === p.problemaId ? '▾' : '▸'}
-                    </button>
-                  )}
-                  {p.titulo}
-                </td>
-                <td className="p-2">{p.dificultad}</td>
-                <td className="p-2">{ETIQUETAS_ESTADO[p.estadoProgreso]}</td>
-                <td className="p-2">
-                  {p.duracionMinutos !== null
-                    ? `${p.duracionMinutos} min`
-                    : '—'}
-                </td>
-                <td className="p-2">
-                  {p.creadoEn ? new Date(p.creadoEn).toLocaleString() : '—'}
-                </td>
-              </tr>
-              {expandido === p.problemaId && p.codigo && (
-                <tr className={`${CLASE_FILA} bg-gray-50`}>
-                  <td colSpan={5} className="p-2">
-                    <p className="text-sm text-gray-600">
-                      Lenguaje: {p.lenguaje}
-                    </p>
-                    <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">
-                      {p.codigo}
-                    </pre>
-                    {p.resultados && (
-                      <ul className="mt-2 flex flex-col gap-1 text-sm">
-                        {p.resultados.map((r, i) => (
-                          <li key={i}>
-                            <code>{formatearArgumentos(r.argumentos)}</code> —
-                            Esperado: <code>{r.salidaEsperada}</code> —
-                            Obtenido:{' '}
-                            <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
-                            {r.aprobado ? '✅' : '❌'}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </td>
-                </tr>
-              )}
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
+      <ProgresoParticipanteTabla problemas={data.problemas} modoEdicion={false} />
     </div>
   )
 }
 ```
 
-- [ ] **Step 6: Agregar el enlace en `src/components/NavbarAdmin.tsx`**
+- [ ] **Step 10: Agregar el enlace en `src/components/NavbarAdmin.tsx`**
 
 ```diff
    { to: '/admin/respuestas', etiqueta: 'Respuestas' },
@@ -2644,13 +2825,13 @@ function HistorialParticipanteDetallePage() {
    { to: '/clasificacion', etiqueta: 'Clasificación' },
 ```
 
-- [ ] **Step 7: Regenerar el árbol de rutas**
+- [ ] **Step 11: Regenerar el árbol de rutas**
 
 ```bash
 npm run generate-routes
 ```
 
-- [ ] **Step 8: Verificación manual**
+- [ ] **Step 12: Verificación manual**
 
 ```bash
 npm run dev
@@ -2658,16 +2839,17 @@ npm run dev
 
 Como admin: crear un segundo torneo (tras concluir el actual), confirmar que el torneo anterior
 aparece en `/admin/historial`, que su lista de resultados carga, y que el detalle de un
-participante de ese torneo se ve correctamente sin ningún control de edición. Confirmar también
-que `/admin/participantes`, `/admin/problemas` y `/admin/respuestas` ahora muestran datos del
-torneo *nuevo* (vacío), y que intentar (vía consola del navegador o llamando la función
-directamente) `actualizarEstadoProgreso`/`actualizarProblema`/`eliminarParticipante` sobre una
-entidad del torneo viejo devuelve el error "Este torneo ya no se puede editar".
+participante de ese torneo se ve correctamente sin ningún control de edición (misma tabla que
+`/admin/respuestas/$usuarioId`, sin columna "Acciones"). Confirmar también que
+`/admin/participantes`, `/admin/problemas` y `/admin/respuestas` ahora muestran datos del torneo
+*nuevo* (vacío), y que intentar (vía consola del navegador o llamando la función directamente)
+`actualizarEstadoProgreso`/`actualizarProblema`/`eliminarParticipante` sobre una entidad del
+torneo viejo devuelve el error "Este torneo ya no se puede editar".
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 13: Commit**
 
 ```bash
-git add src/components/NavbarAdmin.tsx src/server/queries/torneo.ts src/server/queries/historial.ts src/routes/admin/historial src/routeTree.gen.ts
+git add src/components/ProgresoParticipanteTabla.tsx src/routes/admin/respuestas/\$usuarioId.tsx src/components/NavbarAdmin.tsx src/server/queries/torneo.ts src/server/queries/historial.ts src/routes/admin/historial src/routeTree.gen.ts
 git commit -m "feat: agregar panel de historial de torneos de solo lectura"
 ```
 
