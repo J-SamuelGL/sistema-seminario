@@ -11,6 +11,7 @@ const ENLACES = [
   { to: '/admin/torneo', etiqueta: 'Torneo' },
   { to: '/admin/problemas', etiqueta: 'Problemas' },
   { to: '/admin/respuestas', etiqueta: 'Respuestas' },
+  { to: '/admin/historial', etiqueta: 'Historial' },
   { to: '/clasificacion', etiqueta: 'Clasificación' },
 ] as const
 

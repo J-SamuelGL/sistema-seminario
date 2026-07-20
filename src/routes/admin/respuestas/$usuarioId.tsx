@@ -1,4 +1,3 @@
-import { Fragment, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -7,10 +6,8 @@ import {
   participantesConProgresoQueryOptions,
   progresoParticipanteQueryOptions,
 } from '#/server/queries/respuestas'
-import { Spinner } from '#/components/Spinner'
 import { useToastMutation } from '#/components/useToastMutation'
-import { formatearArgumentos } from '#/components/labels'
-import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
+import { ProgresoParticipanteTabla } from '#/components/ProgresoParticipanteTabla'
 
 export const Route = createFileRoute('/admin/respuestas/$usuarioId')({
   loader: ({ context, params }) =>
@@ -20,17 +17,10 @@ export const Route = createFileRoute('/admin/respuestas/$usuarioId')({
   component: AdminRespuestaDetallePage,
 })
 
-const ETIQUETAS_ESTADO: Record<string, string> = {
-  pendiente: 'Pendiente',
-  completado: 'Completado',
-  aprobado_manual: 'Aprobado manual',
-}
-
 function AdminRespuestaDetallePage() {
   const { usuarioId } = Route.useParams()
   const queryClient = useQueryClient()
   const { data } = useSuspenseQuery(progresoParticipanteQueryOptions(usuarioId))
-  const [expandido, setExpandido] = useState<string | null>(null)
 
   const cambiarEstado = useToastMutation({
     mutationFn: (vars: {
@@ -61,99 +51,16 @@ function AdminRespuestaDetallePage() {
         {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
         {data.puesto ?? '—'}
       </h1>
-      <table className={CLASE_TABLA}>
-        <thead>
-          <tr className={CLASE_FILA}>
-            <th className="p-2">Problema</th>
-            <th className="p-2">Dificultad</th>
-            <th className="p-2">Categoría</th>
-            <th className="p-2">Estado</th>
-            <th className="p-2">Duración</th>
-            <th className="p-2">Enviado en</th>
-            <th className="p-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.problemas.map((p) => (
-            <Fragment key={p.problemaId}>
-              <tr className={CLASE_FILA}>
-                <td className="p-2">
-                  {p.codigo && (
-                    <button
-                      className="mr-2 text-blue-600 underline"
-                      onClick={() =>
-                        setExpandido(
-                          expandido === p.problemaId ? null : p.problemaId,
-                        )
-                      }
-                    >
-                      {expandido === p.problemaId ? '▾' : '▸'}
-                    </button>
-                  )}
-                  {p.titulo}
-                </td>
-                <td className="p-2">{p.dificultad}</td>
-                <td className="p-2">{p.categoriaProblema}</td>
-                <td className="p-2">{ETIQUETAS_ESTADO[p.estadoProgreso]}</td>
-                <td className="p-2">
-                  {p.duracionMinutos !== null
-                    ? `${p.duracionMinutos} min`
-                    : '—'}
-                </td>
-                <td className="p-2">
-                  {p.creadoEn ? new Date(p.creadoEn).toLocaleString() : '—'}
-                </td>
-                <td className="p-2">
-                  <div className="flex items-center gap-2">
-                    <select
-                      className="border p-1 text-sm"
-                      value={p.estadoProgreso}
-                      disabled={cambiarEstado.isPending}
-                      onChange={(e) =>
-                        cambiarEstado.mutate({
-                          problemaId: p.problemaId,
-                          estadoProgreso: e.target.value as
-                            'pendiente' | 'completado' | 'aprobado_manual',
-                        })
-                      }
-                    >
-                      <option value="pendiente">Pendiente</option>
-                      <option value="completado">Completado</option>
-                      <option value="aprobado_manual">Aprobado manual</option>
-                    </select>
-                    {cambiarEstado.isPending && <Spinner />}
-                  </div>
-                </td>
-              </tr>
-              {expandido === p.problemaId && p.codigo && (
-                <tr className={`${CLASE_FILA} bg-gray-50`}>
-                  <td colSpan={7} className="p-2">
-                    <p className="text-sm text-gray-600">
-                      Lenguaje: {p.lenguaje}
-                    </p>
-                    <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">
-                      {p.codigo}
-                    </pre>
-                    {p.resultados && (
-                      <ul className="mt-2 flex flex-col gap-1 text-sm">
-                        {p.resultados.map((r, i) => (
-                          <li key={i}>
-                            <code>{formatearArgumentos(r.argumentos)}</code> —
-                            Esperado: <code>{r.salidaEsperada}</code> —
-                            Obtenido:{' '}
-                            <code>{r.salidaObtenida || r.salidaError}</code> —{' '}
-                            {r.aprobado ? '✅' : '❌'}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </td>
-                </tr>
-              )}
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
+      <ProgresoParticipanteTabla
+        problemas={data.problemas}
+        modoEdicion
+        cambiandoEstadoProblemaId={
+          cambiarEstado.isPending ? cambiarEstado.variables.problemaId : null
+        }
+        onCambiarEstado={(problemaId, estadoProgreso) =>
+          cambiarEstado.mutate({ problemaId, estadoProgreso })
+        }
+      />
     </div>
   )
 }
