@@ -1,7 +1,9 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import * as schema from '../db/schema'
+import { cerrarOtrasSesiones } from '../sesiones/activas'
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
@@ -17,6 +19,25 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        // Sesión única por participante: cada login elimina las demás
+        // sesiones de la cuenta, para que nadie pueda resolver problemas en
+        // paralelo desde otro dispositivo. Los admins quedan exentos —
+        // necesitan varias a la vez (p. ej. teléfono para escanear QR de
+        // check-in + laptop para el panel).
+        after: async (sesion) => {
+          const [usuario] = await db
+            .select({ rol: schema.usuarios.rol })
+            .from(schema.usuarios)
+            .where(eq(schema.usuarios.id, sesion.userId))
+          if (usuario.rol === 'admin') return
+          await cerrarOtrasSesiones(sesion.userId, sesion.id)
+        },
+      },
+    },
   },
   user: {
     additionalFields: {

@@ -5,7 +5,7 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { ejecutarCodigo } from '#/server/functions/run'
 import {
   problemaQueryOptions,
@@ -13,12 +13,14 @@ import {
 } from '#/server/queries/problemas'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 import { miProgresoQueryOptions } from '#/server/queries/progreso'
+import { misSesionesActivasQueryOptions } from '#/server/queries/sesiones'
 import { IconoLista } from '#/components/IconoLista'
 import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
 import { AssistantModal } from '#/components/AssistantModal'
 import { ProblemSolvedModal } from '#/components/ProblemSolvedModal'
+import { SesionesMultiplesModal } from '#/components/SesionesMultiplesModal'
 import { LoadingButton } from '#/components/LoadingButton'
 import { useToastMutation } from '#/components/useToastMutation'
 import { usePrevNextProblema } from '#/components/usePrevNextProblema'
@@ -74,6 +76,13 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
     resueltosIds,
     problemaId,
   )
+  // Se re-verifica en cada entrada a la página (el remount por problemaId +
+  // refetchOnMount 'always' fuerzan la consulta): si la cuenta tiene más de
+  // una sesión activa, un modal bloquea la página hasta cerrar las demás.
+  const { data: sesiones } = useQuery({
+    ...misSesionesActivasQueryOptions(),
+    enabled: user != null && user.rol !== 'admin',
+  })
   const [lenguaje, setLenguaje] = useState<LenguajeProgramacion>(
     lenguajes[0]?.lenguaje ?? 'python',
   )
@@ -224,6 +233,9 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
           )}
         </div>
       </div>
+      {sesiones && sesiones.activas > 1 && (
+        <SesionesMultiplesModal sesionesActivas={sesiones.activas} />
+      )}
       {ejecutar.data?.resuelto && (
         <ProblemSolvedModal
           duracionMinutos={ejecutar.data.resuelto.duracionMinutos}
