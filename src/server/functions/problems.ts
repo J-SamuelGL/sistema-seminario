@@ -1,14 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { obtenerUnaFila } from '../db/uno'
-import {
-  problemas,
-  casosPrueba,
-  problemaLenguajes,
-  estadoTorneo,
-} from '../db/schema'
+import { problemas, casosPrueba, problemaLenguajes } from '../db/schema'
 import {
   requerirAdmin,
   requerirParticipanteIngresado,
@@ -21,29 +16,40 @@ import {
 import { grupoDeCategoria } from '../problems/grupo'
 import { idSchema } from '../validacion/comun'
 import { calcularResueltoParaUsuario } from '../envios/resuelto'
-
-async function obtenerEstadoTorneoRow() {
-  return obtenerUnaFila(
-    db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1)),
-  )
-}
+import {
+  obtenerTorneoActual,
+  obtenerTorneoPorId,
+  asegurarEsTorneoActual,
+} from '../tournament/actual'
 
 export const listarProblemas = createServerFn({ method: 'GET' }).handler(
   async () => {
     const request = getRequest()
     const user = await requerirParticipanteIngresado(request.headers)
+
     if (user.rol === 'admin') {
-      return db.select().from(problemas).orderBy(problemas.orden)
+      const torneo = await obtenerTorneoActual()
+      if (!torneo) return []
+      return db
+        .select()
+        .from(problemas)
+        .where(eq(problemas.torneoId, torneo.id))
+        .orderBy(problemas.orden)
     }
-    const estado = await obtenerEstadoTorneoRow()
-    if (!estado?.iniciadoEn) return []
+
+    if (!user.torneoId) return []
+    const torneo = await obtenerTorneoPorId(user.torneoId)
+    if (!torneo?.iniciadoEn) return []
+
     const grupo = grupoDeCategoria(
       user.categoria as 'invitado' | 'junior' | 'senior',
     )
     return db
       .select()
       .from(problemas)
-      .where(eq(problemas.grupo, grupo))
+      .where(
+        and(eq(problemas.grupo, grupo), eq(problemas.torneoId, user.torneoId)),
+      )
       .orderBy(problemas.orden)
   },
 )
@@ -56,12 +62,19 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const filaProblema = await obtenerUnaFila(
       db.select().from(problemas).where(eq(problemas.id, data)),
     )
-    const estado = await obtenerEstadoTorneoRow()
+
+    let torneoIniciadoEn: Date | null = null
+    if (user.rol !== 'admin' && user.torneoId) {
+      const torneo = await obtenerTorneoPorId(user.torneoId)
+      torneoIniciadoEn = torneo?.iniciadoEn ?? null
+    }
+
     const puedeVerlo =
       user.rol === 'admin' ||
-      (filaProblema?.grupo ===
-        grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior') &&
-        Boolean(estado?.iniciadoEn))
+      (filaProblema?.torneoId === user.torneoId &&
+        filaProblema?.grupo ===
+          grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior') &&
+        Boolean(torneoIniciadoEn))
     const problema = filaProblema && puedeVerlo ? filaProblema : null
     const casosCompletos = problema
       ? await db
@@ -80,12 +93,8 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
           .where(eq(problemaLenguajes.problemaId, data))
       : []
     const resuelto =
-      problema && user.rol !== 'admin' && estado?.iniciadoEn
-        ? await calcularResueltoParaUsuario(
-            user.id,
-            problema,
-            estado.iniciadoEn,
-          )
+      problema && user.rol !== 'admin' && torneoIniciadoEn
+        ? await calcularResueltoParaUsuario(user.id, problema, torneoIniciadoEn)
         : null
     return { problema, casosPrueba: casos, lenguajes, resuelto }
   })
@@ -99,9 +108,13 @@ export const crearProblema = createServerFn({ method: 'POST' })
     const errores = validarDatosProblema(data)
     if (errores.length > 0) throw new Error(errores.join(', '))
 
+    const torneo = await obtenerTorneoActual()
+    if (!torneo) throw new Error('No hay ningún torneo actual')
+
     const id = crypto.randomUUID()
     await db.insert(problemas).values({
       id,
+      torneoId: torneo.id,
       titulo: data.titulo,
       descripcion: data.descripcion,
       dificultad: data.dificultad,
@@ -146,6 +159,13 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
 
     const errores = validarDatosProblema(data)
     if (errores.length > 0) throw new Error(errores.join(', '))
+
+    const problemaExistente = await obtenerUnaFila(
+      db.select().from(problemas).where(eq(problemas.id, data.id)),
+    )
+    if (!problemaExistente) throw new Error('Problema no encontrado')
+    const torneoActual = await obtenerTorneoActual()
+    asegurarEsTorneoActual(problemaExistente.torneoId ?? '', torneoActual)
 
     await db
       .update(problemas)
@@ -194,5 +214,13 @@ export const eliminarProblema = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const request = getRequest()
     await requerirAdmin(request.headers)
+
+    const problemaExistente = await obtenerUnaFila(
+      db.select().from(problemas).where(eq(problemas.id, data)),
+    )
+    if (!problemaExistente) throw new Error('Problema no encontrado')
+    const torneoActual = await obtenerTorneoActual()
+    asegurarEsTorneoActual(problemaExistente.torneoId ?? '', torneoActual)
+
     await db.delete(problemas).where(eq(problemas.id, data))
   })
