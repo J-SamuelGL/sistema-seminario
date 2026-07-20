@@ -37,11 +37,11 @@ function TournamentControlPage() {
   const iniciar = useToastMutation({
     mutationFn: () => iniciarTorneo(),
     onSuccess: (resultado) => {
-      queryClient.setQueryData(estadoTorneoQueryOptions().queryKey, {
-        ...estado,
-        iniciadoEn: resultado.iniciadoEn,
-        finalizadoEn: null,
-      })
+      queryClient.setQueryData(estadoTorneoQueryOptions().queryKey, (previo) =>
+        previo
+          ? { ...previo, iniciadoEn: resultado.iniciadoEn, finalizadoEn: null }
+          : previo,
+      )
       toast.success('Torneo iniciado.')
     },
   })
@@ -49,10 +49,11 @@ function TournamentControlPage() {
   const concluir = useToastMutation({
     mutationFn: () => concluirTorneo(),
     onSuccess: (resultado) => {
-      queryClient.setQueryData(estadoTorneoQueryOptions().queryKey, {
-        ...estado,
-        finalizadoEn: resultado.finalizadoEn,
-      })
+      queryClient.setQueryData(estadoTorneoQueryOptions().queryKey, (previo) =>
+        previo
+          ? { ...previo, finalizadoEn: resultado.finalizadoEn }
+          : previo,
+      )
       toast.success('Torneo concluido.')
     },
   })

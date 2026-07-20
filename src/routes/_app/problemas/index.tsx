@@ -20,7 +20,7 @@ function ProblemsListPage() {
   const { data: estado } = useSuspenseQuery(estadoTorneoQueryOptions())
   const { data: progreso } = useSuspenseQuery(miProgresoQueryOptions())
 
-  if (!estado.iniciadoEn) {
+  if (!estado?.iniciadoEn) {
     return <p className="p-8">El torneo aún no ha comenzado.</p>
   }
 
