@@ -12,7 +12,7 @@ import { enviarCorreoBienvenidaSeguro } from '../email/brevo'
 import { puedeEliminarParticipante } from '../../shared/participantes'
 import { datosParticipanteSchema } from '../participantes/validar'
 import { idSchema } from '../validacion/comun'
-import { obtenerTorneoActual } from '../tournament/actual'
+import { obtenerTorneoActual, asegurarEsTorneoActual } from '../tournament/actual'
 
 export const registrarParticipante = createServerFn({ method: 'POST' })
   .validator(datosParticipanteSchema)
@@ -58,6 +58,8 @@ export const reenviarCredenciales = createServerFn({ method: 'POST' })
       db.select().from(usuarios).where(eq(usuarios.id, data)),
     )
     if (!usuario) throw new Error('Participante no encontrado')
+    const torneoActual = await obtenerTorneoActual()
+    asegurarEsTorneoActual(usuario.torneoId ?? '', torneoActual)
 
     const contrasenaGenerada = generarContrasenaAleatoria()
     const hash = await hashPassword(contrasenaGenerada)
@@ -82,6 +84,9 @@ export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(
     const request = getRequest()
     await requerirAdmin(request.headers)
 
+    const torneo = await obtenerTorneoActual()
+    if (!torneo) return []
+
     const filas = await db
       .select({
         id: usuarios.id,
@@ -95,7 +100,9 @@ export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(
       })
       .from(usuarios)
       .leftJoin(envios, eq(envios.usuarioId, usuarios.id))
-      .where(eq(usuarios.rol, 'participante'))
+      .where(
+        and(eq(usuarios.rol, 'participante'), eq(usuarios.torneoId, torneo.id)),
+      )
       .groupBy(usuarios.id)
 
     return filas.map((f) => ({
@@ -115,6 +122,8 @@ export const eliminarParticipante = createServerFn({ method: 'POST' })
       db.select().from(usuarios).where(eq(usuarios.id, data)),
     )
     if (!usuario) throw new Error('Participante no encontrado')
+    const torneoActual = await obtenerTorneoActual()
+    asegurarEsTorneoActual(usuario.torneoId ?? '', torneoActual)
 
     const filasEnvios = await db
       .select()
