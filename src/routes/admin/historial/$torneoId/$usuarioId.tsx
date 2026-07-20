@@ -23,7 +23,10 @@ function HistorialParticipanteDetallePage() {
         {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
         {data.puesto ?? '—'}
       </h1>
-      <ProgresoParticipanteTabla problemas={data.problemas} modoEdicion={false} />
+      <ProgresoParticipanteTabla
+        problemas={data.problemas}
+        modoEdicion={false}
+      />
     </div>
   )
 }

@@ -87,14 +87,14 @@ export function ProgresoParticipanteTabla(props: {
                     <select
                       className="border p-1 text-sm"
                       value={p.estadoProgreso}
-                      disabled={props.cambiandoEstadoProblemaId === p.problemaId}
+                      disabled={
+                        props.cambiandoEstadoProblemaId === p.problemaId
+                      }
                       onChange={(e) =>
                         props.onCambiarEstado?.(
                           p.problemaId,
                           e.target.value as
-                            | 'pendiente'
-                            | 'completado'
-                            | 'aprobado_manual',
+                            'pendiente' | 'completado' | 'aprobado_manual',
                         )
                       }
                     >
@@ -112,7 +112,9 @@ export function ProgresoParticipanteTabla(props: {
             {expandido === p.problemaId && p.codigo && (
               <tr className={`${CLASE_FILA} bg-gray-50`}>
                 <td colSpan={columnas} className="p-2">
-                  <p className="text-sm text-gray-600">Lenguaje: {p.lenguaje}</p>
+                  <p className="text-sm text-gray-600">
+                    Lenguaje: {p.lenguaje}
+                  </p>
                   <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 text-sm">
                     {p.codigo}
                   </pre>

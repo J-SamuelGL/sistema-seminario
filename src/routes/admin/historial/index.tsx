@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { estadoTorneoQueryOptions, torneosQueryOptions } from '#/server/queries/torneo'
+import {
+  estadoTorneoQueryOptions,
+  torneosQueryOptions,
+} from '#/server/queries/torneo'
 import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
 
 export const Route = createFileRoute('/admin/historial/')({
