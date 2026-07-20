@@ -18,19 +18,16 @@ import {
   actualizarEstadoProgresoSchema,
 } from '../envios/progreso'
 import { idSchema } from '../validacion/comun'
+import { obtenerTorneoActual, asegurarEsTorneoActual } from '../tournament/actual'
 
-export const listarParticipantesConProgreso = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  const request = getRequest()
-  await requerirAdmin(request.headers)
-
+async function construirListaConProgreso(torneoId: string) {
   const { clasificacion, todosUsuarios, todosProblemas } =
-    await cargarDatosClasificacion()
+    await cargarDatosClasificacion(torneoId)
 
   const totalPorGrupo = {
-    invitado_junior: todosProblemas.filter((p) => p.grupo === 'invitado_junior')
-      .length,
+    invitado_junior: todosProblemas.filter(
+      (p) => p.grupo === 'invitado_junior',
+    ).length,
     senior: todosProblemas.filter((p) => p.grupo === 'senior').length,
   }
 
@@ -51,7 +48,28 @@ export const listarParticipantesConProgreso = createServerFn({
       puesto: i + 1,
     })),
   )
+}
+
+export const listarParticipantesConProgreso = createServerFn({
+  method: 'GET',
+}).handler(async () => {
+  const request = getRequest()
+  await requerirAdmin(request.headers)
+
+  const torneo = await obtenerTorneoActual()
+  if (!torneo) return []
+  return construirListaConProgreso(torneo.id)
 })
+
+export const listarParticipantesConProgresoDeTorneo = createServerFn({
+  method: 'GET',
+})
+  .validator(idSchema)
+  .handler(async ({ data: torneoId }) => {
+    const request = getRequest()
+    await requerirAdmin(request.headers)
+    return construirListaConProgreso(torneoId)
+  })
 
 export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
   .validator(idSchema)
@@ -63,9 +81,10 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
       db.select().from(usuarios).where(eq(usuarios.id, usuarioId)),
     )
     if (!usuario) throw new Error('Participante no encontrado')
+    if (!usuario.torneoId) throw new Error('Participante sin torneo asignado')
 
     const { clasificacion, todosUsuarios, torneoIniciadoEn } =
-      await cargarDatosClasificacion()
+      await cargarDatosClasificacion(usuario.torneoId)
     const clasificacionCategoria = clasificacion.filter(
       (f) => f.categoria === usuario.categoria,
     )
@@ -84,7 +103,12 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
         db
           .select()
           .from(problemas)
-          .where(eq(problemas.grupo, grupo))
+          .where(
+            and(
+              eq(problemas.grupo, grupo),
+              eq(problemas.torneoId, usuario.torneoId),
+            ),
+          )
           .orderBy(problemas.orden),
         db.select().from(envios).where(eq(envios.usuarioId, usuarioId)),
         db.select().from(corridas).where(eq(corridas.usuarioId, usuarioId)),
@@ -141,6 +165,13 @@ export const actualizarEstadoProgreso = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const request = getRequest()
     const admin = await requerirAdmin(request.headers)
+
+    const problema = await obtenerUnaFila(
+      db.select().from(problemas).where(eq(problemas.id, data.problemaId)),
+    )
+    if (!problema) throw new Error('Problema no encontrado')
+    const torneoActual = await obtenerTorneoActual()
+    asegurarEsTorneoActual(problema.torneoId ?? '', torneoActual)
 
     const corrida = await obtenerUnaFila(
       db
