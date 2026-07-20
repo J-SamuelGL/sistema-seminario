@@ -3,20 +3,14 @@ import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db/client'
 import { obtenerUnaFila } from '../db/uno'
-import {
-  problemas,
-  casosPrueba,
-  problemaLenguajes,
-  corridas,
-  envios,
-  estadoTorneo,
-} from '../db/schema'
+import { problemas, casosPrueba, problemaLenguajes, corridas, envios } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { ejecutarCasosPrueba } from '../judge/runTestCases'
 import { ocultarDetalleCasosNoVisibles } from '../judge/resultadoPublico'
 import { debeMostrarHint } from '../judge/hintCadence'
 import { generarComentarioEnvio } from '../claude/feedback'
 import { asegurarIniciado } from '../tournament/guard'
+import { obtenerTorneoActual } from '../tournament/actual'
 import { datosEjecucionSchema } from '../envios/validar'
 import { calcularResueltoParaUsuario } from '../envios/resuelto'
 import type { ResultadoCasoPublico } from '../judge/resultadoPublico'
@@ -35,15 +29,16 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
       const request = getRequest()
       const user = await requerirParticipanteIngresado(request.headers)
 
-      const estado = await obtenerUnaFila(
-        db.select().from(estadoTorneo).where(eq(estadoTorneo.id, 1)),
-      )
-      asegurarIniciado(estado ?? { iniciadoEn: null, finalizadoEn: null })
+      const torneoActual = await obtenerTorneoActual()
+      asegurarIniciado(torneoActual ?? { iniciadoEn: null, finalizadoEn: null })
 
       const problema = await obtenerUnaFila(
         db.select().from(problemas).where(eq(problemas.id, data.problemaId)),
       )
       if (!problema) throw new Error('Problema no encontrado')
+      if (problema.torneoId !== user.torneoId) {
+        throw new Error('Este problema no pertenece a tu torneo')
+      }
 
       const filaLenguaje = await obtenerUnaFila(
         db
@@ -134,11 +129,11 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
             // Solo se avisa "recién resuelto" la primera vez que se crea el
             // envio en esta misma corrida, no en corridas posteriores sobre
             // un problema que ya estaba completado.
-            resuelto = estado?.iniciadoEn
+            resuelto = torneoActual?.iniciadoEn
               ? await calcularResueltoParaUsuario(
                   user.id,
                   problema,
-                  estado.iniciadoEn,
+                  torneoActual.iniciadoEn,
                 )
               : null
           }
