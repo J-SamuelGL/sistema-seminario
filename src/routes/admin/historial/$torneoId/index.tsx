@@ -39,6 +39,7 @@ function HistorialTorneoPage() {
                 <tr className={CLASE_FILA}>
                   <th className="p-2">Puesto</th>
                   <th className="p-2">Nombre</th>
+                  <th className="p-2">Correo</th>
                   <th className="p-2">Completados</th>
                   <th className="p-2">Puntos</th>
                 </tr>
@@ -56,6 +57,7 @@ function HistorialTorneoPage() {
                         {f.nombre}
                       </Link>
                     </td>
+                    <td className="p-2">{f.correo}</td>
                     <td className="p-2">{f.cantidadCompletados}</td>
                     <td className="p-2">{f.puntosTotales}</td>
                   </tr>

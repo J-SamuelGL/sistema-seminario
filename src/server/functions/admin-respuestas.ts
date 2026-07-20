@@ -33,22 +33,28 @@ async function construirListaConProgreso(torneoId: string) {
     senior: todosProblemas.filter((p) => p.grupo === 'senior').length,
   }
 
+  const usuarioPorId = new Map(todosUsuarios.map((u) => [u.id, u]))
+
   const agrupado = agruparClasificacionPorCategoria(
     filtrarAsistentes(clasificacion, todosUsuarios),
   )
 
   return (['invitado', 'junior', 'senior'] as const).flatMap((categoria) =>
-    agrupado[categoria].map((fila, i) => ({
-      usuarioId: fila.usuarioId,
-      nombre: fila.nombre,
-      categoria: fila.categoria,
-      cantidadCompletados: fila.cantidadResueltos,
-      cantidadPendientes:
-        totalPorGrupo[grupoDeCategoria(fila.categoria)] -
-        fila.cantidadResueltos,
-      puntosTotales: fila.puntosTotales,
-      puesto: i + 1,
-    })),
+    agrupado[categoria].map((fila, i) => {
+      const usuario = usuarioPorId.get(fila.usuarioId)
+      return {
+        usuarioId: fila.usuarioId,
+        nombre: fila.nombre,
+        categoria: fila.categoria,
+        correo: usuario?.correoOriginal ?? usuario?.email ?? '',
+        cantidadCompletados: fila.cantidadResueltos,
+        cantidadPendientes:
+          totalPorGrupo[grupoDeCategoria(fila.categoria)] -
+          fila.cantidadResueltos,
+        puntosTotales: fila.puntosTotales,
+        puesto: i + 1,
+      }
+    }),
   )
 }
 
@@ -155,6 +161,7 @@ export const obtenerProgresoParticipante = createServerFn({ method: 'GET' })
         id: usuario.id,
         nombre: usuario.name,
         categoria: usuario.categoria,
+        correo: usuario.correoOriginal ?? usuario.email,
       },
       puntosTotales: filaClasificacion?.puntosTotales ?? 0,
       puesto,

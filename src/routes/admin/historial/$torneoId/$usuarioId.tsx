@@ -23,6 +23,7 @@ function HistorialParticipanteDetallePage() {
         {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
         {data.puesto ?? '—'}
       </h1>
+      <p className="text-sm text-gray-500">{data.participante.correo}</p>
       <ProgresoParticipanteTabla
         problemas={data.problemas}
         modoEdicion={false}
