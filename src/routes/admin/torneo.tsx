@@ -10,6 +10,14 @@ import {
 import { estadoTorneoQueryOptions } from '#/server/queries/torneo'
 import { LoadingButton } from '#/components/LoadingButton'
 import { useToastMutation } from '#/components/useToastMutation'
+import {
+  ADMIN_CARD_ACCENTED,
+  ADMIN_TITLE,
+  ADMIN_LABEL_BASE,
+  ADMIN_INPUT_BASE,
+  ADMIN_BUTTON_PRIMARY,
+  ADMIN_BUTTON_DANGER,
+} from '#/components/adminBrandStyles'
 
 export const Route = createFileRoute('/admin/torneo')({
   loader: ({ context }) =>
@@ -50,9 +58,7 @@ function TournamentControlPage() {
     mutationFn: () => concluirTorneo(),
     onSuccess: (resultado) => {
       queryClient.setQueryData(estadoTorneoQueryOptions().queryKey, (previo) =>
-        previo
-          ? { ...previo, finalizadoEn: resultado.finalizadoEn }
-          : previo,
+        previo ? { ...previo, finalizadoEn: resultado.finalizadoEn } : previo,
       )
       toast.success('Torneo concluido.')
     },
@@ -60,9 +66,11 @@ function TournamentControlPage() {
 
   if (!estado) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-bold">Control del torneo</h1>
-        <p className="mt-2">No hay ningún torneo creado todavía.</p>
+      <div className="mx-auto max-w-[560px] px-8 py-8">
+        <h1 className={`text-2xl ${ADMIN_TITLE}`}>Control del torneo</h1>
+        <p className="mt-2 text-admin-ink-soft">
+          No hay ningún torneo creado todavía.
+        </p>
         <FormularioCrearTorneo
           anio={anio}
           setAnio={setAnio}
@@ -74,16 +82,18 @@ function TournamentControlPage() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-xl font-bold">Control del torneo {estado.anio}</h1>
+    <div className="mx-auto max-w-[560px] px-8 py-8">
+      <h1 className={`text-2xl ${ADMIN_TITLE}`}>
+        Control del torneo {estado.anio}
+      </h1>
       {estado.finalizadoEn ? (
-        <div>
-          <p>
+        <div className={`${ADMIN_CARD_ACCENTED} mt-4 p-6`}>
+          <p className="text-admin-ink-soft">
             Torneo concluido a las{' '}
             {new Date(estado.finalizadoEn).toLocaleTimeString()}
           </p>
-          <div className="mt-6 border-t pt-4">
-            <h2 className="font-bold">Crear el torneo del siguiente año</h2>
+          <div className="mt-6 border-t border-admin-line/40 pt-4">
+            <h2 className={ADMIN_TITLE}>Crear el torneo del siguiente año</h2>
             <FormularioCrearTorneo
               anio={anio}
               setAnio={setAnio}
@@ -93,13 +103,13 @@ function TournamentControlPage() {
           </div>
         </div>
       ) : estado.iniciadoEn ? (
-        <div>
-          <p>
+        <div className={`${ADMIN_CARD_ACCENTED} mt-4 p-6`}>
+          <p className="text-admin-ink-soft">
             Torneo iniciado a las{' '}
             {new Date(estado.iniciadoEn).toLocaleTimeString()}
           </p>
           <LoadingButton
-            className="mt-4 rounded bg-red-600 px-4 py-2 text-white"
+            className={`mt-4 ${ADMIN_BUTTON_DANGER}`}
             onClick={() => concluir.mutate()}
             isPending={concluir.isPending}
             label="Concluir torneo"
@@ -108,7 +118,7 @@ function TournamentControlPage() {
         </div>
       ) : (
         <LoadingButton
-          className="rounded bg-red-600 px-4 py-2 text-white"
+          className={`mt-4 ${ADMIN_BUTTON_PRIMARY}`}
           onClick={() => iniciar.mutate()}
           isPending={iniciar.isPending}
           label="Iniciar torneo"
@@ -127,16 +137,16 @@ function FormularioCrearTorneo(props: {
 }) {
   return (
     <form
-      className="mt-4 flex items-end gap-2"
+      className="mt-4 flex items-end gap-3"
       onSubmit={(e) => {
         e.preventDefault()
         props.onSubmit()
       }}
     >
       <div>
-        <label className="mb-1 block font-bold">Año</label>
+        <label className={`${ADMIN_LABEL_BASE} mb-1 block`}>Año</label>
         <input
-          className="border p-2"
+          className={ADMIN_INPUT_BASE}
           type="number"
           value={props.anio}
           onChange={(e) => props.setAnio(e.target.value)}
@@ -144,7 +154,7 @@ function FormularioCrearTorneo(props: {
         />
       </div>
       <LoadingButton
-        className="rounded bg-blue-600 px-4 py-2 text-white"
+        className={ADMIN_BUTTON_PRIMARY}
         type="submit"
         isPending={props.isPending}
         label="Crear torneo"

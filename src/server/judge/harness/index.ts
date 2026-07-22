@@ -13,7 +13,9 @@ type GeneradorPrograma = (
   argumentos: Valor[],
 ) => { archivo: string; contenido: string }
 
-const GENERADORES: Record<string, GeneradorPrograma> = {
+// `Partial<Record<...>>` para que indexar con un `lenguaje: string` desconocido
+// tenga tipo `... | undefined` y la guarda de abajo sea real (no dead code).
+const GENERADORES: Partial<Record<string, GeneradorPrograma>> = {
   python: generarProgramaPython,
   javascript: generarProgramaJavascript,
   php: generarProgramaPhp,

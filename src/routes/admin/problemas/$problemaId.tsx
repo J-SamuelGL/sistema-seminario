@@ -13,6 +13,7 @@ import {
 import { AdminProblemForm } from '#/components/AdminProblemForm'
 import { LoadingButton } from '#/components/LoadingButton'
 import { useToastMutation } from '#/components/useToastMutation'
+import { ADMIN_TITLE, ADMIN_BUTTON_DANGER } from '#/components/adminBrandStyles'
 import type {
   ValorFormularioProblema,
   DatosProblemaEnviado,
@@ -81,8 +82,8 @@ function AdminProblemEditPage() {
   if (problemaId !== 'new' && !data?.problema) {
     return (
       <div className="p-8">
-        <h1 className="text-xl font-bold">Problema no encontrado</h1>
-        <p className="text-red-600">
+        <h1 className={`text-xl ${ADMIN_TITLE}`}>Problema no encontrado</h1>
+        <p className="text-admin-red">
           No existe un problema con el id "{problemaId}".
         </p>
       </div>
@@ -147,16 +148,21 @@ function AdminProblemEditPage() {
   }
 
   return (
-    <div>
-      {problemaId !== 'new' && (
-        <LoadingButton
-          className="m-4 rounded bg-red-600 px-4 py-2 text-white disabled:bg-gray-300"
-          onClick={handleDelete}
-          isPending={eliminar.isPending}
-          label="Eliminar problema"
-          pendingLabel="Eliminando..."
-        />
-      )}
+    <div className="mx-auto max-w-[900px] px-8 py-8">
+      <div className="flex items-center justify-between">
+        <h1 className={`text-2xl ${ADMIN_TITLE}`}>
+          {problemaId === 'new' ? 'Nuevo problema' : 'Editar problema'}
+        </h1>
+        {problemaId !== 'new' && (
+          <LoadingButton
+            className={ADMIN_BUTTON_DANGER}
+            onClick={handleDelete}
+            isPending={eliminar.isPending}
+            label="Eliminar problema"
+            pendingLabel="Eliminando..."
+          />
+        )}
+      </div>
       <AdminProblemForm
         initial={initial}
         onSubmit={handleSubmit}

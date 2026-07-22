@@ -14,6 +14,7 @@ import {
   datosProblemaConIdSchema,
 } from '../problems/validate'
 import { grupoDeCategoria } from '../problems/grupo'
+import { aCategoria } from '../../shared/dominio'
 import { idSchema } from '../validacion/comun'
 import { calcularResueltoParaUsuario } from '../envios/resuelto'
 import {
@@ -41,9 +42,7 @@ export const listarProblemas = createServerFn({ method: 'GET' }).handler(
     const torneo = await obtenerTorneoPorId(user.torneoId)
     if (!torneo?.iniciadoEn) return []
 
-    const grupo = grupoDeCategoria(
-      user.categoria as 'invitado' | 'junior' | 'senior',
-    )
+    const grupo = grupoDeCategoria(aCategoria(user.categoria))
     return db
       .select()
       .from(problemas)
@@ -72,8 +71,7 @@ export const obtenerProblema = createServerFn({ method: 'GET' })
     const puedeVerlo =
       user.rol === 'admin' ||
       (filaProblema?.torneoId === user.torneoId &&
-        filaProblema?.grupo ===
-          grupoDeCategoria(user.categoria as 'invitado' | 'junior' | 'senior') &&
+        filaProblema?.grupo === grupoDeCategoria(aCategoria(user.categoria)) &&
         Boolean(torneoIniciadoEn))
     const problema = filaProblema && puedeVerlo ? filaProblema : null
     const casosCompletos = problema
@@ -112,41 +110,46 @@ export const crearProblema = createServerFn({ method: 'POST' })
     if (!torneo) throw new Error('No hay ningún torneo actual')
 
     const id = crypto.randomUUID()
-    await db.insert(problemas).values({
-      id,
-      torneoId: torneo.id,
-      titulo: data.titulo,
-      descripcion: data.descripcion,
-      dificultad: data.dificultad,
-      categoriaProblema: data.categoriaProblema,
-      orden: data.orden,
-      grupo: data.grupo,
-      puntos: data.puntos,
-      parametros: data.parametros,
-      tipoRetorno: data.tipoRetorno,
+    // Transacción: el problema, sus lenguajes y sus casos se insertan como una
+    // sola unidad; si algún insert falla no queda un problema a medias (sin
+    // lenguajes o sin casos de prueba).
+    await db.transaction(async (tx) => {
+      await tx.insert(problemas).values({
+        id,
+        torneoId: torneo.id,
+        titulo: data.titulo,
+        descripcion: data.descripcion,
+        dificultad: data.dificultad,
+        categoriaProblema: data.categoriaProblema,
+        orden: data.orden,
+        grupo: data.grupo,
+        puntos: data.puntos,
+        parametros: data.parametros,
+        tipoRetorno: data.tipoRetorno,
+      })
+
+      if (data.lenguajes.length > 0) {
+        await tx.insert(problemaLenguajes).values(
+          data.lenguajes.map((l) => ({
+            problemaId: id,
+            lenguaje: l.lenguaje,
+            nombreFuncion: l.nombreFuncion,
+            codigoInicial: l.codigoInicial,
+          })),
+        )
+      }
+
+      if (data.casosPrueba.length > 0) {
+        await tx.insert(casosPrueba).values(
+          data.casosPrueba.map((cp) => ({
+            problemaId: id,
+            argumentos: cp.argumentos,
+            salidaEsperada: cp.salidaEsperada,
+            visible: cp.visible,
+          })),
+        )
+      }
     })
-
-    if (data.lenguajes.length > 0) {
-      await db.insert(problemaLenguajes).values(
-        data.lenguajes.map((l) => ({
-          problemaId: id,
-          lenguaje: l.lenguaje,
-          nombreFuncion: l.nombreFuncion,
-          codigoInicial: l.codigoInicial,
-        })),
-      )
-    }
-
-    if (data.casosPrueba.length > 0) {
-      await db.insert(casosPrueba).values(
-        data.casosPrueba.map((cp) => ({
-          problemaId: id,
-          argumentos: cp.argumentos,
-          salidaEsperada: cp.salidaEsperada,
-          visible: cp.visible,
-        })),
-      )
-    }
 
     return { id, ...data }
   })
@@ -167,46 +170,51 @@ export const actualizarProblema = createServerFn({ method: 'POST' })
     const torneoActual = await obtenerTorneoActual()
     asegurarEsTorneoActual(problemaExistente.torneoId ?? '', torneoActual)
 
-    await db
-      .update(problemas)
-      .set({
-        titulo: data.titulo,
-        descripcion: data.descripcion,
-        dificultad: data.dificultad,
-        categoriaProblema: data.categoriaProblema,
-        orden: data.orden,
-        grupo: data.grupo,
-        puntos: data.puntos,
-        parametros: data.parametros,
-        tipoRetorno: data.tipoRetorno,
-      })
-      .where(eq(problemas.id, data.id))
+    // Transacción: el reemplazo de lenguajes y casos borra-e-inserta; si el
+    // insert fallara tras el delete, sin transacción el problema quedaría sin
+    // lenguajes o sin casos de prueba.
+    await db.transaction(async (tx) => {
+      await tx
+        .update(problemas)
+        .set({
+          titulo: data.titulo,
+          descripcion: data.descripcion,
+          dificultad: data.dificultad,
+          categoriaProblema: data.categoriaProblema,
+          orden: data.orden,
+          grupo: data.grupo,
+          puntos: data.puntos,
+          parametros: data.parametros,
+          tipoRetorno: data.tipoRetorno,
+        })
+        .where(eq(problemas.id, data.id))
 
-    await db
-      .delete(problemaLenguajes)
-      .where(eq(problemaLenguajes.problemaId, data.id))
-    if (data.lenguajes.length > 0) {
-      await db.insert(problemaLenguajes).values(
-        data.lenguajes.map((l) => ({
-          problemaId: data.id,
-          lenguaje: l.lenguaje,
-          nombreFuncion: l.nombreFuncion,
-          codigoInicial: l.codigoInicial,
-        })),
-      )
-    }
+      await tx
+        .delete(problemaLenguajes)
+        .where(eq(problemaLenguajes.problemaId, data.id))
+      if (data.lenguajes.length > 0) {
+        await tx.insert(problemaLenguajes).values(
+          data.lenguajes.map((l) => ({
+            problemaId: data.id,
+            lenguaje: l.lenguaje,
+            nombreFuncion: l.nombreFuncion,
+            codigoInicial: l.codigoInicial,
+          })),
+        )
+      }
 
-    await db.delete(casosPrueba).where(eq(casosPrueba.problemaId, data.id))
-    if (data.casosPrueba.length > 0) {
-      await db.insert(casosPrueba).values(
-        data.casosPrueba.map((cp) => ({
-          problemaId: data.id,
-          argumentos: cp.argumentos,
-          salidaEsperada: cp.salidaEsperada,
-          visible: cp.visible,
-        })),
-      )
-    }
+      await tx.delete(casosPrueba).where(eq(casosPrueba.problemaId, data.id))
+      if (data.casosPrueba.length > 0) {
+        await tx.insert(casosPrueba).values(
+          data.casosPrueba.map((cp) => ({
+            problemaId: data.id,
+            argumentos: cp.argumentos,
+            salidaEsperada: cp.salidaEsperada,
+            visible: cp.visible,
+          })),
+        )
+      }
+    })
   })
 
 export const eliminarProblema = createServerFn({ method: 'POST' })

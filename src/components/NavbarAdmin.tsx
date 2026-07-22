@@ -1,8 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
-import { useActiveLinkClass } from '#/components/useActiveLinkClass'
+import { useAdminActiveLinkClass } from '#/components/useAdminActiveLinkClass'
 import { UserMenu } from '#/components/UserMenu'
+import { AdminRingStripe } from '#/components/AdminRingStripe'
+import { AdminSealMark } from '#/components/AdminSealMark'
 
 const ENLACES = [
   { to: '/admin/participantes', etiqueta: 'Participantes' },
@@ -19,22 +21,33 @@ export function NavbarAdmin() {
   const { data: usuario } = useSuspenseQuery(
     usuarioActualOpcionalQueryOptions(),
   )
-  const claseEnlace = useActiveLinkClass()
+  const claseEnlace = useAdminActiveLinkClass()
 
   return (
-    <nav className="flex items-center justify-between border-b bg-gray-50 px-4 py-2">
-      <div className="flex gap-4">
-        {ENLACES.map((enlace) => (
-          <Link
-            key={enlace.to}
-            to={enlace.to}
-            className={claseEnlace(enlace.to)}
-          >
-            {enlace.etiqueta}
-          </Link>
-        ))}
-      </div>
-      <UserMenu nombre={usuario?.name} />
-    </nav>
+    <div className="sticky top-0 z-10">
+      <AdminRingStripe />
+      <nav className="border-b border-admin-line bg-admin-paper-raised shadow-sm shadow-black/5">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-6 px-6 py-2.5">
+          <div className="flex items-center gap-3">
+            <AdminSealMark className="h-7 w-7" />
+            <span className="font-admin-display text-sm font-bold text-admin-ink">
+              Panel administrativo
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-1">
+            {ENLACES.map((enlace) => (
+              <Link
+                key={enlace.to}
+                to={enlace.to}
+                className={claseEnlace(enlace.to)}
+              >
+                {enlace.etiqueta}
+              </Link>
+            ))}
+          </div>
+          <UserMenu nombre={usuario?.name} />
+        </div>
+      </nav>
+    </div>
   )
 }

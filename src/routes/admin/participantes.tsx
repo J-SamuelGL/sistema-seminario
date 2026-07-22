@@ -15,7 +15,21 @@ import { LoadingButton } from '#/components/LoadingButton'
 import { SegmentedControl } from '#/components/SegmentedControl'
 import { useRegistroConCredenciales } from '#/components/useRegistroConCredenciales'
 import { useToastMutation } from '#/components/useToastMutation'
-import { CLASE_TABLA, CLASE_FILA } from '#/components/tableStyles'
+import {
+  CLASE_TABLA,
+  CLASE_FILA_ADMIN,
+  CLASE_ENCABEZADO_ADMIN,
+} from '#/components/tableStyles'
+import {
+  ADMIN_CARD,
+  ADMIN_CARD_ACCENTED,
+  ADMIN_TITLE,
+  ADMIN_LABEL_BASE,
+  ADMIN_INPUT_BASE,
+  ADMIN_BUTTON_PRIMARY,
+  ADMIN_BUTTON_DANGER,
+  ADMIN_LINK,
+} from '#/components/adminBrandStyles'
 
 export const Route = createFileRoute('/admin/participantes')({
   loader: ({ context }) =>
@@ -104,154 +118,175 @@ function AdminParticipantsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-8">
-      <h1 className="text-xl font-bold">Registrar participantes</h1>
+    <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-8 py-8">
+      <h1 className={`text-2xl ${ADMIN_TITLE}`}>Registrar participantes</h1>
 
-      <div className="flex items-end gap-6">
-        <div>
-          <label className="mb-2 block font-bold">
-            Categoría de este salón:
-          </label>
-          <SegmentedControl
-            options={CATEGORIAS}
-            value={categoriaSalon}
-            onChange={(valor) => {
-              setCategoriaSalon(valor)
-              setSemestreSalon('')
-            }}
-          />
+      <div className={`${ADMIN_CARD_ACCENTED} flex flex-col gap-6 p-6`}>
+        <div className="flex flex-wrap items-end gap-6">
+          <div>
+            <label className={`${ADMIN_LABEL_BASE} mb-2 block`}>
+              Categoría de este salón
+            </label>
+            <SegmentedControl
+              options={CATEGORIAS}
+              value={categoriaSalon}
+              onChange={(valor) => {
+                setCategoriaSalon(valor)
+                setSemestreSalon('')
+              }}
+            />
+          </div>
+
+          {requiereCarnetYSemestre && (
+            <div>
+              <label className={`${ADMIN_LABEL_BASE} mb-2 block`}>
+                Semestre de este salón
+              </label>
+              <select
+                className={ADMIN_INPUT_BASE}
+                value={semestreSalon}
+                onChange={(e) => setSemestreSalon(e.target.value as Semestre)}
+                required
+              >
+                <option value="" disabled>
+                  Semestre
+                </option>
+                {SEMESTRES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
-        {requiereCarnetYSemestre && (
-          <div>
-            <label className="mb-2 block font-bold">
-              Semestre de este salón:
-            </label>
-            <select
-              className="border p-2"
-              value={semestreSalon}
-              onChange={(e) => setSemestreSalon(e.target.value as Semestre)}
-              required
-            >
-              <option value="" disabled>
-                Semestre
-              </option>
-              {SEMESTRES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      <form className="flex flex-col gap-2" onSubmit={handleRegistrar}>
-        <input
-          className="border p-2"
-          placeholder="Nombre completo"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          required
-        />
-        <input
-          className="border p-2"
-          type="email"
-          placeholder="Correo"
-          value={correo}
-          onChange={(e) => setCorreo(e.target.value)}
-          maxLength={255}
-          required
-        />
-        {requiereCarnetYSemestre && (
+        <form className="flex flex-col gap-3" onSubmit={handleRegistrar}>
           <input
-            className="border p-2"
-            placeholder="Carné"
-            value={carnet}
-            onChange={(e) => setCarnet(e.target.value)}
+            className={ADMIN_INPUT_BASE}
+            placeholder="Nombre completo"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
             required
           />
-        )}
-        <LoadingButton
-          className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
-          type="submit"
-          isPending={registrar.isPending}
-          label={`Registrar como ${categoriaSalon}`}
-          pendingLabel="Registrando..."
-        />
-      </form>
-
-      <ul className="flex flex-col gap-2">
-        {registrados.map((p) => (
-          <li key={p.id} className="border p-2">
-            <strong>{p.nombre}</strong> — {p.correo} — {p.categoria}
-            {p.correoEnviado ? (
-              <span className="ml-2 text-green-600">✅ correo enviado</span>
-            ) : (
-              <span className="ml-2 text-yellow-600">
-                ⚠️ no se pudo enviar el correo — contraseña:{' '}
-                {p.contrasenaGenerada}
-              </span>
-            )}
-            <LoadingButton
-              className="ml-2 text-blue-600 underline disabled:text-gray-400"
-              disabled={reenviar.isPending}
-              onClick={() => reenviar.mutate(p.id)}
-              isPending={reenviar.isPending && reenviar.variables === p.id}
-              label="Reenviar credenciales"
-              pendingLabel="Reenviando..."
-              wrapperClassName="inline-flex items-center gap-1"
-              spinnerClassName="h-3 w-3"
+          <input
+            className={ADMIN_INPUT_BASE}
+            type="email"
+            placeholder="Correo"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            maxLength={255}
+            required
+          />
+          {requiereCarnetYSemestre && (
+            <input
+              className={ADMIN_INPUT_BASE}
+              placeholder="Carné"
+              value={carnet}
+              onChange={(e) => setCarnet(e.target.value)}
+              required
             />
-          </li>
-        ))}
-      </ul>
+          )}
+          <LoadingButton
+            className={`self-start ${ADMIN_BUTTON_PRIMARY}`}
+            type="submit"
+            isPending={registrar.isPending}
+            label={`Registrar como ${categoriaSalon}`}
+            pendingLabel="Registrando..."
+          />
+        </form>
+      </div>
 
-      <h2 className="text-lg font-bold">Todos los participantes registrados</h2>
-      <table className={CLASE_TABLA}>
-        <thead>
-          <tr className={CLASE_FILA}>
-            <th className="p-2">Nombre</th>
-            <th className="p-2">Correo</th>
-            <th className="p-2">Categoría</th>
-            <th className="p-2">Semestre</th>
-            <th className="p-2">Check-in</th>
-            <th className="p-2">Envíos</th>
-            <th className="p-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {participantes.map((p) => {
-            const permiso = puedeEliminarParticipante({
-              rol: 'participante',
-              cantidadEnvios: p.cantidadEnvios,
-            })
-            return (
-              <tr key={p.id} className={CLASE_FILA}>
-                <td className="p-2">{p.nombre}</td>
-                <td className="p-2">{p.correo}</td>
-                <td className="p-2">{p.categoria}</td>
-                <td className="p-2">{p.semestre ?? '—'}</td>
-                <td className="p-2">{p.ingresadoEn ? '✅' : '—'}</td>
-                <td className="p-2">{p.cantidadEnvios}</td>
-                <td className="p-2">
-                  <LoadingButton
-                    className="text-red-600 underline disabled:text-gray-400 disabled:no-underline"
-                    disabled={!permiso.puede || eliminar.isPending}
-                    title={permiso.puede ? undefined : permiso.motivo}
-                    onClick={() => eliminar.mutate(p.id)}
-                    isPending={estaEliminando(p.id)}
-                    label="Eliminar"
-                    pendingLabel="Eliminando..."
-                    wrapperClassName="inline-flex items-center gap-1"
-                    spinnerClassName="h-3 w-3"
-                  />
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      {registrados.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {registrados.map((p) => (
+            <li key={p.id} className={`${ADMIN_CARD} p-3 text-sm`}>
+              <strong className="text-admin-ink">{p.nombre}</strong>{' '}
+              <span className="text-admin-ink-soft">
+                — {p.correo} — {p.categoria}
+              </span>
+              {p.correoEnviado ? (
+                <span className="ml-2 text-admin-navy-strong">
+                  ✅ correo enviado
+                </span>
+              ) : (
+                <span className="ml-2 text-admin-gold">
+                  ⚠️ no se pudo enviar el correo — contraseña:{' '}
+                  {p.contrasenaGenerada}
+                </span>
+              )}
+              <LoadingButton
+                className={`ml-2 ${ADMIN_LINK} disabled:cursor-not-allowed disabled:text-admin-ink-faint`}
+                disabled={reenviar.isPending}
+                onClick={() => reenviar.mutate(p.id)}
+                isPending={reenviar.isPending && reenviar.variables === p.id}
+                label="Reenviar credenciales"
+                pendingLabel="Reenviando..."
+                wrapperClassName="inline-flex items-center gap-1"
+                spinnerClassName="h-3 w-3"
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 className={`text-lg ${ADMIN_TITLE}`}>
+        Todos los participantes registrados
+      </h2>
+      <div className={`${ADMIN_CARD} overflow-x-auto`}>
+        <table className={CLASE_TABLA}>
+          <thead>
+            <tr className={CLASE_ENCABEZADO_ADMIN}>
+              <th className="p-3">Nombre</th>
+              <th className="p-3">Correo</th>
+              <th className="p-3">Categoría</th>
+              <th className="p-3">Semestre</th>
+              <th className="p-3">Check-in</th>
+              <th className="p-3">Envíos</th>
+              <th className="p-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {participantes.map((p) => {
+              const permiso = puedeEliminarParticipante({
+                rol: 'participante',
+                cantidadEnvios: p.cantidadEnvios,
+              })
+              return (
+                <tr key={p.id} className={CLASE_FILA_ADMIN}>
+                  <td className="p-3 text-admin-ink">{p.nombre}</td>
+                  <td className="p-3 text-admin-ink-soft">{p.correo}</td>
+                  <td className="p-3 text-admin-ink-soft">{p.categoria}</td>
+                  <td className="p-3 text-admin-ink-soft">
+                    {p.semestre ?? '—'}
+                  </td>
+                  <td className="p-3">{p.ingresadoEn ? '✅' : '—'}</td>
+                  <td className="p-3 text-admin-ink-soft">
+                    {p.cantidadEnvios}
+                  </td>
+                  <td className="p-3">
+                    <LoadingButton
+                      className={
+                        permiso.puede
+                          ? ADMIN_BUTTON_DANGER
+                          : `${ADMIN_BUTTON_DANGER} opacity-50`
+                      }
+                      disabled={!permiso.puede || eliminar.isPending}
+                      title={permiso.puede ? undefined : permiso.motivo}
+                      onClick={() => eliminar.mutate(p.id)}
+                      isPending={estaEliminando(p.id)}
+                      label="Eliminar"
+                      pendingLabel="Eliminando..."
+                      wrapperClassName="inline-flex items-center gap-1"
+                      spinnerClassName="h-3 w-3"
+                    />
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

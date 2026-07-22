@@ -1,5 +1,6 @@
-export type TipoEscalar = 'int' | 'float' | 'bool' | 'string'
-export type TipoDato = TipoEscalar | `list<${TipoEscalar}>`
+import type { TipoDato, TipoEscalar } from '#/shared/dominio'
+
+export type { TipoDato, TipoEscalar }
 
 export type Parametro = { nombre: string; tipo: TipoDato }
 

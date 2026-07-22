@@ -1,14 +1,16 @@
+import type { Categoria, EstadoProgreso } from '../../shared/dominio'
+
 export type RegistroEnvio = {
   usuarioId: string
   problemaId: string
-  estadoProgreso: 'pendiente' | 'completado' | 'aprobado_manual'
+  estadoProgreso: EstadoProgreso
   creadoEn: Date
 }
 
 export type RegistroUsuario = {
   id: string
   nombre: string
-  categoria: 'invitado' | 'junior' | 'senior'
+  categoria: Categoria
 }
 
 export type RegistroProblema = { id: string; puntos: number }
@@ -16,7 +18,7 @@ export type RegistroProblema = { id: string; puntos: number }
 export type FilaClasificacion = {
   usuarioId: string
   nombre: string
-  categoria: 'invitado' | 'junior' | 'senior'
+  categoria: Categoria
   cantidadResueltos: number
   puntosTotales: number
   minutosPenalizacionTotal: number

@@ -2,6 +2,25 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { LoadingButton } from '#/components/LoadingButton'
 import { SegmentedControl } from '#/components/SegmentedControl'
+import {
+  TIPOS_DATO,
+  LENGUAJES as LENGUAJES_DISPONIBLES,
+} from '#/shared/dominio'
+import {
+  ADMIN_TITLE,
+  ADMIN_CARD,
+  ADMIN_LABEL_BASE,
+  ADMIN_INPUT_BASE,
+  ADMIN_TEXTAREA_BASE,
+  ADMIN_BUTTON_PRIMARY,
+  ADMIN_BUTTON_SECONDARY,
+} from '#/components/adminBrandStyles'
+import type {
+  TipoDato,
+  Dificultad,
+  CategoriaProblema,
+  Grupo,
+} from '#/shared/dominio'
 import type { LenguajeProgramacion } from '#/server/envios/validar'
 
 function updateAt<T>(array: T[], index: number, updater: (item: T) => T): T[] {
@@ -10,54 +29,26 @@ function updateAt<T>(array: T[], index: number, updater: (item: T) => T): T[] {
   return next
 }
 
-export type TipoDatoFormulario =
-  | 'int'
-  | 'float'
-  | 'bool'
-  | 'string'
-  | 'list<int>'
-  | 'list<float>'
-  | 'list<bool>'
-  | 'list<string>'
+// Los tipos del formulario reutilizan los del dominio (`#/shared/dominio`); los
+// alias se conservan para no romper los imports existentes. Las listas de opciones
+// con etiqueta son puramente de UI (orden y texto visibles), pero se tipan contra
+// el dominio para que un valor mal escrito falle en compilación.
+export type TipoDatoFormulario = TipoDato
+export type DificultadFormulario = Dificultad
+export type CategoriaProblemaFormulario = CategoriaProblema
 
-const TIPOS_DATO: TipoDatoFormulario[] = [
-  'int',
-  'float',
-  'bool',
-  'string',
-  'list<int>',
-  'list<float>',
-  'list<bool>',
-  'list<string>',
-]
-
-const LENGUAJES_DISPONIBLES: LenguajeProgramacion[] = [
-  'python',
-  'javascript',
-  'java',
-  'csharp',
-  'php',
-]
-
-export type DificultadFormulario = 'Fácil' | 'Intermedio' | 'Difícil'
-
-const DIFICULTADES: { valor: DificultadFormulario; etiqueta: string }[] = [
+const DIFICULTADES: { valor: Dificultad; etiqueta: string }[] = [
   { valor: 'Fácil', etiqueta: 'Fácil' },
   { valor: 'Intermedio', etiqueta: 'Intermedio' },
   { valor: 'Difícil', etiqueta: 'Difícil' },
 ]
 
-const GRUPOS: { valor: 'invitado_junior' | 'senior'; etiqueta: string }[] = [
+const GRUPOS: { valor: Grupo; etiqueta: string }[] = [
   { valor: 'invitado_junior', etiqueta: 'Invitados + Junior' },
   { valor: 'senior', etiqueta: 'Senior' },
 ]
 
-export type CategoriaProblemaFormulario = 'debugging' | 'normal'
-
-const CATEGORIAS_PROBLEMA: {
-  valor: CategoriaProblemaFormulario
-  etiqueta: string
-}[] = [
+const CATEGORIAS_PROBLEMA: { valor: CategoriaProblema; etiqueta: string }[] = [
   { valor: 'normal', etiqueta: 'Normal' },
   { valor: 'debugging', etiqueta: 'Debugging' },
 ]
@@ -80,7 +71,7 @@ export type ValorFormularioProblema = {
   dificultad: DificultadFormulario
   categoriaProblema: CategoriaProblemaFormulario
   orden: number
-  grupo: 'invitado_junior' | 'senior'
+  grupo: Grupo
   puntos: number
   parametros: ParametroFormulario[]
   tipoRetorno: TipoDatoFormulario
@@ -94,7 +85,7 @@ export type DatosProblemaEnviado = {
   dificultad: DificultadFormulario
   categoriaProblema: CategoriaProblemaFormulario
   orden: number
-  grupo: 'invitado_junior' | 'senior'
+  grupo: Grupo
   puntos: number
   parametros: ParametroFormulario[]
   tipoRetorno: TipoDatoFormulario
@@ -233,42 +224,42 @@ export function AdminProblemForm({
 
   return (
     <form
-      className="flex flex-col gap-4 p-4"
+      className="flex flex-col gap-5 py-6"
       onSubmit={(e) => {
         e.preventDefault()
         manejarEnvio()
       }}
     >
-      <label className="flex flex-col gap-1">
-        Título
+      <label className="flex flex-col gap-1.5">
+        <span className={ADMIN_LABEL_BASE}>Título</span>
         <input
-          className="border p-2"
+          className={ADMIN_INPUT_BASE}
           placeholder="Título"
           value={value.titulo}
           onChange={(e) => setValue({ ...value, titulo: e.target.value })}
         />
       </label>
-      <label className="flex flex-col gap-1">
-        Descripción
+      <label className="flex flex-col gap-1.5">
+        <span className={ADMIN_LABEL_BASE}>Descripción</span>
         <textarea
-          className="border p-2"
+          className={ADMIN_TEXTAREA_BASE}
           placeholder="Descripción (markdown)"
           value={value.descripcion}
           onChange={(e) => setValue({ ...value, descripcion: e.target.value })}
         />
       </label>
       <div>
-        <span className="mb-2 block font-bold">Dificultad</span>
+        <span className={`${ADMIN_LABEL_BASE} mb-2 block`}>Dificultad</span>
         <SegmentedControl
           options={DIFICULTADES}
           value={value.dificultad}
           onChange={(dificultad) => setValue({ ...value, dificultad })}
         />
       </div>
-      <label className="flex flex-col gap-1">
-        Puntos
+      <label className="flex flex-col gap-1.5">
+        <span className={ADMIN_LABEL_BASE}>Puntos</span>
         <input
-          className="border p-2"
+          className={ADMIN_INPUT_BASE}
           type="number"
           placeholder="Puntos"
           value={value.puntos}
@@ -278,7 +269,7 @@ export function AdminProblemForm({
         />
       </label>
       <div>
-        <span className="mb-2 block font-bold">Grupo</span>
+        <span className={`${ADMIN_LABEL_BASE} mb-2 block`}>Grupo</span>
         <SegmentedControl
           options={GRUPOS}
           value={value.grupo}
@@ -286,7 +277,7 @@ export function AdminProblemForm({
         />
       </div>
       <div>
-        <span className="mb-2 block font-bold">Categoría</span>
+        <span className={`${ADMIN_LABEL_BASE} mb-2 block`}>Categoría</span>
         <SegmentedControl
           options={CATEGORIAS_PROBLEMA}
           value={value.categoriaProblema}
@@ -296,22 +287,22 @@ export function AdminProblemForm({
         />
       </div>
 
-      <h3 className="font-bold">Parámetros de la función</h3>
+      <h3 className={ADMIN_TITLE}>Parámetros de la función</h3>
       {value.parametros.map((p, i) => (
-        <div key={i} className="flex gap-2">
-          <label className="flex flex-col gap-1">
-            Nombre
+        <div key={i} className={`${ADMIN_CARD} flex gap-3 p-3`}>
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className={ADMIN_LABEL_BASE}>Nombre</span>
             <input
-              className="border p-2"
+              className={ADMIN_INPUT_BASE}
               placeholder="nombre"
               value={p.nombre}
               onChange={(e) => actualizarParametro(i, 'nombre', e.target.value)}
             />
           </label>
-          <label className="flex flex-col gap-1">
-            Tipo
+          <label className="flex flex-col gap-1.5">
+            <span className={ADMIN_LABEL_BASE}>Tipo</span>
             <select
-              className="border p-2"
+              className={ADMIN_INPUT_BASE}
               value={p.tipo}
               onChange={(e) => actualizarParametro(i, 'tipo', e.target.value)}
             >
@@ -326,16 +317,16 @@ export function AdminProblemForm({
       ))}
       <button
         type="button"
-        className="rounded bg-gray-200 px-4 py-2"
+        className={`self-start ${ADMIN_BUTTON_SECONDARY}`}
         onClick={agregarParametro}
       >
         + Agregar parámetro
       </button>
 
-      <label>
-        Tipo de retorno:
+      <label className="flex flex-col gap-1.5">
+        <span className={ADMIN_LABEL_BASE}>Tipo de retorno</span>
         <select
-          className="ml-2 border p-2"
+          className={ADMIN_INPUT_BASE}
           value={value.tipoRetorno}
           onChange={(e) =>
             setValue({
@@ -352,26 +343,27 @@ export function AdminProblemForm({
         </select>
       </label>
 
-      <h3 className="font-bold">Lenguajes</h3>
+      <h3 className={ADMIN_TITLE}>Lenguajes</h3>
       {LENGUAJES_DISPONIBLES.map((lenguaje) => {
         const index = value.lenguajes.findIndex((l) => l.lenguaje === lenguaje)
         const config = index >= 0 ? value.lenguajes[index] : null
         return (
-          <div key={lenguaje} className="border p-2">
-            <label>
+          <div key={lenguaje} className={`${ADMIN_CARD} p-3`}>
+            <label className="flex items-center gap-2">
               <input
                 type="checkbox"
+                className="accent-admin-navy"
                 checked={!!config}
                 onChange={() => alternarLenguaje(lenguaje)}
               />
-              <span className="ml-2">{lenguaje}</span>
+              <span className="font-medium text-admin-ink">{lenguaje}</span>
             </label>
             {config && (
-              <div className="mt-2 flex flex-col gap-2">
-                <label className="flex flex-col gap-1">
-                  Nombre de la función
+              <div className="mt-3 flex flex-col gap-3">
+                <label className="flex flex-col gap-1.5">
+                  <span className={ADMIN_LABEL_BASE}>Nombre de la función</span>
                   <input
-                    className="border p-2"
+                    className={ADMIN_INPUT_BASE}
                     placeholder="Nombre de la función"
                     value={config.nombreFuncion}
                     onChange={(e) =>
@@ -379,10 +371,10 @@ export function AdminProblemForm({
                     }
                   />
                 </label>
-                <label className="flex flex-col gap-1">
-                  Código inicial
+                <label className="flex flex-col gap-1.5">
+                  <span className={ADMIN_LABEL_BASE}>Código inicial</span>
                   <textarea
-                    className="border p-2 font-mono"
+                    className={ADMIN_TEXTAREA_BASE}
                     placeholder="Código inicial"
                     value={config.codigoInicial}
                     onChange={(e) =>
@@ -396,24 +388,26 @@ export function AdminProblemForm({
         )
       })}
 
-      <h3 className="font-bold">Casos de prueba</h3>
+      <h3 className={ADMIN_TITLE}>Casos de prueba</h3>
       {value.casosPrueba.map((caso, i) => (
-        <div key={i} className="flex flex-col gap-2 border p-2">
+        <div key={i} className={`${ADMIN_CARD} flex flex-col gap-3 p-3`}>
           {value.parametros.map((p, j) => (
-            <label key={j} className="flex flex-col gap-1">
-              {p.nombre || `Argumento ${j + 1}`}
+            <label key={j} className="flex flex-col gap-1.5">
+              <span className={ADMIN_LABEL_BASE}>
+                {p.nombre || `Argumento ${j + 1}`}
+              </span>
               <input
-                className="border p-2"
+                className={ADMIN_INPUT_BASE}
                 placeholder={`${p.nombre} (JSON)`}
                 value={caso.argumentosTexto[j] ?? ''}
                 onChange={(e) => actualizarArgumento(i, j, e.target.value)}
               />
             </label>
           ))}
-          <label className="flex flex-col gap-1">
-            Salida esperada
+          <label className="flex flex-col gap-1.5">
+            <span className={ADMIN_LABEL_BASE}>Salida esperada</span>
             <input
-              className="border p-2"
+              className={ADMIN_INPUT_BASE}
               placeholder="Salida esperada (JSON)"
               value={caso.salidaEsperadaTexto}
               onChange={(e) =>
@@ -421,21 +415,22 @@ export function AdminProblemForm({
               }
             />
           </label>
-          <label>
+          <label className="flex items-center gap-2 text-sm text-admin-ink-soft">
             <input
               type="checkbox"
+              className="accent-admin-navy"
               checked={caso.visible}
               onChange={(e) =>
                 actualizarCasoPrueba(i, 'visible', e.target.checked)
               }
             />
-            <span className="ml-2">Visible para el participante</span>
+            Visible para el participante
           </label>
         </div>
       ))}
       <button
         type="button"
-        className="rounded bg-gray-200 px-4 py-2"
+        className={`self-start ${ADMIN_BUTTON_SECONDARY}`}
         onClick={agregarCasoPrueba}
       >
         + Agregar caso de prueba
@@ -443,7 +438,7 @@ export function AdminProblemForm({
 
       <LoadingButton
         type="submit"
-        className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
+        className={`self-start ${ADMIN_BUTTON_PRIMARY}`}
         isPending={isPending}
         label="Guardar"
         pendingLabel="Guardando..."

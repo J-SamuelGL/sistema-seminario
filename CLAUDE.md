@@ -141,7 +141,7 @@ and junior participants see the same problem set, senior a different one.
 TanStack Start file-based routing (`src/routes/`, generated `routeTree.gen.ts` — don't hand-edit). Server-side
 logic lives exclusively under `src/server/`, exposed to routes/components via `createServerFn` wrappers in
 `src/server/functions/*.ts` (one file per domain area: `auth`, `checkin`, `leaderboard`, `participantes`,
-`problems`, `run`, `submit`, `tournament`, `admin-submissions`). Route components call these directly; there is
+`problems`, `run`, `tournament`, `admin-respuestas`, `administradores`, `assistant`, `progreso`). Route components call these directly; there is
 no separate REST/tRPC layer. DB access is Drizzle ORM against MySQL (`src/server/db/schema.ts` /
 `src/server/db/client.ts`); migrations are managed by `drizzle-kit` (`drizzle.config.ts`), pushed via
 `npx drizzle-kit push` (see deploy doc) rather than a checked-in migrations flow.

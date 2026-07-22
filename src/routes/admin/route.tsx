@@ -17,7 +17,7 @@ export const Route = createFileRoute('/admin')({
 
 function AdminLayout() {
   return (
-    <div>
+    <div className="min-h-screen bg-admin-paper text-admin-ink">
       <NavbarAdmin />
       <Outlet />
     </div>

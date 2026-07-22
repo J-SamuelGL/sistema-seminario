@@ -11,6 +11,18 @@ import {
 } from 'drizzle-orm/mysql-core'
 import type { Parametro, Valor } from '../judge/tipos'
 import type { ResultadoCaso } from '../judge/verdict'
+import {
+  ROLES,
+  CATEGORIAS,
+  SEMESTRES,
+  DIFICULTADES,
+  CATEGORIAS_PROBLEMA,
+  GRUPOS,
+  LENGUAJES,
+  TIPOS_DATO,
+  ESTADOS_ENVIO,
+  ESTADOS_PROGRESO,
+} from '../../shared/dominio'
 
 export const torneos = mysqlTable('torneos', {
   id: varchar('id', { length: 36 })
@@ -31,23 +43,10 @@ export const usuarios = mysqlTable('usuario', {
   image: text('imagen'),
   createdAt: timestamp('creado_en').notNull().defaultNow(),
   updatedAt: timestamp('actualizado_en').notNull().defaultNow(),
-  rol: mysqlEnum('rol', ['participante', 'admin'])
-    .notNull()
-    .default('participante'),
-  categoria: mysqlEnum('categoria', ['invitado', 'junior', 'senior']).notNull(),
+  rol: mysqlEnum('rol', ROLES).notNull().default('participante'),
+  categoria: mysqlEnum('categoria', CATEGORIAS).notNull(),
   carnet: text('carnet'),
-  semestre: mysqlEnum('semestre', [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '10',
-  ]),
+  semestre: mysqlEnum('semestre', SEMESTRES),
   tokenIngreso: varchar('token_ingreso', { length: 255 })
     .$defaultFn(() => crypto.randomUUID())
     .notNull()
@@ -105,28 +104,15 @@ export const problemas = mysqlTable('problemas', {
   torneoId: varchar('torneo_id', { length: 36 }).references(() => torneos.id),
   titulo: text('titulo').notNull(),
   descripcion: text('descripcion').notNull(),
-  dificultad: mysqlEnum('dificultad', [
-    'Fácil',
-    'Intermedio',
-    'Difícil',
-  ]).notNull(),
-  categoriaProblema: mysqlEnum('categoria_problema', ['debugging', 'normal'])
+  dificultad: mysqlEnum('dificultad', DIFICULTADES).notNull(),
+  categoriaProblema: mysqlEnum('categoria_problema', CATEGORIAS_PROBLEMA)
     .notNull()
     .default('normal'),
   orden: int('orden').notNull().default(0),
-  grupo: mysqlEnum('grupo', ['invitado_junior', 'senior']).notNull(),
+  grupo: mysqlEnum('grupo', GRUPOS).notNull(),
   puntos: int('puntos').notNull().default(10),
   parametros: json('parametros').$type<Parametro[]>().notNull(),
-  tipoRetorno: mysqlEnum('tipo_retorno', [
-    'int',
-    'float',
-    'bool',
-    'string',
-    'list<int>',
-    'list<float>',
-    'list<bool>',
-    'list<string>',
-  ]).notNull(),
+  tipoRetorno: mysqlEnum('tipo_retorno', TIPOS_DATO).notNull(),
 })
 
 export const problemaLenguajes = mysqlTable(
@@ -138,13 +124,7 @@ export const problemaLenguajes = mysqlTable(
     problemaId: varchar('problema_id', { length: 36 })
       .notNull()
       .references(() => problemas.id, { onDelete: 'cascade' }),
-    lenguaje: mysqlEnum('lenguaje', [
-      'python',
-      'javascript',
-      'java',
-      'csharp',
-      'php',
-    ]).notNull(),
+    lenguaje: mysqlEnum('lenguaje', LENGUAJES).notNull(),
     nombreFuncion: text('nombre_funcion').notNull(),
     codigoInicial: text('codigo_inicial').notNull(),
   },
@@ -179,20 +159,8 @@ export const envios = mysqlTable(
       .references(() => problemas.id),
     codigo: text('codigo').notNull(),
     lenguaje: text('lenguaje').notNull(),
-    estado: mysqlEnum('estado', [
-      'pendiente',
-      'aceptado',
-      'respuesta_incorrecta',
-      'error_ejecucion',
-      'tiempo_excedido',
-    ])
-      .notNull()
-      .default('pendiente'),
-    estadoProgreso: mysqlEnum('estado_progreso', [
-      'pendiente',
-      'completado',
-      'aprobado_manual',
-    ])
+    estado: mysqlEnum('estado', ESTADOS_ENVIO).notNull().default('pendiente'),
+    estadoProgreso: mysqlEnum('estado_progreso', ESTADOS_PROGRESO)
       .notNull()
       .default('pendiente'),
     resultados: json('resultados').$type<ResultadoCaso[]>(),
@@ -243,13 +211,7 @@ export const corridas = mysqlTable(
     contador: int('contador').notNull().default(0),
     ultimoCodigo: text('ultimo_codigo'),
     ultimoLenguaje: text('ultimo_lenguaje'),
-    ultimoVeredicto: mysqlEnum('ultimo_veredicto', [
-      'pendiente',
-      'aceptado',
-      'respuesta_incorrecta',
-      'error_ejecucion',
-      'tiempo_excedido',
-    ]),
+    ultimoVeredicto: mysqlEnum('ultimo_veredicto', ESTADOS_ENVIO),
     ultimosResultados: json('ultimos_resultados').$type<ResultadoCaso[]>(),
     ultimaEjecucionEn: timestamp('ultima_ejecucion_en'),
   },

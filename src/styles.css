@@ -1,6 +1,65 @@
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
+/* Identidad visual "CodeFest 2026" (torneo participante): dorado/pergamino +
+   laurel verde, Cinzel para títulos, Inter para texto, JetBrains Mono para
+   código/datos monoespaciados. Ver src/components/brandStyles.ts para las
+   clases compartidas que usan estos tokens. */
+@theme {
+  --font-display: 'Cinzel', serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  /* Identidad "sello UMG" (solo vistas /admin) — ver src/components/adminBrandStyles.ts. */
+  --font-admin-display: 'Source Serif 4', Georgia, serif;
+
+  --color-parchment: oklch(95% 0.012 78);
+  --color-paper: oklch(99% 0.004 80);
+  --color-paper-soft: oklch(97% 0.008 80);
+
+  --color-ink: oklch(24% 0.02 55);
+  --color-ink-soft: oklch(45% 0.02 60);
+  --color-ink-faint: oklch(45% 0.02 62);
+
+  --color-line: oklch(75% 0.03 70);
+
+  --color-gold: oklch(50% 0.11 76);
+  --color-gold-dark: oklch(38% 0.1 72);
+  --color-gold-soft: oklch(55% 0.08 70);
+  --color-gold-label: oklch(42% 0.08 68);
+  --color-gold-strong: oklch(47% 0.19 75);
+  --color-brass-1: oklch(66% 0.13 82);
+  --color-brass-2: oklch(50% 0.11 76);
+
+  --color-laurel-deep: oklch(26% 0.02 150);
+  --color-laurel: oklch(46% 0.13 152);
+  --color-laurel-soft: oklch(93% 0.05 152);
+  --color-laurel-ink: oklch(32% 0.11 152);
+
+  --color-amber-soft: oklch(93% 0.035 75);
+  --color-amber-ink: oklch(40% 0.08 70);
+
+  --color-char: oklch(24% 0.03 50);
+  --color-char-ink: oklch(96% 0.01 80);
+
+  /* Identidad "sello UMG" (vistas /admin, neutra — sin pergamino/dorado/laurel).
+     No usar fuera de src/components/adminBrandStyles.ts y las rutas admin/**. */
+  --color-admin-paper: #faf9f7;
+  --color-admin-paper-soft: #f1efe9;
+  --color-admin-paper-raised: #ffffff;
+  --color-admin-ink: #23262b;
+  --color-admin-ink-soft: #565b63;
+  --color-admin-ink-faint: #83878e;
+  --color-admin-line: #ddd8ce;
+  --color-admin-line-strong: #c7c1b3;
+  --color-admin-navy: #1f3f63;
+  --color-admin-navy-strong: #16304d;
+  --color-admin-navy-soft: #e7edf3;
+  --color-admin-red: #9c3a32;
+  --color-admin-red-soft: #f3e3e0;
+  --color-admin-gold: #a6842e;
+  --color-admin-gold-soft: #f1e9d3;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -13,6 +72,16 @@ body,
 
 body {
   margin: 0;
+  background:
+    radial-gradient(
+      ellipse 1000px 500px at 50% -8%,
+      oklch(98% 0.02 85) 0%,
+      transparent 60%
+    ),
+    oklch(95% 0.012 78);
+  background-attachment: fixed;
+  color: oklch(24% 0.02 55);
+  font-family: var(--font-sans);
 }
 
 /* Código inline dentro de markdown (Markdown.tsx): sin backticks visibles, con

@@ -5,6 +5,7 @@ import { db } from '../db/client'
 import { problemas, envios } from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { grupoDeCategoria } from '../problems/grupo'
+import { aCategoria } from '../../shared/dominio'
 import { calcularDuraciones } from '../standings/duracion'
 import { cargarDatosClasificacion } from '../standings/datos'
 import { calcularPuestoEntreAsistentes } from '../standings/asistentes'
@@ -32,9 +33,7 @@ export const obtenerMiProgreso = createServerFn({ method: 'GET' }).handler(
       user.id,
     )
 
-    const grupo = grupoDeCategoria(
-      user.categoria as 'invitado' | 'junior' | 'senior',
-    )
+    const grupo = grupoDeCategoria(aCategoria(user.categoria))
     const [problemasDelGrupo, enviosDelUsuario] = await Promise.all([
       db
         .select()

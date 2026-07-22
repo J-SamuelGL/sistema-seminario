@@ -3,7 +3,13 @@ import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db/client'
 import { obtenerUnaFila } from '../db/uno'
-import { problemas, casosPrueba, problemaLenguajes, corridas, envios } from '../db/schema'
+import {
+  problemas,
+  casosPrueba,
+  problemaLenguajes,
+  corridas,
+  envios,
+} from '../db/schema'
 import { requerirParticipanteIngresado } from '../auth/middleware'
 import { ejecutarCasosPrueba } from '../judge/runTestCases'
 import { ocultarDetalleCasosNoVisibles } from '../judge/resultadoPublico'
@@ -177,10 +183,13 @@ export const ejecutarCodigo = createServerFn({ method: 'POST' })
 
         return { resultados: resultadosPublicos, error: null, hint, resuelto }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
+        // Se registra el detalle en el servidor pero no se devuelve al
+        // participante: el mensaje crudo puede exponer internals de Judge0 o de
+        // la base de datos.
+        console.error('Fallo al ejecutar la corrida', err)
         return {
           resultados: [],
-          error: `No se pudo ejecutar el código. Intenta de nuevo. (${message})`,
+          error: 'No se pudo ejecutar el código. Intenta de nuevo.',
           hint: null,
           resuelto: null,
         }

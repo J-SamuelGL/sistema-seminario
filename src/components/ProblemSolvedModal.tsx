@@ -1,4 +1,5 @@
 import { useModalA11y } from '#/components/useModalA11y'
+import { CARD, BUTTON_PRIMARY, GRADIENT_TEXT } from '#/components/brandStyles'
 
 export function ProblemSolvedModal({
   duracionMinutos,
@@ -20,18 +21,18 @@ export function ProblemSolvedModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="resuelto-titulo"
-        className="w-96 rounded bg-white p-4"
+        className={`${CARD} w-96 p-6`}
       >
-        <h2 id="resuelto-titulo" className="text-lg font-bold text-green-600">
+        <h2
+          id="resuelto-titulo"
+          className={`font-display text-lg font-bold ${GRADIENT_TEXT}`}
+        >
           ✅ ¡Problema resuelto!
         </h2>
-        <p className="mt-2 text-sm text-gray-700">
+        <p className="mt-2 text-sm text-ink-soft">
           Lo completaste en {duracionMinutos} min — {puntos} pts.
         </p>
-        <button
-          className="mt-4 w-full rounded bg-green-600 px-4 py-2 text-white"
-          onClick={onAceptar}
-        >
+        <button className={`mt-4 w-full ${BUTTON_PRIMARY}`} onClick={onAceptar}>
           Aceptar
         </button>
       </div>

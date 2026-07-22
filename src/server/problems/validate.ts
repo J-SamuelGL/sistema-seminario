@@ -1,21 +1,20 @@
 import { z } from 'zod'
 import { valorCoincideConTipo } from '../judge/tipos'
 import { idSchema, textoRequerido } from '../validacion/comun'
+import {
+  TIPOS_DATO,
+  LENGUAJES,
+  DIFICULTADES,
+  CATEGORIAS_PROBLEMA,
+  GRUPOS,
+} from '../../shared/dominio'
 import type { Parametro, TipoDato } from '../judge/tipos'
+import type { Grupo } from '../../shared/dominio'
 
-const tipoDatoSchema = z.enum([
-  'int',
-  'float',
-  'bool',
-  'string',
-  'list<int>',
-  'list<float>',
-  'list<bool>',
-  'list<string>',
-])
+const tipoDatoSchema = z.enum(TIPOS_DATO)
 
 const lenguajeProblemaSchema = z.object({
-  lenguaje: z.enum(['python', 'javascript', 'java', 'csharp', 'php']),
+  lenguaje: z.enum(LENGUAJES),
   nombreFuncion: textoRequerido('Falta el nombre de función'),
   codigoInicial: textoRequerido('Falta el código inicial'),
 })
@@ -33,10 +32,10 @@ const casoPruebaSchema = z.object({
 export const datosProblemaSchema = z.object({
   titulo: textoRequerido('El título es requerido'),
   descripcion: textoRequerido('La descripción es requerida'),
-  dificultad: z.enum(['Fácil', 'Intermedio', 'Difícil']),
-  categoriaProblema: z.enum(['debugging', 'normal']),
+  dificultad: z.enum(DIFICULTADES),
+  categoriaProblema: z.enum(CATEGORIAS_PROBLEMA),
   orden: z.number().int(),
-  grupo: z.enum(['invitado_junior', 'senior']),
+  grupo: z.enum(GRUPOS),
   puntos: z.number().int().positive(),
   parametros: z.array(
     z.object({
@@ -67,7 +66,7 @@ export type CasoPruebaProblema = {
 export function validarDatosProblema(input: {
   titulo: string
   descripcion: string
-  grupo: 'invitado_junior' | 'senior'
+  grupo: Grupo
   puntos: number
   parametros: Parametro[]
   tipoRetorno: TipoDato
@@ -77,7 +76,9 @@ export function validarDatosProblema(input: {
   const errores: string[] = []
   if (!input.titulo.trim()) errores.push('El título es requerido')
   if (!input.descripcion.trim()) errores.push('La descripción es requerida')
-  if (input.grupo !== 'invitado_junior' && input.grupo !== 'senior')
+  // Validación en runtime: aunque el tipo diga `Grupo`, este validador también
+  // se ejerce con entradas fuera del tipo (ver test con `grupo: '' as never`).
+  if (!(GRUPOS as readonly string[]).includes(input.grupo))
     errores.push('Debe indicar el grupo (invitado_junior o senior)')
   if (!Number.isInteger(input.puntos) || input.puntos <= 0)
     errores.push('Los puntos deben ser un entero positivo')

@@ -3,6 +3,7 @@ import { cerrarMisOtrasSesiones } from '#/server/functions/sesiones'
 import { useModalA11y } from '#/components/useModalA11y'
 import { useToastMutation } from '#/components/useToastMutation'
 import { LoadingButton } from '#/components/LoadingButton'
+import { CARD } from '#/components/brandStyles'
 
 export function SesionesMultiplesModal({
   sesionesActivas,
@@ -28,15 +29,15 @@ export function SesionesMultiplesModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="sesiones-multiples-titulo"
-        className="w-96 rounded bg-white p-4"
+        className={`${CARD} w-96 p-6`}
       >
         <h2
           id="sesiones-multiples-titulo"
-          className="text-lg font-bold text-red-600"
+          className="font-display text-lg font-bold text-red-600"
         >
           ⚠️ Tienes más de una sesión abierta
         </h2>
-        <p className="mt-2 text-sm text-gray-700">
+        <p className="mt-2 text-sm text-ink-soft">
           Tu cuenta tiene {sesionesActivas} sesiones activas. Para continuar
           resolviendo problemas debes cerrar las sesiones abiertas en otros
           dispositivos.

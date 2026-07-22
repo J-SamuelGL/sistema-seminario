@@ -10,6 +10,13 @@ import { administradoresQueryOptions } from '#/server/queries/administradores'
 import { datosAdministradorSchema } from '#/server/administradores/validar'
 import { LoadingButton } from '#/components/LoadingButton'
 import { useRegistroConCredenciales } from '#/components/useRegistroConCredenciales'
+import {
+  ADMIN_CARD,
+  ADMIN_TITLE,
+  ADMIN_INPUT_BASE,
+  ADMIN_BUTTON_PRIMARY,
+  ADMIN_BUTTON_DANGER,
+} from '#/components/adminBrandStyles'
 
 export const Route = createFileRoute('/admin/administradores')({
   loader: ({ context }) =>
@@ -41,11 +48,11 @@ function AdminAdministradoresPage() {
   const credenciales = registrados.at(0) ?? null
 
   return (
-    <div className="flex flex-col gap-6 p-8">
-      <h1 className="text-xl font-bold">Administradores</h1>
+    <div className="mx-auto flex max-w-[800px] flex-col gap-6 px-8 py-8">
+      <h1 className={`text-2xl ${ADMIN_TITLE}`}>Administradores</h1>
 
       <form
-        className="flex flex-col gap-2"
+        className={`${ADMIN_CARD} flex flex-col gap-3 p-6`}
         onSubmit={(e) => {
           e.preventDefault()
           const validacion = datosAdministradorSchema.safeParse({
@@ -60,14 +67,14 @@ function AdminAdministradoresPage() {
         }}
       >
         <input
-          className="border p-2"
+          className={ADMIN_INPUT_BASE}
           placeholder="Nombre completo"
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           required
         />
         <input
-          className="border p-2"
+          className={ADMIN_INPUT_BASE}
           type="email"
           placeholder="Correo"
           value={correo}
@@ -76,7 +83,7 @@ function AdminAdministradoresPage() {
           required
         />
         <LoadingButton
-          className="rounded bg-blue-600 px-4 py-2 text-white disabled:bg-gray-300"
+          className={`self-start ${ADMIN_BUTTON_PRIMARY}`}
           type="submit"
           isPending={crear.isPending}
           label="Registrar administrador"
@@ -85,7 +92,7 @@ function AdminAdministradoresPage() {
       </form>
 
       {credenciales && !credenciales.correoEnviado && (
-        <p className="text-yellow-600">
+        <p className="text-admin-gold">
           ⚠️ No se pudo enviar el correo — contraseña:{' '}
           {credenciales.contrasenaGenerada}
         </p>
@@ -95,13 +102,14 @@ function AdminAdministradoresPage() {
         {administradores.map((a) => (
           <li
             key={a.id}
-            className="flex items-center justify-between border p-2"
+            className={`${ADMIN_CARD} flex items-center justify-between p-3`}
           >
-            <span>
-              <strong>{a.nombre}</strong> — {a.correo}
+            <span className="text-sm">
+              <strong className="text-admin-ink">{a.nombre}</strong>{' '}
+              <span className="text-admin-ink-soft">— {a.correo}</span>
             </span>
             <LoadingButton
-              className="text-red-600 underline disabled:text-gray-400"
+              className={ADMIN_BUTTON_DANGER}
               disabled={eliminar.isPending}
               onClick={() => eliminar.mutate(a.id)}
               isPending={estaEliminando(a.id)}

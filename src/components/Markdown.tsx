@@ -13,12 +13,17 @@ export function Markdown({ children }: { children: string }) {
             return <>{props.children}</>
           },
           code(props) {
-            const { className, children, node: _node, ...rest } = props
+            const {
+              className,
+              children: contenido,
+              node: _node,
+              ...rest
+            } = props
             const lenguaje = /language-(\w+)/.exec(className ?? '')?.[1]
             if (!lenguaje) {
               return (
                 <code className={className} {...rest}>
-                  {children}
+                  {contenido}
                 </code>
               )
             }
@@ -28,7 +33,7 @@ export function Markdown({ children }: { children: string }) {
                 style={vscDarkPlus}
                 PreTag="div"
               >
-                {String(children).replace(/\n$/, '')}
+                {String(contenido).replace(/\n$/, '')}
               </SyntaxHighlighter>
             )
           },

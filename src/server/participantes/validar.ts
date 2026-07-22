@@ -1,22 +1,12 @@
 import { z } from 'zod'
 import { emailSchema, textoRequerido, TEXT_MAX } from '../validacion/comun'
+import { CATEGORIAS, SEMESTRES } from '../../shared/dominio'
+import type { Categoria, Semestre } from '../../shared/dominio'
 
-export const categoriaSchema = z.enum(['invitado', 'junior', 'senior'])
-export const semestreSchema = z.enum([
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '10',
-])
+export const categoriaSchema = z.enum(CATEGORIAS)
+export const semestreSchema = z.enum(SEMESTRES)
 
-export type Categoria = z.infer<typeof categoriaSchema>
-export type Semestre = z.infer<typeof semestreSchema>
+export type { Categoria, Semestre }
 
 export const datosParticipanteSchema = z
   .object({

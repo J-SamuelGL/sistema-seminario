@@ -8,6 +8,7 @@ import {
 } from '#/server/queries/respuestas'
 import { useToastMutation } from '#/components/useToastMutation'
 import { ProgresoParticipanteTabla } from '#/components/ProgresoParticipanteTabla'
+import { ADMIN_TITLE } from '#/components/adminBrandStyles'
 
 export const Route = createFileRoute('/admin/respuestas/$usuarioId')({
   loader: ({ context, params }) =>
@@ -46,8 +47,8 @@ function AdminRespuestaDetallePage() {
   })
 
   return (
-    <div className="flex flex-col gap-4 p-8">
-      <h1 className="text-xl font-bold">
+    <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-8 py-8">
+      <h1 className={`text-xl ${ADMIN_TITLE}`}>
         {data.participante.nombre} — {data.puntosTotales} pts — Puesto #
         {data.puesto ?? '—'}
       </h1>

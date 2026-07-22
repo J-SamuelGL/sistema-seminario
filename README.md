@@ -72,4 +72,4 @@ npx vitest run tests/judge.test.ts   # un solo archivo
 ## Deploy
 
 Ver [`docs/deployment.md`](./docs/deployment.md) para la guía de deploy a Railway (incluye cómo se
-configura Piston en producción, variables de entorno y verificación post-deploy).
+obtiene la API key de Judge0 CE en RapidAPI, variables de entorno y verificación post-deploy).

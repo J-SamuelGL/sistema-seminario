@@ -1,4 +1,7 @@
 import type { Valor } from './tipos'
+import type { Veredicto } from '#/shared/dominio'
+
+export type { Veredicto }
 
 export type ResultadoCaso = {
   visible: boolean
@@ -11,9 +14,6 @@ export type ResultadoCaso = {
   tiempoExcedido: boolean
   codigoSalida: number
 }
-
-export type Veredicto =
-  'aceptado' | 'respuesta_incorrecta' | 'error_ejecucion' | 'tiempo_excedido'
 
 export function determinarVeredicto(resultados: ResultadoCaso[]): Veredicto {
   if (resultados.length === 0) return 'error_ejecucion'
