@@ -14,7 +14,6 @@ import {
 import { usuarioActualOpcionalQueryOptions } from '#/server/queries/usuarioActual'
 import { miProgresoQueryOptions } from '#/server/queries/progreso'
 import { misSesionesActivasQueryOptions } from '#/server/queries/sesiones'
-import { IconoLista } from '#/components/IconoLista'
 import { ProblemDescription } from '#/components/ProblemDescription'
 import { CodeEditor } from '#/components/CodeEditor'
 import { RunResults } from '#/components/RunResults'
@@ -26,7 +25,13 @@ import { useToastMutation } from '#/components/useToastMutation'
 import { usePrevNextProblema } from '#/components/usePrevNextProblema'
 import { serializarCanonico } from '#/shared/serializar'
 import { CornerFrame } from '#/components/CornerFrame'
-import { BUTTON_PRIMARY } from '#/components/brandStyles'
+import {
+  BUTTON_TERMINAL_RUN,
+  BUTTON_TERMINAL_ASSIST,
+  BUTTON_TERMINAL_NAV,
+  NAV_ARROW_BUTTON,
+  LOGRO_TEXT_NEUTRO,
+} from '#/components/brandStyles'
 import type { LenguajeProgramacion } from '#/server/envios/validar'
 
 export const Route = createFileRoute('/_app/problemas/$problemaId')({
@@ -149,7 +154,7 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
           <Link
             to="/problemas/$problemaId"
             params={{ problemaId: anterior.id }}
-            className="rounded-sm border border-line/60 bg-paper px-3 py-1.5 text-lg text-ink-soft transition-colors hover:text-gold-dark"
+            className={NAV_ARROW_BUTTON}
             aria-label="Problema anterior"
             title={anterior.titulo}
           >
@@ -158,22 +163,16 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
         ) : (
           <span className="w-9" />
         )}
-        <Link
-          to="/problemas"
-          className="flex items-center gap-2 text-sm font-medium text-ink-soft transition-colors hover:text-gold-dark"
-          aria-label="Ver lista de problemas"
-          title="Ver lista de problemas"
-        >
-          <IconoLista className="h-4 w-4 text-gold" />
-          {indice >= 0
-            ? `Problema ${indice + 1} de ${listaProblemas.length}`
-            : 'Ver lista de problemas'}
-        </Link>
+        {indice >= 0 && (
+          <span className={`${LOGRO_TEXT_NEUTRO} text-[11px] whitespace-nowrap`}>
+            ✦ Problema {indice + 1} de {listaProblemas.length} ✦
+          </span>
+        )}
         {siguiente ? (
           <Link
             to="/problemas/$problemaId"
             params={{ problemaId: siguiente.id }}
-            className="rounded-sm border border-line/60 bg-paper px-3 py-1.5 text-lg text-ink-soft transition-colors hover:text-gold-dark"
+            className={NAV_ARROW_BUTTON}
             aria-label="Siguiente problema"
             title={siguiente.titulo}
           >
@@ -184,17 +183,31 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
         )}
       </div>
       <div className="grid grid-cols-2 gap-8 items-start">
-        <ProblemDescription
-          titulo={problema.titulo}
-          descripcion={problema.descripcion}
-          dificultad={problema.dificultad}
-          categoriaProblema={problema.categoriaProblema}
-          ejemplos={ejemplos}
-          resuelto={resuelto}
-        />
         <div>
-          <CornerFrame borderClassName="border-[oklch(40%_0.1_150/0.5)]">
-            <div className="overflow-hidden rounded-md border border-[oklch(40%_0.1_150/0.5)] bg-[oklch(8%_0.02_152)] shadow-2xl shadow-black/30">
+          <div className="mb-4">
+            <Link to="/problemas" className={BUTTON_TERMINAL_NAV}>
+              Volver a la lista de problemas
+            </Link>
+          </div>
+          <ProblemDescription
+            titulo={problema.titulo}
+            descripcion={problema.descripcion}
+            dificultad={problema.dificultad}
+            categoriaProblema={problema.categoriaProblema}
+            ejemplos={ejemplos}
+            resuelto={resuelto}
+          />
+        </div>
+        <div>
+          {/* Altura acotada al viewport (menos navbar + nav de problema
+           * anterior/siguiente de arriba) para que "Ejecutar"/"Preguntar a
+           * Haiku" queden siempre visibles sin necesidad de scroll; el
+           * editor es el único que crece/encoge (flex-1 min-h-0). */}
+          <CornerFrame
+            borderClassName="border-[oklch(40%_0.1_150/0.5)]"
+            className="flex h-[calc(100vh-11rem)] min-h-[420px] flex-col"
+          >
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-[oklch(40%_0.1_150/0.5)] bg-[oklch(8%_0.02_152)] shadow-2xl shadow-black/30">
               <div className="flex items-center justify-between gap-3 border-b border-[oklch(40%_0.1_150/0.5)] bg-[oklch(12%_0.02_150)] px-4 py-2">
                 <span className="font-mono text-xs text-[oklch(45%_0.1_148)]">
                   problema.{lenguaje}
@@ -213,14 +226,16 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
                   ))}
                 </select>
               </div>
-              <CodeEditor
-                lenguaje={lenguaje}
-                value={codigo}
-                onChange={setCodigo}
-              />
+              <div className="min-h-0 flex-1">
+                <CodeEditor
+                  lenguaje={lenguaje}
+                  value={codigo}
+                  onChange={setCodigo}
+                />
+              </div>
               <div className="flex flex-wrap gap-2.5 border-t border-[oklch(40%_0.1_150/0.5)] bg-[oklch(12%_0.02_150)] px-4 py-3">
                 <LoadingButton
-                  className={BUTTON_PRIMARY}
+                  className={BUTTON_TERMINAL_RUN}
                   onClick={() => ejecutar.mutate()}
                   isPending={ejecutar.isPending}
                   label="▶ Ejecutar"
@@ -228,7 +243,7 @@ function ProblemDetailContent({ problemaId }: { problemaId: string }) {
                 />
                 {user && user.categoria === 'invitado' && (
                   <button
-                    className="rounded-sm border border-[oklch(55%_0.12_152/0.6)] bg-[oklch(16%_0.03_152)] px-4 py-2 font-display text-[13px] font-semibold tracking-wide text-[oklch(78%_0.14_152)] uppercase shadow-[0_0_16px_oklch(55%_0.14_152/0.25)] transition hover:shadow-[0_0_22px_oklch(55%_0.14_152/0.4)]"
+                    className={BUTTON_TERMINAL_ASSIST}
                     onClick={() => setMostrarAsistente(true)}
                   >
                     Preguntar a Haiku

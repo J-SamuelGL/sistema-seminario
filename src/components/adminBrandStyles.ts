@@ -12,13 +12,13 @@ export const ADMIN_CARD =
 export const ADMIN_CARD_ACCENTED = `${ADMIN_CARD} border-t-[3px] border-t-admin-navy`
 
 export const ADMIN_BUTTON_PRIMARY =
-  'rounded-md border border-transparent bg-admin-navy px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-admin-navy-strong disabled:cursor-not-allowed disabled:opacity-50'
+  'cursor-pointer rounded-md border border-transparent bg-admin-navy px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-admin-navy-strong disabled:cursor-not-allowed disabled:opacity-50'
 
 export const ADMIN_BUTTON_SECONDARY =
-  'rounded-md border border-admin-line-strong bg-admin-paper-raised px-4 py-2 text-sm font-medium text-admin-ink-soft transition hover:border-admin-navy hover:text-admin-navy disabled:cursor-not-allowed disabled:opacity-50'
+  'cursor-pointer rounded-md border border-admin-line-strong bg-admin-paper-raised px-4 py-2 text-sm font-medium text-admin-ink-soft transition hover:border-admin-navy hover:text-admin-navy disabled:cursor-not-allowed disabled:opacity-50'
 
 export const ADMIN_BUTTON_DANGER =
-  'rounded-md border border-transparent bg-admin-red px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50'
+  'cursor-pointer rounded-md border border-transparent bg-admin-red px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50'
 
 export const ADMIN_INPUT_BASE =
   'w-full rounded-md border border-admin-line-strong bg-admin-paper px-3.5 py-2.5 text-[14.5px] text-admin-ink outline-none focus:border-admin-navy focus:ring-[3px] focus:ring-admin-navy/15'
@@ -34,6 +34,12 @@ export const ADMIN_NAV_LINK_INACTIVE =
   'text-admin-ink-soft hover:text-admin-navy'
 
 export const ADMIN_LINK = 'text-admin-navy underline-offset-2 hover:underline'
+
+/** Bloque "nombre + cerrar sesión" del UserMenu de la navbar admin — mismo
+ * tratamiento tenue-hasta-el-hover que ADMIN_NAV_LINK_INACTIVE. */
+export const ADMIN_NAV_USER_NAME = 'text-sm text-admin-ink-soft'
+export const ADMIN_NAV_LOGOUT =
+  'text-sm font-medium text-admin-ink-soft transition-colors hover:text-admin-red'
 
 export const ADMIN_TEXTAREA_BASE = `${ADMIN_INPUT_BASE} min-h-24 resize-y font-mono text-[13.5px]`
 

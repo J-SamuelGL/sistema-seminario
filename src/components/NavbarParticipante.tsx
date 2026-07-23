@@ -29,9 +29,9 @@ export function NavbarParticipante() {
       <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-6 px-6 py-2.5">
         <div className="flex items-center gap-3">
           <img
-            src="/logo.jpeg"
+            src="/logo-mark.png"
             alt=""
-            className="h-8 w-8 rounded-full border border-gold-soft object-cover"
+            className="h-12 w-12 rounded-full border border-gold-soft bg-paper-soft object-contain p-1.5"
           />
           <span className={`font-display text-sm font-bold ${GRADIENT_TEXT}`}>
             CodeFest 2026

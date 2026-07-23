@@ -7,6 +7,7 @@ import {
   problemas,
   problemaLenguajes,
   casosPrueba,
+  torneos,
 } from '../src/server/db/schema'
 import type { Parametro, TipoDato, Valor } from '../src/server/judge/tipos'
 import type { Semestre } from '../src/server/participantes/validar'
@@ -22,6 +23,7 @@ const TABLAS_A_LIMPIAR = [
   'verificacion',
   'problemas',
   'usuario',
+  'torneos',
 ] as const
 
 async function limpiarBaseDeDatos() {
@@ -42,6 +44,7 @@ async function crearCuenta(input: {
   carnet: string | null
   semestre?: Semestre | null
   ingresado: boolean
+  torneoId: string
 }) {
   const id = crypto.randomUUID()
   const hash = await hashPassword(input.contrasena)
@@ -54,6 +57,7 @@ async function crearCuenta(input: {
     carnet: input.carnet,
     semestre: input.semestre ?? null,
     ingresadoEn: input.ingresado ? new Date() : null,
+    torneoId: input.torneoId,
   })
   await db.insert(cuentas).values({
     id: crypto.randomUUID(),
@@ -84,10 +88,12 @@ async function crearProblemaSeed(input: {
   tipoRetorno: TipoDato
   lenguajes: LenguajeSeed[]
   casosPrueba: CasoSeed[]
+  torneoId: string
 }) {
   const id = crypto.randomUUID()
   await db.insert(problemas).values({
     id,
+    torneoId: input.torneoId,
     titulo: input.titulo,
     descripcion: input.descripcion,
     dificultad: input.dificultad,
@@ -120,6 +126,13 @@ async function crearProblemaSeed(input: {
 async function main() {
   await limpiarBaseDeDatos()
 
+  const torneoId = crypto.randomUUID()
+  await db.insert(torneos).values({
+    id: torneoId,
+    anio: 2026,
+    iniciadoEn: new Date(),
+  })
+
   const adminContrasena = 'AdminPrueba123!'
   const adminId = await crearCuenta({
     nombre: 'Admin de Prueba',
@@ -129,6 +142,7 @@ async function main() {
     categoria: 'senior',
     carnet: null,
     ingresado: true,
+    torneoId,
   })
 
   const participanteContrasena = 'ParticipantePrueba123!'
@@ -140,6 +154,7 @@ async function main() {
     categoria: 'invitado',
     carnet: '99-9999-2026',
     ingresado: true,
+    torneoId,
   })
 
   const CONTRASENA_MASIVA = 'test123'
@@ -153,6 +168,7 @@ async function main() {
       categoria: 'senior', // placeholder sin significado real para admins
       carnet: null,
       ingresado: true,
+      torneoId,
     })
   }
 
@@ -180,10 +196,12 @@ async function main() {
       carnet: `carnet-${String(i).padStart(2, '0')}-2026`,
       semestre: semestreParticipanteMasivo(i),
       ingresado: true,
+      torneoId,
     })
   }
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar vocales (con error)',
     descripcion:
       'Se les da una función que debería contar cuántas vocales tiene un texto, pero tiene un error de depuración: compara la letra contra toda la cadena "aeiou" con igualdad exacta, en vez de verificar si la letra está contenida en esa cadena. Deben encontrar el error y corregirlo.',
@@ -235,6 +253,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar números negativos en una lista',
     descripcion:
       'Escribe una función que reciba una lista de números y devuelva cuántos de ellos son negativos.',
@@ -286,6 +305,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar mayúsculas en un texto',
     descripcion:
       'Escribe una función que reciba un texto y devuelva cuántas letras mayúsculas tiene.',
@@ -337,6 +357,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Duplicar cada número de una lista',
     descripcion:
       'Escribe una función que reciba una lista de números y devuelva una nueva lista donde cada número está multiplicado por 2.',
@@ -388,6 +409,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Verificar si un elemento está en una lista (con error)',
     descripcion:
       'Se les da una función que debería verificar si un elemento está en una lista, pero tiene un error de depuración: el `else` dentro del bucle hace que la función se detenga y devuelva False en cuanto encuentra el primer elemento que no coincide con el objetivo, sin revisar el resto de la lista. Deben encontrar el error y corregirlo.',
@@ -442,6 +464,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Sumar todos los números de una lista (con error)',
     descripcion:
       'Se les da una función que debería sumar todos los números de una lista, pero tiene un error de depuración: el acumulador `total` empieza en 1 en lugar de 0. Deben encontrar el error y corregirlo.',
@@ -493,6 +516,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Filtrar números mayores a un umbral',
     descripcion:
       'Escribe una función que reciba una lista de números y un umbral, y devuelva una nueva lista con solo los números mayores que el umbral.',
@@ -551,6 +575,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar cuántas veces aparece un elemento en una lista',
     descripcion:
       'Escribe una función que reciba una lista de números y un elemento objetivo, y devuelva cuántas veces aparece ese elemento en la lista.',
@@ -605,6 +630,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Encontrar el mayor número de una lista (con error)',
     descripcion:
       'Se les da una función que debería encontrar el número más grande de una lista, pero tiene un error: inicializa el mayor en 0, lo cual falla si todos los números de la lista son negativos (nunca entra a la condición, y devuelve 0 incorrectamente). Deben corregir la inicialización.',
@@ -656,6 +682,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar números dentro de un rango',
     descripcion:
       'Escribe una función que reciba una lista de números y dos valores mínimo y máximo, y devuelva cuántos números de la lista están dentro de ese rango (incluyendo los extremos).',
@@ -719,6 +746,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar cuántos números están por encima del promedio',
     descripcion:
       'Escribe una función que reciba una lista de números y devuelva cuántos son mayores que el promedio de toda la lista.',
@@ -770,6 +798,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Encontrar la posición de un elemento en una lista',
     descripcion:
       'Escribe una función que reciba una lista y un valor objetivo, y devuelva el índice de la primera aparición de ese valor en la lista, o -1 si no está.',
@@ -824,6 +853,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar incrementos consecutivos (con error)',
     descripcion:
       'Se les da una función que debería contar cuántas veces un número de la lista es mayor que el número inmediatamente anterior, pero tiene un error: el bucle empieza en el índice 0, por lo que al comparar el primer elemento termina comparándolo contra el elemento anterior a él (que no existe). Deben corregir el índice en el que empieza el bucle.',
@@ -875,6 +905,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Combinar dos listas alternando elementos',
     descripcion:
       'Escribe una función que reciba dos listas de números y devuelva una nueva lista combinando sus elementos alternando uno de cada lista; si una lista es más corta que la otra, se agregan al final los elementos restantes de la más larga.',
@@ -943,6 +974,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Suma hasta el primer negativo (con error)',
     descripcion:
       'Se les da una función que debería sumar los números de una lista hasta encontrar el primer número negativo (sin incluirlo), pero tiene un error: la variable que acumula la suma se declara dentro del bucle, por lo que se reinicia a 0 en cada vuelta y nunca acumula el total real. Deben corregir dónde se inicializa esa variable.',
@@ -994,6 +1026,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Suma por bloques',
     descripcion:
       'Escribe una función que reciba una lista de números y un tamaño de bloque, y devuelva una lista donde cada elemento es la suma de un bloque consecutivo de esa cantidad de números; el último bloque puede tener menos elementos si la lista no es múltiplo exacto del tamaño de bloque.',
@@ -1060,6 +1093,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Verificar si una lista es simétrica',
     descripcion:
       'Escribe una función que reciba una lista de números y devuelva si es simétrica, es decir, si se lee igual desde el principio que desde el final.',
@@ -1111,6 +1145,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Racha más larga de números positivos (con error)',
     descripcion:
       "Se les da una función que debería encontrar la racha más larga de números positivos consecutivos dentro de una lista. Tiene un error: la línea que reinicia la racha actual a 0 está fuera del 'else', así que se ejecuta en cada iteración sin importar si el número es positivo o no, y nunca deja que la racha crezca más de 1. Deben encontrarlo y corregirlo.",
@@ -1166,6 +1201,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: '¿Existe un par que sume el objetivo?',
     descripcion:
       'Escribe una función que reciba una lista de números y un valor objetivo, y determine si existen dos elementos distintos en la lista (por posición, no necesariamente por valor) cuya suma sea igual al objetivo.',
@@ -1221,6 +1257,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Elemento más frecuente',
     descripcion:
       'Escribe una función que reciba una lista de números y devuelva el que aparece con más frecuencia. Si hay empate entre dos o más números con la misma frecuencia máxima, se debe devolver el que aparece primero en la lista (en orden de recorrido).',
@@ -1273,6 +1310,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: '¿Tiene duplicados? (con error)',
     descripcion:
       "Se les da una función que debería determinar si una lista tiene algún elemento repetido. Tiene un error: agrega cada número al conjunto de 'vistos' antes de verificar si ya estaba ahí, así que la condición siempre resulta verdadera (el elemento que se acaba de agregar, obviamente ya está). Deben encontrarlo y corregirlo.",
@@ -1324,6 +1362,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Intercambiar primer y último elemento (con error)',
     descripcion:
       'Se les da una función que debería intercambiar el primer y el último elemento de una lista. Tiene un error: no usa una variable temporal para guardar el valor original antes de sobreescribirlo, así que el primer elemento pierde su valor original antes de que se use para actualizar el último. Deben encontrarlo y corregirlo.',
@@ -1383,6 +1422,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: '¿Es permutación?',
     descripcion:
       'Escribe una función que reciba dos listas de números y determine si una es una permutación de la otra (es decir, si contienen exactamente los mismos elementos con las mismas frecuencias, sin importar el orden).',
@@ -1459,6 +1499,7 @@ async function main() {
   })
 
   await crearProblemaSeed({
+    torneoId,
     titulo: 'Contar vocales por palabra',
     descripcion:
       'Escribe una función que reciba un texto y devuelva una lista con la cantidad de vocales (a, e, i, o, u, mayúsculas o minúsculas) que tiene cada palabra del texto, en el mismo orden en que aparecen.',

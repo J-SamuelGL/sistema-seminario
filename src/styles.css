@@ -70,6 +70,15 @@ body,
   min-height: 100%;
 }
 
+/* Reserva siempre el ancho del scrollbar vertical: sin esto, páginas cortas
+ * (p.ej. /perfil) que no llegan a necesitar scroll dejan el viewport ~15-17px
+ * más ancho que páginas largas (/problemas, /clasificacion), y la navbar
+ * (mx-auto) se recalcula con ese ancho distinto — se ve como si el padding
+ * cambiara entre rutas cuando en realidad es el ancho disponible el que varía. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   background:

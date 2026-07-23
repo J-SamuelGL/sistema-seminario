@@ -19,7 +19,7 @@ export function CodeEditor({
 }) {
   return (
     <Editor
-      height="70vh"
+      height="100%"
       language={MONACO_LANGUAGE[lenguaje] ?? 'plaintext'}
       value={value}
       onChange={(v) => onChange(v ?? '')}

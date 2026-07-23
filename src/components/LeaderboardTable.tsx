@@ -1,5 +1,10 @@
 import type { FilaClasificacion } from '#/server/standings/calculate'
-import { CARD, GRADIENT_TEXT, PILL_BASE } from '#/components/brandStyles'
+import {
+  CARD,
+  GRADIENT_TEXT,
+  PILL_BASE,
+  ROW_ACTIVE_GRADIENT,
+} from '#/components/brandStyles'
 import { BrandDivider } from '#/components/BrandDivider'
 
 const GRID_COLS =
@@ -50,10 +55,10 @@ export function LeaderboardTable({
           return (
             <div
               key={row.usuarioId}
-              className={`grid ${GRID_COLS} items-center border-b border-line/25 px-4 py-3 text-sm last:border-b-0 ${
+              className={`grid ${GRID_COLS} items-center border-b border-line/25 px-4 py-3 text-sm transition-colors last:border-b-0 ${
                 esYo
-                  ? 'bg-laurel-soft shadow-[inset_0_0_0_1px_oklch(50%_0.13_152/0.7)]'
-                  : ''
+                  ? `${ROW_ACTIVE_GRADIENT} shadow-[inset_1px_0_0_0_var(--color-laurel),inset_0_1px_0_0_color-mix(in_oklch,var(--color-laurel)_40%,transparent),inset_0_-1px_0_0_color-mix(in_oklch,var(--color-laurel)_40%,transparent)] hover:bg-[linear-gradient(90deg,color-mix(in_oklch,var(--color-laurel-soft)_100%,transparent)_0%,color-mix(in_oklch,var(--color-laurel-soft)_25%,transparent)_80%)]`
+                  : 'hover:bg-[linear-gradient(90deg,color-mix(in_oklch,var(--color-laurel-soft)_75%,transparent)_0%,transparent_62%)]'
               }`}
             >
               <div>

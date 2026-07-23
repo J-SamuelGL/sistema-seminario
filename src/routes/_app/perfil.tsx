@@ -3,6 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { usuarioActualQueryOptions } from '#/server/queries/usuarioActual'
 import { QrCode } from '#/components/QrCode'
 import { CornerFrame } from '#/components/CornerFrame'
+import { LogroBanner } from '#/components/LogroBanner'
 import { CARD, GRADIENT_TEXT, PILL_BASE } from '#/components/brandStyles'
 
 export const Route = createFileRoute('/_app/perfil')({
@@ -33,13 +34,13 @@ function ProfilePage() {
         <CornerFrame className="rounded bg-paper-soft p-4">
           <QrCode value={user.tokenIngreso} />
         </CornerFrame>
-        <span
-          className={`${PILL_BASE} ${user.ingresadoEn ? 'bg-laurel-soft text-laurel-ink' : 'border border-line text-ink-faint'}`}
-        >
-          {user.ingresadoEn
-            ? '✅ Ya hiciste check-in'
-            : 'Aún no has hecho check-in'}
-        </span>
+        {user.ingresadoEn ? (
+          <LogroBanner>✦ Ya hiciste check-in ✦</LogroBanner>
+        ) : (
+          <span className={`${PILL_BASE} border border-line text-ink-faint`}>
+            Aún no has hecho check-in
+          </span>
+        )}
       </div>
     </div>
   )

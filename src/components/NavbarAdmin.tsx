@@ -5,6 +5,10 @@ import { useAdminActiveLinkClass } from '#/components/useAdminActiveLinkClass'
 import { UserMenu } from '#/components/UserMenu'
 import { AdminRingStripe } from '#/components/AdminRingStripe'
 import { AdminSealMark } from '#/components/AdminSealMark'
+import {
+  ADMIN_NAV_USER_NAME,
+  ADMIN_NAV_LOGOUT,
+} from '#/components/adminBrandStyles'
 
 const ENLACES = [
   { to: '/admin/participantes', etiqueta: 'Participantes' },
@@ -45,7 +49,11 @@ export function NavbarAdmin() {
               </Link>
             ))}
           </div>
-          <UserMenu nombre={usuario?.name} />
+          <UserMenu
+            nombre={usuario?.name}
+            nombreClassName={ADMIN_NAV_USER_NAME}
+            logoutClassName={ADMIN_NAV_LOGOUT}
+          />
         </div>
       </nav>
     </div>

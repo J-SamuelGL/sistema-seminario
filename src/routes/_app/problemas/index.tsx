@@ -7,8 +7,18 @@ import { ETIQUETAS_CATEGORIA } from '#/components/labels'
 import {
   CARD,
   GRADIENT_TEXT,
-  PILL_BASE,
   DIFICULTAD_PILL,
+  CATEGORIA_PILL_TERMINAL,
+  DURACION_PILL_TERMINAL,
+  KPI_TILE,
+  KPI_TILE_HIGHLIGHT,
+  KPI_TILE_LABEL,
+  KPI_TILE_VALUE,
+  KPI_TILE_VALUE_HIGHLIGHT,
+  ROW_INTERACTIVE,
+  ROW_MARKER_INTERACTIVE,
+  ROW_TITLE_HOVER_GRADIENT,
+  LOGRO_TEXT,
 } from '#/components/brandStyles'
 
 export const Route = createFileRoute('/_app/problemas/')({
@@ -47,11 +57,28 @@ function ProblemsListPage() {
         no se puede volver a abrir.
       </p>
       {progreso.puesto !== null && (
-        <p className="mt-3 text-sm font-medium text-ink">
-          Resueltos: {cantidadResueltos} / {problemas.length} — Faltan{' '}
-          {problemas.length - cantidadResueltos} — {progreso.puntosTotales} pts
-          — Puesto #{progreso.puesto}
-        </p>
+        <div className="mt-4 flex overflow-hidden rounded-sm border border-line/60">
+          <div className={KPI_TILE}>
+            <div className={KPI_TILE_LABEL}>Resueltos</div>
+            <div className={KPI_TILE_VALUE}>
+              {cantidadResueltos} / {problemas.length}
+            </div>
+          </div>
+          <div className={KPI_TILE}>
+            <div className={KPI_TILE_LABEL}>Faltan</div>
+            <div className={KPI_TILE_VALUE}>
+              {problemas.length - cantidadResueltos}
+            </div>
+          </div>
+          <div className={KPI_TILE}>
+            <div className={KPI_TILE_LABEL}>Puntos</div>
+            <div className={KPI_TILE_VALUE}>{progreso.puntosTotales}</div>
+          </div>
+          <div className={KPI_TILE_HIGHLIGHT}>
+            <div className={KPI_TILE_LABEL}>Puesto</div>
+            <div className={KPI_TILE_VALUE_HIGHLIGHT}>#{progreso.puesto}</div>
+          </div>
+        </div>
       )}
       <div className={`${CARD} mt-6 divide-y divide-line/30`}>
         {problemas.map((p) => {
@@ -61,43 +88,57 @@ function ProblemsListPage() {
             estadoProblema.estadoProgreso !== 'pendiente'
           const etiquetaCategoria =
             ETIQUETAS_CATEGORIA[p.categoriaProblema] ?? p.categoriaProblema
-          const pillClase =
-            DIFICULTAD_PILL[p.dificultad] ?? 'bg-paper-soft text-ink-faint'
-          const contenido = (
-            <div className="flex items-center gap-4 px-5 py-3.5">
-              <span className="w-5 font-mono text-xs text-ink-faint">
-                {resuelto ? '✅' : '›'}
+          const pillClase = DIFICULTAD_PILL[p.dificultad] ?? CATEGORIA_PILL_TERMINAL
+          if (resuelto) {
+            return (
+              <div
+                key={p.id}
+                className="flex items-center gap-4 border-l-[3px] border-transparent px-5 py-3.5"
+              >
+                <span className={`${LOGRO_TEXT} shrink-0 text-[9.5px] whitespace-nowrap`}>
+                  ✦ Resuelto ✦
+                </span>
+                <span className="flex-1 text-sm text-ink-soft">
+                  {p.titulo}
+                  <span className="ml-2 inline-flex items-center gap-1.5">
+                    <span className={CATEGORIA_PILL_TERMINAL}>
+                      {etiquetaCategoria}
+                    </span>
+                    {estadoProblema.duracionMinutos !== null && (
+                      <span className={DURACION_PILL_TERMINAL}>
+                        {estadoProblema.duracionMinutos} min
+                      </span>
+                    )}
+                  </span>
+                </span>
+                <span className={pillClase}>{p.dificultad}</span>
+              </div>
+            )
+          }
+          return (
+            <Link
+              key={p.id}
+              to="/problemas/$problemaId"
+              params={{ problemaId: p.id }}
+              className={ROW_INTERACTIVE}
+            >
+              <span
+                className={`w-4 text-center font-mono text-xs ${ROW_MARKER_INTERACTIVE}`}
+              >
+                ✦
               </span>
               <span
-                className={`flex-1 text-sm ${resuelto ? 'text-ink-soft' : 'font-medium text-ink'}`}
+                className={`flex-1 text-sm font-medium text-ink ${ROW_TITLE_HOVER_GRADIENT}`}
               >
                 {p.titulo}
-                <span className="ml-2 text-xs text-ink-faint">
-                  {etiquetaCategoria}
-                  {resuelto &&
-                    estadoProblema.duracionMinutos !== null &&
-                    ` · ${estadoProblema.duracionMinutos} min`}
+                <span className="ml-2 inline-flex">
+                  <span className={CATEGORIA_PILL_TERMINAL}>
+                    {etiquetaCategoria}
+                  </span>
                 </span>
               </span>
-              <span className={`${PILL_BASE} ${pillClase}`}>
-                {p.dificultad}
-              </span>
-            </div>
-          )
-          return (
-            <div key={p.id}>
-              {resuelto ? (
-                contenido
-              ) : (
-                <Link
-                  to="/problemas/$problemaId"
-                  params={{ problemaId: p.id }}
-                  className="block transition-colors hover:bg-paper-soft"
-                >
-                  {contenido}
-                </Link>
-              )}
-            </div>
+              <span className={pillClase}>{p.dificultad}</span>
+            </Link>
           )
         })}
       </div>
