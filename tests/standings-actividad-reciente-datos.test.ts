@@ -33,6 +33,7 @@ describe('cargarActividadReciente', () => {
 
     const problemaViejo = crypto.randomUUID()
     const problemaNuevo = crypto.randomUUID()
+    const problemaPendiente = crypto.randomUUID()
     const problemaOtroTorneo = crypto.randomUUID()
     await db.insert(problemas).values([
       {
@@ -49,6 +50,17 @@ describe('cargarActividadReciente', () => {
       {
         id: problemaNuevo,
         titulo: 'Nuevo',
+        descripcion: 'd',
+        dificultad: 'Fácil',
+        grupo: 'invitado_junior',
+        puntos: 10,
+        parametros: [],
+        tipoRetorno: 'int',
+        torneoId,
+      },
+      {
+        id: problemaPendiente,
+        titulo: 'Pendiente',
         descripcion: 'd',
         dificultad: 'Fácil',
         grupo: 'invitado_junior',
@@ -88,6 +100,14 @@ describe('cargarActividadReciente', () => {
         creadoEn: new Date('2026-07-23T11:00:00Z'),
       },
       {
+        usuarioId,
+        problemaId: problemaPendiente,
+        codigo: 'c',
+        lenguaje: 'python',
+        estadoProgreso: 'pendiente',
+        creadoEn: new Date('2026-07-23T12:30:00Z'),
+      },
+      {
         usuarioId: usuarioOtroTorneo,
         problemaId: problemaOtroTorneo,
         codigo: 'c',
@@ -99,5 +119,7 @@ describe('cargarActividadReciente', () => {
 
     const resultado = await cargarActividadReciente(torneoId, 15)
     expect(resultado.map((r) => r.problemaTitulo)).toEqual(['Nuevo', 'Viejo'])
+    // Verify pendiente status is excluded: 'Pendiente' should NOT appear
+    expect(resultado.map((r) => r.problemaTitulo)).not.toContain('Pendiente')
   })
 })
