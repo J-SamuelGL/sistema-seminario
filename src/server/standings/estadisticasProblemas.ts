@@ -96,7 +96,7 @@ export function problemasResueltosPorTodos(
 export function problemasResueltosPorNadie(
   stats: EstadisticaProblema[],
 ): EstadisticaProblema[] {
-  return stats.filter((s) => s.resueltos === 0)
+  return stats.filter((s) => s.elegibles > 0 && s.resueltos === 0)
 }
 
 /** "En llamas" es una heurística, no una métrica exacta: aproxima "fallos

@@ -95,6 +95,24 @@ describe('problemasResueltosPorTodos / problemasResueltosPorNadie', () => {
       'p2',
     ])
   })
+
+  it('excluye problemas sin elegibles de "resuelto por nadie"', () => {
+    const sinElegibles = [
+      ...base,
+      {
+        problemaId: 'p3',
+        titulo: 'Sin elegibles',
+        grupo: 'senior' as const,
+        elegibles: 0,
+        resueltos: 0,
+        intentosTotales: 0,
+        tasaAciertos: 0,
+      },
+    ]
+    expect(
+      problemasResueltosPorNadie(sinElegibles).map((s) => s.problemaId),
+    ).toEqual(['p2'])
+  })
 })
 
 describe('problemaEnLlamasPorGrupo', () => {

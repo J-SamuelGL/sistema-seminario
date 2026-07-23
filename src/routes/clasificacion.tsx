@@ -11,6 +11,7 @@ import {
   estadisticasProblemasQueryOptions,
   actividadEnVivoQueryOptions,
 } from '#/server/queries/tablero'
+import { NavbarParticipante } from '#/components/NavbarParticipante'
 import { LeaderboardTable } from '#/components/LeaderboardTable'
 import { FiltroCategorias } from '#/components/FiltroCategorias'
 import { CountdownTorneo } from '#/components/CountdownTorneo'
@@ -104,70 +105,73 @@ function LeaderboardPage() {
   )
 
   return (
-    <div className="mx-auto max-w-[1320px] px-6 py-8">
-      <h1
-        className={`font-display text-2xl font-bold tracking-wide uppercase ${GRADIENT_TEXT}`}
-      >
-        Tabla de Clasificación
-      </h1>
-      <div className="mt-2 mb-6 flex items-center gap-3">
-        <BrandDivider />
-        <p className="text-sm text-ink-soft italic">
-          Puntos acumulados por problemas resueltos
-        </p>
-      </div>
+    <div>
+      <NavbarParticipante />
+      <div className="mx-auto max-w-[1320px] px-6 py-8">
+        <h1
+          className={`font-display text-2xl font-bold tracking-wide uppercase ${GRADIENT_TEXT}`}
+        >
+          Tabla de Clasificación
+        </h1>
+        <div className="mt-2 mb-6 flex items-center gap-3">
+          <BrandDivider />
+          <p className="text-sm text-ink-soft italic">
+            Puntos acumulados por problemas resueltos
+          </p>
+        </div>
 
-      <div className="mb-8 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-        <FiltroCategorias
-          activas={categoriasActivas}
-          onToggle={alternarCategoria}
-        />
-        <CountdownTorneo
-          iniciadoEn={estado?.iniciadoEn ? new Date(estado.iniciadoEn) : null}
-          finalizadoEn={
-            estado?.finalizadoEn ? new Date(estado.finalizadoEn) : null
-          }
-        />
-      </div>
-
-      <div
-        className={`grid ${GRID_COLS_POR_CANTIDAD[tablasVisibles.length] ?? 'grid-cols-1'} gap-8`}
-      >
-        {tablasVisibles.map((t) => (
-          <LeaderboardTable
-            key={t.categoria}
-            title={t.titulo}
-            rows={data[t.categoria]}
-            usuarioActualId={usuario?.id}
+        <div className="mb-8 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <FiltroCategorias
+            activas={categoriasActivas}
+            onToggle={alternarCategoria}
           />
-        ))}
-      </div>
+          <CountdownTorneo
+            iniciadoEn={estado?.iniciadoEn ? new Date(estado.iniciadoEn) : null}
+            finalizadoEn={
+              estado?.finalizadoEn ? new Date(estado.finalizadoEn) : null
+            }
+          />
+        </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <ActividadRecienteFeed
-          items={actividadReciente}
-          categoriasActivas={categoriasActivas}
-        />
-        <BeneficiosUsadosPanel
-          items={beneficiosYCupoIa.beneficios}
-          categoriasActivas={categoriasActivas}
-        />
-        {categoriasActivas.has('invitado') && (
-          <IaRestantePanel items={beneficiosYCupoIa.cupoIa} />
-        )}
-        <EstadisticasProblemasPanel
-          resueltosPorTodos={estadisticasProblemas.resueltosPorTodos}
-          resueltosPorNadie={estadisticasProblemas.resueltosPorNadie}
-          grupoVisible={grupoVisible}
-        />
-        <ProblemaEnLlamasPanel
-          porGrupo={estadisticasProblemas.enLlamasPorGrupo}
-          grupoVisible={grupoVisible}
-        />
-        <ActividadEnVivoPanel
-          items={actividadEnVivo}
-          categoriasActivas={categoriasActivas}
-        />
+        <div
+          className={`grid ${GRID_COLS_POR_CANTIDAD[tablasVisibles.length] ?? 'grid-cols-1'} gap-8`}
+        >
+          {tablasVisibles.map((t) => (
+            <LeaderboardTable
+              key={t.categoria}
+              title={t.titulo}
+              rows={data[t.categoria]}
+              usuarioActualId={usuario?.id}
+            />
+          ))}
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <ActividadRecienteFeed
+            items={actividadReciente}
+            categoriasActivas={categoriasActivas}
+          />
+          <BeneficiosUsadosPanel
+            items={beneficiosYCupoIa.beneficios}
+            categoriasActivas={categoriasActivas}
+          />
+          {categoriasActivas.has('invitado') && (
+            <IaRestantePanel items={beneficiosYCupoIa.cupoIa} />
+          )}
+          <EstadisticasProblemasPanel
+            resueltosPorTodos={estadisticasProblemas.resueltosPorTodos}
+            resueltosPorNadie={estadisticasProblemas.resueltosPorNadie}
+            grupoVisible={grupoVisible}
+          />
+          <ProblemaEnLlamasPanel
+            porGrupo={estadisticasProblemas.enLlamasPorGrupo}
+            grupoVisible={grupoVisible}
+          />
+          <ActividadEnVivoPanel
+            items={actividadEnVivo}
+            categoriasActivas={categoriasActivas}
+          />
+        </div>
       </div>
     </div>
   )
