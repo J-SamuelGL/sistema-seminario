@@ -1,0 +1,1 @@
+export const DURACION_TORNEO_MINUTOS = 180
