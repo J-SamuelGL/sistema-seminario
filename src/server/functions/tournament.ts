@@ -14,6 +14,7 @@ import {
 import { obtenerTorneoActual } from '../tournament/actual'
 import { archivarParticipantesDeTorneo } from '../participantes/archivar'
 import { guardarProgresoPendiente } from '../tournament/progresoPendiente'
+import { asignarBeneficios } from '../beneficios/asignar'
 
 export const obtenerEstadoTorneo = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -35,6 +36,8 @@ export const iniciarTorneo = createServerFn({ method: 'POST' }).handler(
       .update(torneos)
       .set({ iniciadoEn })
       .where(eq(torneos.id, torneo.id))
+
+    await asignarBeneficios(torneo.id)
 
     return { iniciadoEn }
   },

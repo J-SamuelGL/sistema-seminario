@@ -1,10 +1,17 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, sql } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/mysql-core'
 import { hashPassword } from 'better-auth/crypto'
 import { db } from '../db/client'
 import { obtenerUnaFila } from '../db/uno'
-import { usuarios, cuentas, envios, preguntasIa } from '../db/schema'
+import {
+  usuarios,
+  cuentas,
+  envios,
+  preguntasIa,
+  beneficios,
+} from '../db/schema'
 import { requerirAdmin } from '../auth/middleware'
 import { crearCuentaParticipante } from '../participantes/crear'
 import { generarContrasenaAleatoria } from '../auth/password'
@@ -12,7 +19,10 @@ import { enviarCorreoBienvenidaSeguro } from '../email/brevo'
 import { puedeEliminarParticipante } from '../../shared/participantes'
 import { datosParticipanteSchema } from '../participantes/validar'
 import { idSchema } from '../validacion/comun'
-import { obtenerTorneoActual, asegurarEsTorneoActual } from '../tournament/actual'
+import {
+  obtenerTorneoActual,
+  asegurarEsTorneoActual,
+} from '../tournament/actual'
 
 export const registrarParticipante = createServerFn({ method: 'POST' })
   .validator(datosParticipanteSchema)
@@ -105,9 +115,32 @@ export const obtenerParticipantes = createServerFn({ method: 'GET' }).handler(
       )
       .groupBy(usuarios.id)
 
+    const objetivoUsuario = alias(usuarios, 'objetivoUsuario')
+    const filasBeneficios = await db
+      .select({
+        usuarioId: beneficios.usuarioId,
+        clave: beneficios.clave,
+        usadoEn: beneficios.usadoEn,
+        objetivoUsuarioId: beneficios.objetivoUsuarioId,
+        objetivoUsuarioNombre: objetivoUsuario.name,
+        objetivoIngeniero: beneficios.objetivoIngeniero,
+      })
+      .from(beneficios)
+      .innerJoin(usuarios, eq(usuarios.id, beneficios.usuarioId))
+      .leftJoin(
+        objetivoUsuario,
+        eq(objetivoUsuario.id, beneficios.objetivoUsuarioId),
+      )
+      .where(eq(usuarios.torneoId, torneo.id))
+
+    const beneficioPorUsuario = new Map(
+      filasBeneficios.map((b) => [b.usuarioId, b]),
+    )
+
     return filas.map((f) => ({
       ...f,
       cantidadEnvios: Number(f.cantidadEnvios),
+      beneficio: beneficioPorUsuario.get(f.id) ?? null,
     }))
   },
 )
