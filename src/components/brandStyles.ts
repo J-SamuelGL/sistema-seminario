@@ -194,3 +194,22 @@ export const NAV_ARROW_BUTTON =
  * navegación anterior/siguiente. */
 export const BUTTON_TERMINAL_NAV =
   'inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-brass-1/60 bg-[oklch(28%_0.03_82)] px-3 py-1.5 font-display text-[12px] font-semibold tracking-wide text-brass-1 uppercase shadow-[0_0_8px_color-mix(in_oklch,var(--color-brass-1)_12%,transparent)] transition hover:border-brass-1 hover:text-[oklch(90%_0.08_85)] hover:shadow-[0_0_22px_5px_color-mix(in_oklch,var(--color-brass-1)_45%,transparent)]'
+
+/** Tarjeta oscura tipo "terminal" para los paneles del tablero público de
+ * clasificación — mismo lenguaje que BUTTON_TERMINAL_RUN/ASSIST y
+ * DIFICULTAD_PILL, pero como contenedor de panel en vez de botón/badge. */
+export const CARD_TERMINAL =
+  'rounded-md border border-[oklch(40%_0.1_150/0.5)] bg-[oklch(8%_0.02_152)] shadow-2xl shadow-black/30'
+
+/** Título de panel dentro de CARD_TERMINAL: mismo small-caps ceremonial que
+ * LOGRO_TEXT, en el verde de la familia terminal. */
+export const PANEL_TITLE_TERMINAL =
+  'font-display text-[13px] font-bold tracking-[0.14em] text-[oklch(78%_0.14_152)] uppercase [font-variant-caps:small-caps]'
+
+/** Pills del filtro de categorías del tablero público — activa/inactiva,
+ * mismo lenguaje visual "terminal" que el resto del módulo. */
+export const PILL_FILTRO_ACTIVA =
+  'cursor-pointer rounded-sm border border-[oklch(55%_0.14_152/0.6)] bg-[oklch(16%_0.03_152)] px-3 py-1.5 font-display text-[11px] font-bold tracking-wide text-[oklch(78%_0.14_152)] uppercase shadow-[0_0_12px_2px_oklch(55%_0.16_152/0.35)] transition'
+
+export const PILL_FILTRO_INACTIVA =
+  'cursor-pointer rounded-sm border border-line/40 bg-[oklch(14%_0.01_150)] px-3 py-1.5 font-display text-[11px] font-bold tracking-wide text-ink-faint uppercase opacity-60 transition hover:opacity-90'
