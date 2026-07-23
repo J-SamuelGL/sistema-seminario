@@ -80,4 +80,61 @@ describe('cargarCupoIaRestante', () => {
       { usuarioId: invitadoId, usuarioNombre: 'Invitada', preguntasRestantes: 2 },
     ])
   })
+
+  it('devuelve 0 preguntasRestantes cuando preguntasIaUsadas >= LIMITE_PREGUNTAS_IA', async () => {
+    const torneoId = crypto.randomUUID()
+    await db.insert(torneos).values({ id: torneoId, anio: 1901 + Math.floor(Math.random() * 100) })
+
+    const invitadoId = crypto.randomUUID()
+    await db.insert(usuarios).values({
+      id: invitadoId,
+      name: 'Invitado Sin Cupo',
+      email: `nospc-${invitadoId}@example.com`,
+      categoria: 'invitado',
+      torneoId,
+      preguntasIaUsadas: 3,
+    })
+
+    const resultado = await cargarCupoIaRestante(torneoId)
+    expect(resultado).toEqual([
+      { usuarioId: invitadoId, usuarioNombre: 'Invitado Sin Cupo', preguntasRestantes: 0 },
+    ])
+  })
+
+  it('no incluye admin invitado, solo participantes invitado', async () => {
+    const torneoId = crypto.randomUUID()
+    await db.insert(torneos).values({ id: torneoId, anio: 1902 + Math.floor(Math.random() * 100) })
+
+    const invitadoParticipanteId = crypto.randomUUID()
+    const invitadoAdminId = crypto.randomUUID()
+    await db.insert(usuarios).values([
+      {
+        id: invitadoParticipanteId,
+        name: 'Invitado Participante',
+        email: `ip-${invitadoParticipanteId}@example.com`,
+        categoria: 'invitado',
+        rol: 'participante',
+        torneoId,
+        preguntasIaUsadas: 1,
+      },
+      {
+        id: invitadoAdminId,
+        name: 'Invitado Admin',
+        email: `ia-${invitadoAdminId}@example.com`,
+        categoria: 'invitado',
+        rol: 'admin',
+        torneoId,
+        preguntasIaUsadas: 1,
+      },
+    ])
+
+    const resultado = await cargarCupoIaRestante(torneoId)
+    expect(resultado).toEqual([
+      {
+        usuarioId: invitadoParticipanteId,
+        usuarioNombre: 'Invitado Participante',
+        preguntasRestantes: 2,
+      },
+    ])
+  })
 })
