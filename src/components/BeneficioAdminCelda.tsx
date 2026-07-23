@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LoadingButton } from '#/components/LoadingButton'
 import { ADMIN_INPUT_BASE, ADMIN_BUTTON_SECONDARY } from '#/components/adminBrandStyles'
 import { CATALOGO_BENEFICIOS, INGENIEROS } from '#/shared/beneficios'
@@ -37,6 +37,14 @@ export function BeneficioAdminCelda({
   const [objetivoIngeniero, setObjetivoIngeniero] = useState(
     beneficio?.objetivoIngeniero ?? '',
   )
+
+  useEffect(() => {
+    setObjetivoUsuarioId(beneficio?.objetivoUsuarioId ?? '')
+  }, [beneficio?.objetivoUsuarioId])
+
+  useEffect(() => {
+    setObjetivoIngeniero(beneficio?.objetivoIngeniero ?? '')
+  }, [beneficio?.objetivoIngeniero])
 
   if (!beneficio) {
     return <span className="text-admin-ink-faint">—</span>
