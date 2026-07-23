@@ -11,10 +11,15 @@ import { participantesQueryOptions } from '#/server/queries/participantes'
 import { puedeEliminarParticipante } from '#/shared/participantes'
 import { datosParticipanteSchema } from '#/server/participantes/validar'
 import type { Categoria, Semestre } from '#/server/participantes/validar'
+import { registrarUsoBeneficio } from '#/server/functions/beneficios'
 import { LoadingButton } from '#/components/LoadingButton'
 import { SegmentedControl } from '#/components/SegmentedControl'
 import { useRegistroConCredenciales } from '#/components/useRegistroConCredenciales'
 import { useToastMutation } from '#/components/useToastMutation'
+import {
+  BeneficioAdminCelda,
+  type RegistrarBeneficioInput,
+} from '#/components/BeneficioAdminCelda'
 import {
   CLASE_TABLA,
   CLASE_FILA_ADMIN,
@@ -96,6 +101,17 @@ function AdminParticipantsPage() {
         contrasenaGenerada: resultado.contrasenaGenerada,
       })
       toast.success('Credenciales reenviadas.')
+    },
+  })
+
+  const registrarBeneficio = useToastMutation({
+    mutationFn: (input: RegistrarBeneficioInput) =>
+      registrarUsoBeneficio({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: participantesQueryOptions().queryKey,
+      })
+      toast.success('Beneficio registrado.')
     },
   })
 
@@ -243,6 +259,7 @@ function AdminParticipantsPage() {
               <th className="p-3">Semestre</th>
               <th className="p-3">Check-in</th>
               <th className="p-3">Envíos</th>
+              <th className="p-3">Beneficio</th>
               <th className="p-3">Acciones</th>
             </tr>
           </thead>
@@ -263,6 +280,20 @@ function AdminParticipantsPage() {
                   <td className="p-3">{p.ingresadoEn ? '✅' : '—'}</td>
                   <td className="p-3 text-admin-ink-soft">
                     {p.cantidadEnvios}
+                  </td>
+                  <td className="p-3">
+                    <BeneficioAdminCelda
+                      usuarioId={p.id}
+                      beneficio={p.beneficio}
+                      opcionesObjetivo={participantes
+                        .filter((x) => x.id !== p.id)
+                        .map((x) => ({ id: x.id, nombre: x.nombre }))}
+                      onRegistrar={(input) => registrarBeneficio.mutate(input)}
+                      estaGuardando={
+                        registrarBeneficio.isPending &&
+                        registrarBeneficio.variables?.usuarioId === p.id
+                      }
+                    />
                   </td>
                   <td className="p-3">
                     <LoadingButton
