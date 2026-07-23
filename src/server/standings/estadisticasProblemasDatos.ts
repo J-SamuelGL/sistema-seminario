@@ -13,9 +13,15 @@ export async function cargarEstadisticasProblemas(torneoId: string) {
     db
       .select({ categoria: usuarios.categoria })
       .from(usuarios)
-      .where(and(eq(usuarios.torneoId, torneoId), eq(usuarios.rol, 'participante'))),
+      .where(
+        and(eq(usuarios.torneoId, torneoId), eq(usuarios.rol, 'participante')),
+      ),
     db
-      .select({ id: problemas.id, titulo: problemas.titulo, grupo: problemas.grupo })
+      .select({
+        id: problemas.id,
+        titulo: problemas.titulo,
+        grupo: problemas.grupo,
+      })
       .from(problemas)
       .where(eq(problemas.torneoId, torneoId)),
   ])
@@ -43,7 +49,12 @@ export async function cargarEstadisticasProblemas(torneoId: string) {
         ])
       : [[], []]
 
-  const todas = calcularEstadisticasProblemas(todosUsuarios, todosEnvios, todasCorridas, todosProblemas)
+  const todas = calcularEstadisticasProblemas(
+    todosUsuarios,
+    todosEnvios,
+    todasCorridas,
+    todosProblemas,
+  )
 
   return {
     todas,

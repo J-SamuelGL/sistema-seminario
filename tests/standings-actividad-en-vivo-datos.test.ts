@@ -48,8 +48,18 @@ describe('cargarActividadEnVivo', () => {
     const haceUnaHora = new Date(ahora.getTime() - 3600000)
 
     await db.insert(corridas).values([
-      { usuarioId: usuarioReciente, problemaId, contador: 1, ultimaEjecucionEn: haceUnMinuto },
-      { usuarioId: usuarioViejo, problemaId, contador: 1, ultimaEjecucionEn: haceUnaHora },
+      {
+        usuarioId: usuarioReciente,
+        problemaId,
+        contador: 1,
+        ultimaEjecucionEn: haceUnMinuto,
+      },
+      {
+        usuarioId: usuarioViejo,
+        problemaId,
+        contador: 1,
+        ultimaEjecucionEn: haceUnaHora,
+      },
     ])
 
     const resultado = await cargarActividadEnVivo(torneoId)

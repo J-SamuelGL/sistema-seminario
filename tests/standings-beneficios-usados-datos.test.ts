@@ -9,7 +9,9 @@ import {
 describe('cargarBeneficiosUsados', () => {
   it('incluye el nombre del objetivo cuando el beneficio ya se usó', async () => {
     const torneoId = crypto.randomUUID()
-    await db.insert(torneos).values({ id: torneoId, anio: 1700 + Math.floor(Math.random() * 100) })
+    await db
+      .insert(torneos)
+      .values({ id: torneoId, anio: 1700 + Math.floor(Math.random() * 100) })
 
     const usuarioId = crypto.randomUUID()
     const objetivoId = crypto.randomUUID()
@@ -52,7 +54,9 @@ describe('cargarBeneficiosUsados', () => {
 describe('cargarCupoIaRestante', () => {
   it('calcula el cupo restante solo para participantes invitado', async () => {
     const torneoId = crypto.randomUUID()
-    await db.insert(torneos).values({ id: torneoId, anio: 1900 + Math.floor(Math.random() * 100) })
+    await db
+      .insert(torneos)
+      .values({ id: torneoId, anio: 1900 + Math.floor(Math.random() * 100) })
 
     const invitadoId = crypto.randomUUID()
     const seniorId = crypto.randomUUID()
@@ -77,13 +81,19 @@ describe('cargarCupoIaRestante', () => {
 
     const resultado = await cargarCupoIaRestante(torneoId)
     expect(resultado).toEqual([
-      { usuarioId: invitadoId, usuarioNombre: 'Invitada', preguntasRestantes: 2 },
+      {
+        usuarioId: invitadoId,
+        usuarioNombre: 'Invitada',
+        preguntasRestantes: 2,
+      },
     ])
   })
 
   it('devuelve 0 preguntasRestantes cuando preguntasIaUsadas >= LIMITE_PREGUNTAS_IA', async () => {
     const torneoId = crypto.randomUUID()
-    await db.insert(torneos).values({ id: torneoId, anio: 1901 + Math.floor(Math.random() * 100) })
+    await db
+      .insert(torneos)
+      .values({ id: torneoId, anio: 1901 + Math.floor(Math.random() * 100) })
 
     const invitadoId = crypto.randomUUID()
     await db.insert(usuarios).values({
@@ -97,13 +107,19 @@ describe('cargarCupoIaRestante', () => {
 
     const resultado = await cargarCupoIaRestante(torneoId)
     expect(resultado).toEqual([
-      { usuarioId: invitadoId, usuarioNombre: 'Invitado Sin Cupo', preguntasRestantes: 0 },
+      {
+        usuarioId: invitadoId,
+        usuarioNombre: 'Invitado Sin Cupo',
+        preguntasRestantes: 0,
+      },
     ])
   })
 
   it('no incluye admin invitado, solo participantes invitado', async () => {
     const torneoId = crypto.randomUUID()
-    await db.insert(torneos).values({ id: torneoId, anio: 1902 + Math.floor(Math.random() * 100) })
+    await db
+      .insert(torneos)
+      .values({ id: torneoId, anio: 1902 + Math.floor(Math.random() * 100) })
 
     const invitadoParticipanteId = crypto.randomUUID()
     const invitadoAdminId = crypto.randomUUID()

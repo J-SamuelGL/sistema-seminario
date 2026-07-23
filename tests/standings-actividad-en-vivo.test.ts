@@ -19,7 +19,12 @@ describe('calcularActividadEnVivo', () => {
       10,
     )
     expect(resultado).toEqual([
-      { usuarioId: 'u1', usuarioNombre: 'Ana', usuarioCategoria: 'invitado', problemaTitulo: 'Suma' },
+      {
+        usuarioId: 'u1',
+        usuarioNombre: 'Ana',
+        usuarioCategoria: 'invitado',
+        problemaTitulo: 'Suma',
+      },
     ])
   })
 
@@ -62,7 +67,12 @@ describe('calcularActividadEnVivo', () => {
       10,
     )
     expect(resultado).toEqual([
-      { usuarioId: 'u1', usuarioNombre: 'Ana', usuarioCategoria: 'invitado', problemaTitulo: 'Resta' },
+      {
+        usuarioId: 'u1',
+        usuarioNombre: 'Ana',
+        usuarioCategoria: 'invitado',
+        problemaTitulo: 'Resta',
+      },
     ])
   })
 

@@ -26,7 +26,10 @@ export function calcularActividadEnVivo(
   for (const c of corridas) {
     if (!c.ultimaEjecucionEn) continue
     const actual = masRecientePorUsuario.get(c.usuarioId)
-    if (!actual || c.ultimaEjecucionEn.getTime() > actual.ultimaEjecucionEn!.getTime()) {
+    if (
+      !actual ||
+      c.ultimaEjecucionEn.getTime() > actual.ultimaEjecucionEn!.getTime()
+    ) {
       masRecientePorUsuario.set(c.usuarioId, c)
     }
   }

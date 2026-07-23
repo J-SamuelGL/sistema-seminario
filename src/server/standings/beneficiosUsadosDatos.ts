@@ -16,7 +16,9 @@ export type BeneficioUsadoItem = {
   objetivoIngeniero: Ingeniero | null
 }
 
-export async function cargarBeneficiosUsados(torneoId: string): Promise<BeneficioUsadoItem[]> {
+export async function cargarBeneficiosUsados(
+  torneoId: string,
+): Promise<BeneficioUsadoItem[]> {
   const objetivoUsuario = alias(usuarios, 'objetivoUsuario')
   return db
     .select({
@@ -30,7 +32,10 @@ export async function cargarBeneficiosUsados(torneoId: string): Promise<Benefici
     })
     .from(beneficios)
     .innerJoin(usuarios, eq(usuarios.id, beneficios.usuarioId))
-    .leftJoin(objetivoUsuario, eq(objetivoUsuario.id, beneficios.objetivoUsuarioId))
+    .leftJoin(
+      objetivoUsuario,
+      eq(objetivoUsuario.id, beneficios.objetivoUsuarioId),
+    )
     .where(eq(usuarios.torneoId, torneoId))
 }
 
@@ -40,7 +45,9 @@ export type CupoIaItem = {
   preguntasRestantes: number
 }
 
-export async function cargarCupoIaRestante(torneoId: string): Promise<CupoIaItem[]> {
+export async function cargarCupoIaRestante(
+  torneoId: string,
+): Promise<CupoIaItem[]> {
   const filas = await db
     .select({
       usuarioId: usuarios.id,

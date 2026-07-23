@@ -58,12 +58,22 @@ function LeaderboardPage() {
   )
 
   const { data } = useSuspenseQuery(clasificacionQueryOptions())
-  const { data: usuario } = useSuspenseQuery(usuarioActualOpcionalQueryOptions())
+  const { data: usuario } = useSuspenseQuery(
+    usuarioActualOpcionalQueryOptions(),
+  )
   const { data: estado } = useSuspenseQuery(estadoTorneoQueryOptions())
-  const { data: actividadReciente } = useSuspenseQuery(actividadRecienteQueryOptions())
-  const { data: beneficiosYCupoIa } = useSuspenseQuery(beneficiosUsadosQueryOptions())
-  const { data: estadisticasProblemas } = useSuspenseQuery(estadisticasProblemasQueryOptions())
-  const { data: actividadEnVivo } = useSuspenseQuery(actividadEnVivoQueryOptions())
+  const { data: actividadReciente } = useSuspenseQuery(
+    actividadRecienteQueryOptions(),
+  )
+  const { data: beneficiosYCupoIa } = useSuspenseQuery(
+    beneficiosUsadosQueryOptions(),
+  )
+  const { data: estadisticasProblemas } = useSuspenseQuery(
+    estadisticasProblemasQueryOptions(),
+  )
+  const { data: actividadEnVivo } = useSuspenseQuery(
+    actividadEnVivoQueryOptions(),
+  )
 
   function alternarCategoria(categoria: Categoria) {
     setCategoriasActivas((previo) => {
@@ -80,30 +90,43 @@ function LeaderboardPage() {
 
   function grupoVisible(grupo: Grupo) {
     return CATEGORIAS.some(
-      (categoria) => categoriasActivas.has(categoria) && grupoDeCategoria(categoria) === grupo,
+      (categoria) =>
+        categoriasActivas.has(categoria) &&
+        grupoDeCategoria(categoria) === grupo,
     )
   }
 
   if (!data.iniciado)
     return <p className="p-8 text-ink-soft">El torneo aún no ha comenzado.</p>
 
-  const tablasVisibles = TABLAS_CATEGORIA.filter((t) => categoriasActivas.has(t.categoria))
+  const tablasVisibles = TABLAS_CATEGORIA.filter((t) =>
+    categoriasActivas.has(t.categoria),
+  )
 
   return (
     <div className="mx-auto max-w-[1320px] px-6 py-8">
-      <h1 className={`font-display text-2xl font-bold tracking-wide uppercase ${GRADIENT_TEXT}`}>
+      <h1
+        className={`font-display text-2xl font-bold tracking-wide uppercase ${GRADIENT_TEXT}`}
+      >
         Tabla de Clasificación
       </h1>
       <div className="mt-2 mb-6 flex items-center gap-3">
         <BrandDivider />
-        <p className="text-sm text-ink-soft italic">Puntos acumulados por problemas resueltos</p>
+        <p className="text-sm text-ink-soft italic">
+          Puntos acumulados por problemas resueltos
+        </p>
       </div>
 
       <div className="mb-8 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-        <FiltroCategorias activas={categoriasActivas} onToggle={alternarCategoria} />
+        <FiltroCategorias
+          activas={categoriasActivas}
+          onToggle={alternarCategoria}
+        />
         <CountdownTorneo
           iniciadoEn={estado?.iniciadoEn ? new Date(estado.iniciadoEn) : null}
-          finalizadoEn={estado?.finalizadoEn ? new Date(estado.finalizadoEn) : null}
+          finalizadoEn={
+            estado?.finalizadoEn ? new Date(estado.finalizadoEn) : null
+          }
         />
       </div>
 
@@ -121,7 +144,10 @@ function LeaderboardPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <ActividadRecienteFeed items={actividadReciente} categoriasActivas={categoriasActivas} />
+        <ActividadRecienteFeed
+          items={actividadReciente}
+          categoriasActivas={categoriasActivas}
+        />
         <BeneficiosUsadosPanel
           items={beneficiosYCupoIa.beneficios}
           categoriasActivas={categoriasActivas}
@@ -138,7 +164,10 @@ function LeaderboardPage() {
           porGrupo={estadisticasProblemas.enLlamasPorGrupo}
           grupoVisible={grupoVisible}
         />
-        <ActividadEnVivoPanel items={actividadEnVivo} categoriasActivas={categoriasActivas} />
+        <ActividadEnVivoPanel
+          items={actividadEnVivo}
+          categoriasActivas={categoriasActivas}
+        />
       </div>
     </div>
   )

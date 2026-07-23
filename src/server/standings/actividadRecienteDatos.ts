@@ -29,7 +29,10 @@ export async function cargarActividadReciente(
     .innerJoin(usuarios, eq(usuarios.id, envios.usuarioId))
     .innerJoin(problemas, eq(problemas.id, envios.problemaId))
     .where(
-      and(eq(usuarios.torneoId, torneoId), inArray(envios.estadoProgreso, ['completado', 'aprobado_manual'])),
+      and(
+        eq(usuarios.torneoId, torneoId),
+        inArray(envios.estadoProgreso, ['completado', 'aprobado_manual']),
+      ),
     )
     .orderBy(desc(envios.creadoEn))
     .limit(limite)

@@ -72,7 +72,8 @@ export function calcularEstadisticasProblemas(
   return problemas.map((p): EstadisticaProblema => {
     const resueltos = resueltosPorProblema.get(p.id)?.size ?? 0
     const intentosTotales = intentosPorProblema.get(p.id) ?? 0
-    const participantesConIntento = participantesConIntentoPorProblema.get(p.id)?.size ?? 0
+    const participantesConIntento =
+      participantesConIntentoPorProblema.get(p.id)?.size ?? 0
     return {
       problemaId: p.id,
       titulo: p.titulo,
@@ -80,16 +81,21 @@ export function calcularEstadisticasProblemas(
       elegibles: elegiblesPorGrupo.get(p.grupo) ?? 0,
       resueltos,
       intentosTotales,
-      tasaAciertos: participantesConIntento > 0 ? resueltos / participantesConIntento : 0,
+      tasaAciertos:
+        participantesConIntento > 0 ? resueltos / participantesConIntento : 0,
     }
   })
 }
 
-export function problemasResueltosPorTodos(stats: EstadisticaProblema[]): EstadisticaProblema[] {
+export function problemasResueltosPorTodos(
+  stats: EstadisticaProblema[],
+): EstadisticaProblema[] {
   return stats.filter((s) => s.elegibles > 0 && s.resueltos >= s.elegibles)
 }
 
-export function problemasResueltosPorNadie(stats: EstadisticaProblema[]): EstadisticaProblema[] {
+export function problemasResueltosPorNadie(
+  stats: EstadisticaProblema[],
+): EstadisticaProblema[] {
   return stats.filter((s) => s.resueltos === 0)
 }
 
@@ -102,7 +108,9 @@ export function problemaEnLlamasPorGrupo(
 ): Partial<Record<Grupo, EstadisticaProblema>> {
   const resultado: Partial<Record<Grupo, EstadisticaProblema>> = {}
   for (const grupo of GRUPOS) {
-    const candidatos = stats.filter((s) => s.grupo === grupo && s.intentosTotales > 0)
+    const candidatos = stats.filter(
+      (s) => s.grupo === grupo && s.intentosTotales > 0,
+    )
     if (candidatos.length === 0) continue
     candidatos.sort((a, b) => {
       const fallosA = a.intentosTotales - a.resueltos

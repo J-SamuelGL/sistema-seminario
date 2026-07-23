@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { db } from '../src/server/db/client'
-import { torneos, usuarios, problemas, envios, corridas } from '../src/server/db/schema'
+import {
+  torneos,
+  usuarios,
+  problemas,
+  envios,
+  corridas,
+} from '../src/server/db/schema'
 import { cargarEstadisticasProblemas } from '../src/server/standings/estadisticasProblemasDatos'
 
 describe('cargarEstadisticasProblemas', () => {
@@ -57,7 +63,11 @@ describe('cargarEstadisticasProblemas', () => {
 
     const resultado = await cargarEstadisticasProblemas(torneoId)
     const stat = resultado.todas.find((s) => s.problemaId === problemaId)
-    expect(stat).toMatchObject({ elegibles: 2, resueltos: 1, intentosTotales: 5 })
+    expect(stat).toMatchObject({
+      elegibles: 2,
+      resueltos: 1,
+      intentosTotales: 5,
+    })
     expect(resultado.resueltosPorNadie).toEqual([])
   })
 })

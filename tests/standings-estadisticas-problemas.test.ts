@@ -14,7 +14,11 @@ const problemas = [
 describe('calcularEstadisticasProblemas', () => {
   it('cuenta elegibles por grupo a partir de la categoría de cada usuario', () => {
     const stats = calcularEstadisticasProblemas(
-      [{ categoria: 'invitado' }, { categoria: 'junior' }, { categoria: 'senior' }],
+      [
+        { categoria: 'invitado' },
+        { categoria: 'junior' },
+        { categoria: 'senior' },
+      ],
       [],
       [],
       problemas,
@@ -81,11 +85,15 @@ describe('problemasResueltosPorTodos / problemasResueltosPorNadie', () => {
   ]
 
   it('identifica el problema resuelto por todos los elegibles', () => {
-    expect(problemasResueltosPorTodos(base).map((s) => s.problemaId)).toEqual(['p1'])
+    expect(problemasResueltosPorTodos(base).map((s) => s.problemaId)).toEqual([
+      'p1',
+    ])
   })
 
   it('identifica el problema que nadie ha resuelto', () => {
-    expect(problemasResueltosPorNadie(base).map((s) => s.problemaId)).toEqual(['p2'])
+    expect(problemasResueltosPorNadie(base).map((s) => s.problemaId)).toEqual([
+      'p2',
+    ])
   })
 })
 

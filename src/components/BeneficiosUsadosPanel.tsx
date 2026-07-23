@@ -10,7 +10,9 @@ export function BeneficiosUsadosPanel({
   items: BeneficioUsadoItem[]
   categoriasActivas: Set<Categoria>
 }) {
-  const filtrados = items.filter((i) => categoriasActivas.has(i.usuarioCategoria))
+  const filtrados = items.filter((i) =>
+    categoriasActivas.has(i.usuarioCategoria),
+  )
 
   return (
     <div className={`${CARD_TERMINAL} p-4`}>
@@ -21,7 +23,10 @@ export function BeneficiosUsadosPanel({
           const objetivo = item.objetivoUsuarioNombre ?? item.objetivoIngeniero
           return (
             <li key={item.usuarioId}>
-              <span className="font-semibold text-ink">{item.usuarioNombre}</span> — {definicion.texto}
+              <span className="font-semibold text-ink">
+                {item.usuarioNombre}
+              </span>{' '}
+              — {definicion.texto}
               {item.usadoEn ? (
                 <span className="text-[oklch(78%_0.14_152)]">
                   {' '}
@@ -34,7 +39,9 @@ export function BeneficiosUsadosPanel({
           )
         })}
         {filtrados.length === 0 && (
-          <li className="text-ink-faint">Nadie tiene beneficio asignado todavía.</li>
+          <li className="text-ink-faint">
+            Nadie tiene beneficio asignado todavía.
+          </li>
         )}
       </ul>
     </div>

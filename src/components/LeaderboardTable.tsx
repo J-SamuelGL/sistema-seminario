@@ -14,10 +14,15 @@ function claseInsignia(rank: number) {
   return 'bg-transparent text-[oklch(55%_0.01_150)] border-[oklch(35%_0.02_150/0.6)]'
 }
 
-function brechaConLider(row: FilaClasificacion, lider: FilaClasificacion): string | null {
+function brechaConLider(
+  row: FilaClasificacion,
+  lider: FilaClasificacion,
+): string | null {
   if (row.usuarioId === lider.usuarioId) return null
   const puntos = row.puntosTotales - lider.puntosTotales
-  const minutos = Math.round(row.minutosPenalizacionTotal - lider.minutosPenalizacionTotal)
+  const minutos = Math.round(
+    row.minutosPenalizacionTotal - lider.minutosPenalizacionTotal,
+  )
   const signoMinutos = minutos >= 0 ? '+' : ''
   return `${puntos} pts / ${signoMinutos}${minutos} min vs. líder`
 }
@@ -35,7 +40,9 @@ export function LeaderboardTable({
 
   return (
     <div className={`${CARD_TERMINAL} overflow-hidden`}>
-      <h2 className={`${PANEL_TITLE_TERMINAL} px-4 pt-4 text-[15px]`}>{title}</h2>
+      <h2 className={`${PANEL_TITLE_TERMINAL} px-4 pt-4 text-[15px]`}>
+        {title}
+      </h2>
       <div
         className={`mt-3 grid ${GRID_COLS} border-y border-[oklch(30%_0.02_150/0.5)] bg-[oklch(12%_0.02_150)] px-4 py-2.5 text-[11px] font-bold tracking-wide text-[oklch(60%_0.1_85)] uppercase`}
       >
@@ -71,13 +78,13 @@ export function LeaderboardTable({
                   </span>
                 )}
               </span>
-              {lider && (
-                <span className="text-[11px] text-[oklch(55%_0.02_150)]">
-                  {brechaConLider(row, lider)}
-                </span>
-              )}
+              <span className="text-[11px] text-[oklch(55%_0.02_150)]">
+                {brechaConLider(row, lider)}
+              </span>
             </div>
-            <div className="font-mono font-bold text-[oklch(78%_0.16_70)]">{row.puntosTotales}</div>
+            <div className="font-mono font-bold text-[oklch(78%_0.16_70)]">
+              {row.puntosTotales}
+            </div>
             <div className="hidden font-mono text-[oklch(65%_0.01_150)] sm:block">
               {row.cantidadResueltos}
             </div>

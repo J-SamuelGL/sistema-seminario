@@ -28,7 +28,9 @@ export function EstadisticasProblemasPanel({
             {todos.slice(0, LIMITE).map((p) => (
               <li key={p.problemaId}>{p.titulo}</li>
             ))}
-            {todos.length === 0 && <li className="text-ink-faint">Ninguno todavía.</li>}
+            {todos.length === 0 && (
+              <li className="text-ink-faint">Ninguno todavía.</li>
+            )}
             {todos.length > LIMITE && (
               <li className="text-ink-faint">+{todos.length - LIMITE} más</li>
             )}

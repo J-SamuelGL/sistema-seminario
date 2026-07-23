@@ -1,6 +1,9 @@
 import { CATEGORIAS } from '#/shared/dominio'
 import type { Categoria } from '#/shared/dominio'
-import { PILL_FILTRO_ACTIVA, PILL_FILTRO_INACTIVA } from '#/components/brandStyles'
+import {
+  PILL_FILTRO_ACTIVA,
+  PILL_FILTRO_INACTIVA,
+} from '#/components/brandStyles'
 
 const ETIQUETAS: Record<Categoria, string> = {
   invitado: 'Invitados',
@@ -22,7 +25,9 @@ export function FiltroCategorias({
           key={categoria}
           type="button"
           onClick={() => onToggle(categoria)}
-          className={activas.has(categoria) ? PILL_FILTRO_ACTIVA : PILL_FILTRO_INACTIVA}
+          className={
+            activas.has(categoria) ? PILL_FILTRO_ACTIVA : PILL_FILTRO_INACTIVA
+          }
         >
           {ETIQUETAS[categoria]}
         </button>
