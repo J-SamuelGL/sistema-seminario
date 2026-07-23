@@ -43,17 +43,15 @@ export function NavbarParticipante() {
             {perfil.activo && <span className={NAV_LINK_CARET} />}
           </Link>
           {usuario.ingresadoEn && (
-            <>
-              <Link to="/problemas" className={problemas.className}>
-                Problemas
-                {problemas.activo && <span className={NAV_LINK_CARET} />}
-              </Link>
-              <Link to="/clasificacion" className={clasificacion.className}>
-                Clasificación
-                {clasificacion.activo && <span className={NAV_LINK_CARET} />}
-              </Link>
-            </>
+            <Link to="/problemas" className={problemas.className}>
+              Problemas
+              {problemas.activo && <span className={NAV_LINK_CARET} />}
+            </Link>
           )}
+          <Link to="/clasificacion" className={clasificacion.className}>
+            Clasificación
+            {clasificacion.activo && <span className={NAV_LINK_CARET} />}
+          </Link>
         </div>
         <UserMenu nombre={usuario.name} />
       </div>
