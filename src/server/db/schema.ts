@@ -23,6 +23,7 @@ import {
   ESTADOS_ENVIO,
   ESTADOS_PROGRESO,
 } from '../../shared/dominio'
+import { CLAVES_BENEFICIO, INGENIEROS } from '../../shared/beneficios'
 
 export const torneos = mysqlTable('torneos', {
   id: varchar('id', { length: 36 })
@@ -222,3 +223,21 @@ export const corridas = mysqlTable(
     ),
   ],
 )
+
+export const beneficios = mysqlTable('beneficios', {
+  id: varchar('id', { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  usuarioId: varchar('usuario_id', { length: 36 })
+    .notNull()
+    .unique()
+    .references(() => usuarios.id, { onDelete: 'cascade' }),
+  clave: mysqlEnum('clave', CLAVES_BENEFICIO).notNull(),
+  asignadoEn: timestamp('asignado_en').notNull().defaultNow(),
+  usadoEn: timestamp('usado_en'),
+  objetivoUsuarioId: varchar('objetivo_usuario_id', { length: 36 }).references(
+    () => usuarios.id,
+    { onDelete: 'set null' },
+  ),
+  objetivoIngeniero: mysqlEnum('objetivo_ingeniero', INGENIEROS),
+})
