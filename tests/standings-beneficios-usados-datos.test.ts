@@ -92,7 +92,7 @@ describe('cargarCupoIaRestante', () => {
       email: `nospc-${invitadoId}@example.com`,
       categoria: 'invitado',
       torneoId,
-      preguntasIaUsadas: 3,
+      preguntasIaUsadas: 4,
     })
 
     const resultado = await cargarCupoIaRestante(torneoId)
