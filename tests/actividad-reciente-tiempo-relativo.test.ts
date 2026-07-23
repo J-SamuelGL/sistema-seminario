@@ -16,4 +16,14 @@ describe('tiempoRelativo', () => {
     const ahora = new Date('2026-07-23T17:05:00Z')
     expect(tiempoRelativo(new Date('2026-07-23T15:00:00Z'), ahora)).toBe('hace 2h')
   })
+
+  it('usa floor, no round, al calcular minutos', () => {
+    const ahora = new Date('2026-07-23T15:00:00Z')
+    expect(tiempoRelativo(new Date('2026-07-23T14:58:25Z'), ahora)).toBe('hace 1m')
+  })
+
+  it('a los 60 minutos exactos pasa a mostrar horas', () => {
+    const ahora = new Date('2026-07-23T16:00:00Z')
+    expect(tiempoRelativo(new Date('2026-07-23T15:00:00Z'), ahora)).toBe('hace 1h')
+  })
 })
