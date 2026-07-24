@@ -5,9 +5,9 @@ import { beneficioPropioQueryOptions } from '#/server/queries/beneficioPropio'
 import { QrCode } from '#/components/QrCode'
 import { CornerFrame } from '#/components/CornerFrame'
 import { LogroBanner } from '#/components/LogroBanner'
+import { BeneficioIcono } from '#/components/BeneficioIcono'
 import { CARD, GRADIENT_TEXT, PILL_BASE } from '#/components/brandStyles'
-import { CATALOGO_BENEFICIOS } from '#/shared/beneficios'
-import type { ClaveBeneficio } from '#/shared/beneficios'
+import { CATALOGO_BENEFICIOS, rutaIconoBeneficio } from '#/shared/beneficios'
 
 export const Route = createFileRoute('/_app/perfil')({
   loader: async ({ context }) => {
@@ -56,8 +56,16 @@ function ProfilePage() {
           <h2 className={`font-display text-lg font-bold ${GRADIENT_TEXT}`}>
             Tu ventaja/desventaja
           </h2>
+          {rutaIconoBeneficio(beneficio.clave) && (
+            <CornerFrame
+              className="rounded bg-paper-soft p-1"
+              borderClassName="border-brass-1/70"
+            >
+              <BeneficioIcono clave={beneficio.clave} size="lg" />
+            </CornerFrame>
+          )}
           <p className="text-[14px] text-ink-soft">
-            {CATALOGO_BENEFICIOS[beneficio.clave as ClaveBeneficio].texto}
+            {CATALOGO_BENEFICIOS[beneficio.clave].texto}
           </p>
           {beneficio.usadoEn ? (
             <LogroBanner>✦ Ya se aplicó ✦</LogroBanner>

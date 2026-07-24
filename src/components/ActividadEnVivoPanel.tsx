@@ -1,7 +1,8 @@
 // src/components/ActividadEnVivoPanel.tsx
 import type { ActividadEnVivo } from '#/server/standings/actividadEnVivo'
 import type { Categoria } from '#/shared/dominio'
-import { CARD_TERMINAL, PANEL_TITLE_TERMINAL } from '#/components/brandStyles'
+import { PanelTablero } from '#/components/PanelTablero'
+import { ROW_ACCENT_LAUREL } from '#/components/brandStyles'
 
 export function ActividadEnVivoPanel({
   items,
@@ -15,18 +16,15 @@ export function ActividadEnVivoPanel({
   )
 
   return (
-    <div className={`${CARD_TERMINAL} p-4`}>
-      <h3 className={PANEL_TITLE_TERMINAL}>Quién resuelve qué</h3>
-      <ul className="mt-3 flex flex-col gap-1.5 text-[13px] text-ink-soft">
+    <PanelTablero titulo="Quién resuelve qué">
+      <ul className="mt-3 flex flex-col gap-1.5 text-[13px] text-ink">
         {filtrados.map((item) => (
           <li
             key={item.usuarioId}
-            className="flex items-center justify-between gap-3"
+            className={`flex items-center justify-between gap-3 ${ROW_ACCENT_LAUREL}`}
           >
             <span className="text-ink">{item.usuarioNombre}</span>
-            <span className="text-[oklch(78%_0.14_152)]">
-              {item.problemaTitulo}
-            </span>
+            <span className="text-laurel-ink">{item.problemaTitulo}</span>
           </li>
         ))}
         {filtrados.length === 0 && (
@@ -35,6 +33,6 @@ export function ActividadEnVivoPanel({
           </li>
         )}
       </ul>
-    </div>
+    </PanelTablero>
   )
 }

@@ -82,8 +82,12 @@ const NAV_LINK_UNDERLINE =
 export const NAV_LINK_ACTIVE = `border-gold text-gold-strong ${NAV_LINK_UNDERLINE} after:opacity-100`
 export const NAV_LINK_INACTIVE = `text-ink-faint hover:text-gold-dark ${NAV_LINK_UNDERLINE} after:opacity-0 hover:after:opacity-100`
 
-/** Bloque "nombre + cerrar sesión" del UserMenu de la navbar de participante. */
-export const NAV_USER_NAME = 'text-sm text-ink-faint'
+/** Bloque "nombre + cerrar sesión" del UserMenu de la navbar de participante.
+ * Mismo lenguaje ceremonial que LOGRO_TEXT_NEUTRO (p.ej. "✦ Problema X de N ✦"),
+ * al mismo tamaño en el que ese badge se usa en la barra de navegación del
+ * detalle de problema. */
+export const NAV_USER_NAME =
+  'font-display text-[11px] font-bold tracking-[0.16em] text-gold-strong uppercase [font-variant-caps:small-caps] whitespace-nowrap [text-shadow:0_0_10px_color-mix(in_oklch,var(--color-gold)_55%,transparent)]'
 
 /** "Cerrar sesión" como cajita oscura con resplandor, mismo lenguaje visual
  * que BUTTON_TERMINAL_RUN/BUTTON_TERMINAL_ASSIST (editor de código), en tono
@@ -170,6 +174,38 @@ export const LOGRO_TEXT_NEUTRO =
 export const LOGRO_LINE =
   'h-px bg-gradient-to-r from-transparent via-laurel to-transparent'
 
+/** Contraparte de LOGRO_LINE para acompañar a LOGRO_TEXT_NEUTRO (dorado en
+ * vez de verde). */
+export const LOGRO_LINE_NEUTRO =
+  'h-px bg-gradient-to-r from-transparent via-gold to-transparent'
+
+/** Como LOGRO_TEXT_NEUTRO pero en el amarillo/brass brillante que ya usan
+ * BUTTON_TERMINAL_NAV/NAV_ARROW_BUTTON para leerse sobre fondo oscuro
+ * (`char`) — el dorado apagado de LOGRO_TEXT_NEUTRO está pensado para papel
+ * claro y se ve deslucido sobre negro. */
+export const LOGRO_TEXT_NEUTRO_OSCURO =
+  'font-display font-bold tracking-[0.16em] text-brass-1 uppercase [font-variant-caps:small-caps] [text-shadow:0_0_10px_color-mix(in_oklch,var(--color-brass-1)_55%,transparent)]'
+
+/** Mismo lenguaje ceremonial que LOGRO_TEXT/LOGRO_LINE (small-caps,
+ * resplandor, filete arriba/abajo), pero en los tonos brillantes de la
+ * familia "terminal" (BUTTON_TERMINAL_RUN/ASSIST, DIFICULTAD_PILL) en vez de
+ * laurel-ink/gold-strong: laurel-ink es un verde oscuro pensado para texto
+ * sobre papel claro, e ilegible sobre el fondo casi negro del panel de
+ * resultados de Ejecutar — este par (éxito/error) es para ese contexto
+ * oscuro específicamente. */
+export const LOGRO_TEXT_TERMINAL: Record<'exito' | 'error', string> = {
+  exito:
+    'font-display font-bold tracking-[0.16em] text-[oklch(78%_0.14_152)] uppercase [font-variant-caps:small-caps] [text-shadow:0_0_10px_oklch(55%_0.16_152/0.5)]',
+  error:
+    'font-display font-bold tracking-[0.16em] text-[oklch(78%_0.16_25)] uppercase [font-variant-caps:small-caps] [text-shadow:0_0_10px_oklch(55%_0.16_25/0.5)]',
+}
+export const LOGRO_LINE_TERMINAL: Record<'exito' | 'error', string> = {
+  exito:
+    'h-px bg-gradient-to-r from-transparent via-[oklch(55%_0.16_152)] to-transparent',
+  error:
+    'h-px bg-gradient-to-r from-transparent via-[oklch(55%_0.16_25)] to-transparent',
+}
+
 /** Botones de la barra del editor de código (fondo tipo terminal oscura):
  * ámbar para la acción principal (Ejecutar), verde para el asistente de IA.
  * Deliberadamente distintos de BUTTON_PRIMARY (usado por acciones de
@@ -195,21 +231,57 @@ export const NAV_ARROW_BUTTON =
 export const BUTTON_TERMINAL_NAV =
   'inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-brass-1/60 bg-[oklch(28%_0.03_82)] px-3 py-1.5 font-display text-[12px] font-semibold tracking-wide text-brass-1 uppercase shadow-[0_0_8px_color-mix(in_oklch,var(--color-brass-1)_12%,transparent)] transition hover:border-brass-1 hover:text-[oklch(90%_0.08_85)] hover:shadow-[0_0_22px_5px_color-mix(in_oklch,var(--color-brass-1)_45%,transparent)]'
 
-/** Tarjeta oscura tipo "terminal" para los paneles del tablero público de
- * clasificación — mismo lenguaje que BUTTON_TERMINAL_RUN/ASSIST y
- * DIFICULTAD_PILL, pero como contenedor de panel en vez de botón/badge. */
-export const CARD_TERMINAL =
-  'rounded-md border border-[oklch(40%_0.1_150/0.5)] bg-[oklch(8%_0.02_152)] shadow-2xl shadow-black/30'
+/** Tarjeta clara para los paneles del tablero público de clasificación —
+ * mismo lenguaje que CARD (pergamino/dorado del resto de la identidad de
+ * participante), como contenedor de panel. */
+export const CARD_TABLERO =
+  'rounded-md border border-line/40 bg-paper shadow-xl shadow-black/5'
 
-/** Título de panel dentro de CARD_TERMINAL: mismo small-caps ceremonial que
- * LOGRO_TEXT, en el verde de la familia terminal. */
-export const PANEL_TITLE_TERMINAL =
-  'font-display text-[13px] font-bold tracking-[0.14em] text-[oklch(78%_0.14_152)] uppercase [font-variant-caps:small-caps]'
+/** Título de panel dentro de CARD_TABLERO: small-caps ceremonial en dorado,
+ * misma familia que KPI_TILE_LABEL/LABEL_BASE. */
+export const PANEL_TITLE_TABLERO =
+  'font-display text-[13px] font-bold tracking-[0.14em] text-gold-label uppercase [font-variant-caps:small-caps]'
 
-/** Pills del filtro de categorías del tablero público — activa/inactiva,
- * mismo lenguaje visual "terminal" que el resto del módulo. */
+/** Filete bajo el título de un panel del tablero (ver `PanelTablero`) — el
+ * mismo lenguaje de "regla dorada" que separa secciones en otras vistas
+ * ceremoniales, aplicado acá para darle más peso al encabezado. */
+export const PANEL_TITLE_RULE_TABLERO =
+  'mt-1.5 block h-px w-full bg-gradient-to-r from-brass-1/70 via-brass-1/20 to-transparent'
+
+/** Pestañas del selector de categoría del tablero público — una sola activa
+ * a la vez (no filtro multi-select), por eso la activa lleva resplandor:
+ * es la que decide qué categoría ve todo el tablero, no un simple filtro
+ * secundario. */
 export const PILL_FILTRO_ACTIVA =
-  'cursor-pointer rounded-sm border border-[oklch(55%_0.14_152/0.6)] bg-[oklch(16%_0.03_152)] px-3 py-1.5 font-display text-[11px] font-bold tracking-wide text-[oklch(78%_0.14_152)] uppercase shadow-[0_0_12px_2px_oklch(55%_0.16_152/0.35)] transition'
+  'cursor-pointer rounded-sm border border-laurel/60 bg-laurel-soft px-4 py-2 font-display text-[12px] font-bold tracking-wide text-laurel-ink uppercase shadow-[0_0_14px_2px_color-mix(in_oklch,var(--color-laurel)_35%,transparent)] transition'
 
 export const PILL_FILTRO_INACTIVA =
-  'cursor-pointer rounded-sm border border-line/40 bg-[oklch(14%_0.01_150)] px-3 py-1.5 font-display text-[11px] font-bold tracking-wide text-ink-faint uppercase opacity-60 transition hover:opacity-90'
+  'cursor-pointer rounded-sm border border-line/60 bg-paper-soft px-4 py-2 font-display text-[12px] font-bold tracking-wide text-ink-faint uppercase opacity-60 transition hover:opacity-90'
+
+/** Título de panel del tablero público, versión más dramática: mismo dorado
+ * ceremonial que PANEL_TITLE_TABLERO pero más grande y con el resplandor que
+ * ya usa LOGRO_TEXT_NEUTRO — sube el peso visual de los seis paneles
+ * secundarios sin tocar PANEL_TITLE_TABLERO (que sigue usando LeaderboardTable
+ * sin cambios). */
+export const PANEL_TITLE_TABLERO_EPICO =
+  'font-display text-[16px] font-bold tracking-[0.16em] text-gold-strong uppercase [font-variant-caps:small-caps] [text-shadow:0_0_10px_color-mix(in_oklch,var(--color-gold)_50%,transparent)]'
+
+/** Contraparte roja de LOGRO_TEXT para texto ceremonial de alerta sobre
+ * papel claro (p.ej. "Por nadie"): mismo tratamiento (small-caps +
+ * resplandor) que LOGRO_TEXT, pero en rojo en vez de laurel. */
+export const LOGRO_TEXT_ALERTA =
+  'font-display font-bold tracking-[0.16em] text-red-700 uppercase [font-variant-caps:small-caps] [text-shadow:0_0_8px_color-mix(in_oklch,oklch(55%_0.18_25)_45%,transparent)]'
+
+/** Acento de fila estático (no clickeable) para las listas de los paneles
+ * del tablero: banda horizontal de borde a borde con desvanecido simétrico
+ * (opaca en el centro, se apaga en ambos extremos) + filete arriba/abajo,
+ * como la barra de selección de un menú de Elden Ring — no un degradado que
+ * arranca de golpe en el borde izquierdo (eso se leía como un corte, no
+ * como una fila resaltada). Variantes laurel/ámbar/alerta según el tipo de
+ * dato de cada fila. */
+export const ROW_ACCENT_LAUREL =
+  'border-y border-laurel/20 bg-[linear-gradient(90deg,transparent_0%,color-mix(in_oklch,var(--color-laurel-soft)_65%,transparent)_20%,color-mix(in_oklch,var(--color-laurel-soft)_65%,transparent)_80%,transparent_100%)] py-1.5'
+export const ROW_ACCENT_AMBAR =
+  'border-y border-brass-1/20 bg-[linear-gradient(90deg,transparent_0%,color-mix(in_oklch,var(--color-amber-soft)_65%,transparent)_20%,color-mix(in_oklch,var(--color-amber-soft)_65%,transparent)_80%,transparent_100%)] py-1.5'
+export const ROW_ACCENT_ALERTA =
+  'border-y border-red-300/30 bg-[linear-gradient(90deg,transparent_0%,color-mix(in_oklch,oklch(88%_0.06_25)_65%,transparent)_20%,color-mix(in_oklch,oklch(88%_0.06_25)_65%,transparent)_80%,transparent_100%)] py-1.5'

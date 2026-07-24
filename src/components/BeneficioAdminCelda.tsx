@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { LoadingButton } from '#/components/LoadingButton'
-import { ADMIN_INPUT_BASE, ADMIN_BUTTON_SECONDARY } from '#/components/adminBrandStyles'
-import { CATALOGO_BENEFICIOS, INGENIEROS } from '#/shared/beneficios'
+import {
+  ADMIN_INPUT_BASE,
+  ADMIN_BUTTON_SECONDARY,
+} from '#/components/adminBrandStyles'
+import {
+  CATALOGO_BENEFICIOS,
+  INGENIEROS,
+  rutaIconoBeneficio,
+} from '#/shared/beneficios'
 import type { ClaveBeneficio, Ingeniero } from '#/shared/beneficios'
 
 export type BeneficioParticipante = {
@@ -50,7 +57,9 @@ export function BeneficioAdminCelda({
     return <span className="text-admin-ink-faint">—</span>
   }
 
-  const definicion = CATALOGO_BENEFICIOS[beneficio.clave as ClaveBeneficio]
+  const claveBeneficio = beneficio.clave as ClaveBeneficio
+  const definicion = CATALOGO_BENEFICIOS[claveBeneficio]
+  const iconoUrl = rutaIconoBeneficio(claveBeneficio)
 
   function handleRegistrar() {
     onRegistrar({
@@ -68,7 +77,16 @@ export function BeneficioAdminCelda({
 
   return (
     <div className="flex flex-col gap-1.5 py-1">
-      <span className="text-admin-ink-soft">{definicion.texto}</span>
+      <div className="flex items-start gap-2">
+        {iconoUrl && (
+          <img
+            src={iconoUrl}
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-sm border border-admin-line object-cover"
+          />
+        )}
+        <span className="text-admin-ink-soft">{definicion.texto}</span>
+      </div>
 
       {definicion.tipoObjetivo === 'participante' && (
         <select

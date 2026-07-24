@@ -25,7 +25,7 @@ export function NavbarParticipante() {
   }
 
   return (
-    <nav className="sticky top-0 z-10 border-b border-line/50 bg-paper-soft shadow-sm shadow-black/5">
+    <nav className="sticky top-0 z-20 border-b border-line/50 bg-paper-soft shadow-sm shadow-black/5">
       <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-6 px-6 py-2.5">
         <div className="flex items-center gap-3">
           <img

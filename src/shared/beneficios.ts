@@ -108,3 +108,24 @@ export const CATALOGO_BENEFICIOS: Record<
 // explícita del spec): es un array que se edita en código.
 export const INGENIEROS = ['Ingeniero 1', 'Ingeniero 2'] as const
 export type Ingeniero = (typeof INGENIEROS)[number]
+
+// Solo estas claves tienen ilustración en public/beneficios/ (encargadas por
+// separado; "cupon_premio" y "prompt_ia" todavía no tienen arte). El nombre
+// de archivo coincide con la clave.
+const CLAVES_CON_ICONO = new Set<ClaveBeneficio>([
+  'busqueda_google',
+  'ver_codigo',
+  'borrar_codigo',
+  'consultar_ingeniero',
+  'nada',
+  'salir_caminar',
+  'reiniciar_compu',
+  'poner_cancion',
+  'voltear_pantalla',
+  'atar_mano',
+  'letra_chiquita',
+])
+
+export function rutaIconoBeneficio(clave: ClaveBeneficio): string | null {
+  return CLAVES_CON_ICONO.has(clave) ? `/beneficios/${clave}.jpg` : null
+}

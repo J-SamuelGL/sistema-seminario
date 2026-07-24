@@ -41,12 +41,6 @@ export const Route = createFileRoute('/clasificacion')({
   component: LeaderboardPage,
 })
 
-const GRID_COLS_POR_CANTIDAD: Record<number, string> = {
-  1: 'grid-cols-1',
-  2: 'grid-cols-1 lg:grid-cols-2',
-  3: 'grid-cols-1 lg:grid-cols-3',
-}
-
 const TABLAS_CATEGORIA: { categoria: Categoria; titulo: string }[] = [
   { categoria: 'invitado', titulo: 'Invitados' },
   { categoria: 'junior', titulo: 'Junior' },
@@ -54,9 +48,16 @@ const TABLAS_CATEGORIA: { categoria: Categoria; titulo: string }[] = [
 ]
 
 function LeaderboardPage() {
+  // Solo una categoría visible a la vez: con las tres tablas en un grid de 3
+  // columnas era difícil seguir cualquiera de ellas. Se mantiene como `Set`
+  // (en vez de un solo valor) porque los paneles secundarios de abajo
+  // (actividad reciente, ventajas/desventajas, etc.) ya filtran recibiendo un
+  // `Set<Categoria>` — así no hace falta tocar esa lógica, solo garantizar
+  // que este Set nunca tenga más de un elemento.
   const [categoriasActivas, setCategoriasActivas] = useState<Set<Categoria>>(
-    () => new Set(CATEGORIAS),
+    () => new Set(['invitado']),
   )
+  const categoriaActiva = [...categoriasActivas][0]
 
   const { data } = useSuspenseQuery(clasificacionQueryOptions())
   const { data: usuario } = useSuspenseQuery(
@@ -76,17 +77,8 @@ function LeaderboardPage() {
     actividadEnVivoQueryOptions(),
   )
 
-  function alternarCategoria(categoria: Categoria) {
-    setCategoriasActivas((previo) => {
-      const siguiente = new Set(previo)
-      if (siguiente.has(categoria)) {
-        if (siguiente.size === 1) return previo
-        siguiente.delete(categoria)
-      } else {
-        siguiente.add(categoria)
-      }
-      return siguiente
-    })
+  function seleccionarCategoria(categoria: Categoria) {
+    setCategoriasActivas(new Set([categoria]))
   }
 
   function grupoVisible(grupo: Grupo) {
@@ -100,9 +92,9 @@ function LeaderboardPage() {
   if (!data.iniciado)
     return <p className="p-8 text-ink-soft">El torneo aún no ha comenzado.</p>
 
-  const tablasVisibles = TABLAS_CATEGORIA.filter((t) =>
-    categoriasActivas.has(t.categoria),
-  )
+  const tablaActiva = TABLAS_CATEGORIA.find(
+    (t) => t.categoria === categoriaActiva,
+  )!
 
   return (
     <div>
@@ -122,8 +114,8 @@ function LeaderboardPage() {
 
         <div className="mb-8 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <FiltroCategorias
-            activas={categoriasActivas}
-            onToggle={alternarCategoria}
+            activa={categoriaActiva}
+            onSeleccionar={seleccionarCategoria}
           />
           <CountdownTorneo
             iniciadoEn={estado?.iniciadoEn ? new Date(estado.iniciadoEn) : null}
@@ -133,20 +125,14 @@ function LeaderboardPage() {
           />
         </div>
 
-        <div
-          className={`grid ${GRID_COLS_POR_CANTIDAD[tablasVisibles.length] ?? 'grid-cols-1'} gap-8`}
-        >
-          {tablasVisibles.map((t) => (
-            <LeaderboardTable
-              key={t.categoria}
-              title={t.titulo}
-              rows={data[t.categoria]}
-              usuarioActualId={usuario?.id}
-            />
-          ))}
-        </div>
+        <LeaderboardTable
+          key={tablaActiva.categoria}
+          title={tablaActiva.titulo}
+          rows={data[tablaActiva.categoria]}
+          usuarioActualId={usuario?.id}
+        />
 
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
           <ActividadRecienteFeed
             items={actividadReciente}
             categoriasActivas={categoriasActivas}

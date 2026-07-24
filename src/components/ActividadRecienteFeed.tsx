@@ -1,6 +1,7 @@
 import type { ActividadRecienteItem } from '#/server/standings/actividadRecienteDatos'
 import type { Categoria } from '#/shared/dominio'
-import { CARD_TERMINAL, PANEL_TITLE_TERMINAL } from '#/components/brandStyles'
+import { PanelTablero } from '#/components/PanelTablero'
+import { LogroBanner } from '#/components/LogroBanner'
 
 export function tiempoRelativo(fecha: Date, ahora: Date): string {
   const segundos = Math.max(
@@ -27,25 +28,22 @@ export function ActividadRecienteFeed({
   )
 
   return (
-    <div className={`${CARD_TERMINAL} p-4`}>
-      <h3 className={PANEL_TITLE_TERMINAL}>Actividad reciente</h3>
-      <ul className="mt-3 flex flex-col gap-2 text-[13px] text-ink-soft">
+    <PanelTablero titulo="Actividad reciente">
+      <div className="mt-3 flex flex-col gap-1">
         {filtrados.map((item, i) => (
-          <li key={`${item.usuarioId}-${i}`}>
-            <span className="font-semibold text-ink">{item.usuarioNombre}</span>{' '}
-            resolvió{' '}
-            <span className="text-[oklch(78%_0.14_152)]">
-              {item.problemaTitulo}
-            </span>{' '}
-            <span className="text-ink-faint">
+          <LogroBanner key={`${item.usuarioId}-${i}`} tono="neutro">
+            {item.usuarioNombre} resolvió {item.problemaTitulo}{' '}
+            <span className="text-[10px] opacity-70">
               ({tiempoRelativo(new Date(item.creadoEn), ahora)})
             </span>
-          </li>
+          </LogroBanner>
         ))}
         {filtrados.length === 0 && (
-          <li className="text-ink-faint">Todavía no hay actividad.</li>
+          <p className="text-center text-[13px] text-ink-faint">
+            Todavía no hay actividad.
+          </p>
         )}
-      </ul>
-    </div>
+      </div>
+    </PanelTablero>
   )
 }

@@ -12,11 +12,11 @@ const ETIQUETAS: Record<Categoria, string> = {
 }
 
 export function FiltroCategorias({
-  activas,
-  onToggle,
+  activa,
+  onSeleccionar,
 }: {
-  activas: Set<Categoria>
-  onToggle: (categoria: Categoria) => void
+  activa: Categoria
+  onSeleccionar: (categoria: Categoria) => void
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -24,9 +24,9 @@ export function FiltroCategorias({
         <button
           key={categoria}
           type="button"
-          onClick={() => onToggle(categoria)}
+          onClick={() => onSeleccionar(categoria)}
           className={
-            activas.has(categoria) ? PILL_FILTRO_ACTIVA : PILL_FILTRO_INACTIVA
+            activa === categoria ? PILL_FILTRO_ACTIVA : PILL_FILTRO_INACTIVA
           }
         >
           {ETIQUETAS[categoria]}

@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { eq } from 'drizzle-orm'
 import { hashPassword } from 'better-auth/crypto'
 import { db } from '../src/server/db/client'
 import {
@@ -8,12 +9,19 @@ import {
   problemaLenguajes,
   casosPrueba,
   torneos,
+  envios,
+  corridas,
+  beneficios,
 } from '../src/server/db/schema'
+import { LENGUAJES } from '../src/shared/dominio'
+import type { Lenguaje, EstadoEnvio } from '../src/shared/dominio'
+import type { ClaveBeneficio, Ingeniero } from '../src/shared/beneficios'
 import type { Parametro, TipoDato, Valor } from '../src/server/judge/tipos'
 import type { Semestre } from '../src/server/participantes/validar'
 
 const TABLAS_A_LIMPIAR = [
   'preguntas_ia',
+  'beneficios',
   'corridas',
   'envios',
   'casos_prueba',
@@ -45,6 +53,7 @@ async function crearCuenta(input: {
   semestre?: Semestre | null
   ingresado: boolean
   torneoId: string
+  preguntasIaUsadas?: number
 }) {
   const id = crypto.randomUUID()
   const hash = await hashPassword(input.contrasena)
@@ -58,6 +67,7 @@ async function crearCuenta(input: {
     semestre: input.semestre ?? null,
     ingresadoEn: input.ingresado ? new Date() : null,
     torneoId: input.torneoId,
+    preguntasIaUsadas: input.preguntasIaUsadas ?? 0,
   })
   await db.insert(cuentas).values({
     id: crypto.randomUUID(),
@@ -126,18 +136,20 @@ async function crearProblemaSeed(input: {
 async function main() {
   await limpiarBaseDeDatos()
 
+  const CONTRASENA = 'test123'
+
   const torneoId = crypto.randomUUID()
+  const torneoIniciadoEn = new Date()
   await db.insert(torneos).values({
     id: torneoId,
     anio: 2026,
-    iniciadoEn: new Date(),
+    iniciadoEn: torneoIniciadoEn,
   })
 
-  const adminContrasena = 'AdminPrueba123!'
   const adminId = await crearCuenta({
     nombre: 'Admin de Prueba',
-    correo: 'admin@torneo.local',
-    contrasena: adminContrasena,
+    correo: 'admin@gmail.com',
+    contrasena: CONTRASENA,
     rol: 'admin',
     categoria: 'senior',
     carnet: null,
@@ -145,11 +157,10 @@ async function main() {
     torneoId,
   })
 
-  const participanteContrasena = 'ParticipantePrueba123!'
   const participanteId = await crearCuenta({
     nombre: 'Participante de Prueba',
-    correo: 'participante@torneo.local',
-    contrasena: participanteContrasena,
+    correo: 'participante@gmail.com',
+    contrasena: CONTRASENA,
     rol: 'participante',
     categoria: 'invitado',
     carnet: '99-9999-2026',
@@ -157,13 +168,11 @@ async function main() {
     torneoId,
   })
 
-  const CONTRASENA_MASIVA = 'test123'
-
   for (let i = 1; i <= 5; i++) {
     await crearCuenta({
       nombre: `Admin ${i}`,
-      correo: `admin${i}@torneo.local`,
-      contrasena: CONTRASENA_MASIVA,
+      correo: `admin${i}@gmail.com`,
+      contrasena: CONTRASENA,
       rol: 'admin',
       categoria: 'senior', // placeholder sin significado real para admins
       carnet: null,
@@ -186,18 +195,31 @@ async function main() {
     return String(5 + ((i - 27) % 6)) as Semestre // senior: más de 4to semestre
   }
 
+  const idsInvitado: string[] = []
+  const idsJunior: string[] = []
+  const idsSenior: string[] = []
+
   for (let i = 1; i <= 40; i++) {
-    await crearCuenta({
+    const categoria = categoriaParticipanteMasivo(i)
+    // Los primeros 3 invitados ya gastaron alguna pregunta de IA, para que
+    // el panel de cupo restante muestre variedad en vez de "3/3" parejo.
+    const preguntasIaUsadas =
+      categoria === 'invitado' ? [2, 1, 3][idsInvitado.length] : undefined
+    const id = await crearCuenta({
       nombre: `Usuario ${i}`,
-      correo: `usuario${i}@torneo.local`,
-      contrasena: CONTRASENA_MASIVA,
+      correo: `usuario${i}@gmail.com`,
+      contrasena: CONTRASENA,
       rol: 'participante',
-      categoria: categoriaParticipanteMasivo(i),
+      categoria,
       carnet: `carnet-${String(i).padStart(2, '0')}-2026`,
       semestre: semestreParticipanteMasivo(i),
       ingresado: true,
       torneoId,
+      preguntasIaUsadas,
     })
+    if (categoria === 'invitado') idsInvitado.push(id)
+    else if (categoria === 'junior') idsJunior.push(id)
+    else idsSenior.push(id)
   }
 
   await crearProblemaSeed({
@@ -1554,27 +1576,266 @@ async function main() {
     ],
   })
 
-  console.log('\nListo. Credenciales de prueba:\n')
-  console.log(
-    `  Admin        -> correo: admin@torneo.local        contraseña: ${adminContrasena}`,
+  // --- Actividad de torneo para que /clasificacion no se vea vacío ---
+
+  const todosLosProblemas = await db
+    .select({
+      id: problemas.id,
+      grupo: problemas.grupo,
+      orden: problemas.orden,
+    })
+    .from(problemas)
+    .where(eq(problemas.torneoId, torneoId))
+
+  const problemasInvitadoJunior = todosLosProblemas
+    .filter((p) => p.grupo === 'invitado_junior')
+    .sort((a, b) => a.orden - b.orden)
+  const problemasSenior = todosLosProblemas
+    .filter((p) => p.grupo === 'senior')
+    .sort((a, b) => a.orden - b.orden)
+
+  type Resuelto = {
+    usuarioId: string
+    problemaId: string
+    lenguaje: Lenguaje
+    minutosDesdeInicio: number
+  }
+  const resueltos: Resuelto[] = []
+  const yaResuelto = new Set<string>()
+
+  function marcarResuelto(
+    usuarioId: string,
+    problemaId: string,
+    lenguaje: Lenguaje,
+    minutosDesdeInicio: number,
+  ) {
+    const clave = `${usuarioId}:${problemaId}`
+    if (yaResuelto.has(clave)) return
+    yaResuelto.add(clave)
+    resueltos.push({ usuarioId, problemaId, lenguaje, minutosDesdeInicio })
+  }
+
+  // Un problema resuelto por TODOS los invitado+junior, y uno por TODOS los
+  // senior, para que "Resuelto por todos" en el panel de estadísticas no
+  // esté vacío.
+  const problemaFacilInvitadoJunior = problemasInvitadoJunior[1]
+  const problemaFacilSenior = problemasSenior[0]
+  // Incluye a "Participante de Prueba" (también invitado) para que de verdad
+  // sea TODOS los elegibles del grupo invitado_junior, no solo los masivos.
+  ;[...idsInvitado, ...idsJunior, participanteId].forEach((usuarioId, idx) => {
+    marcarResuelto(
+      usuarioId,
+      problemaFacilInvitadoJunior.id,
+      LENGUAJES[idx % LENGUAJES.length],
+      5 + idx,
+    )
+  })
+  idsSenior.forEach((usuarioId, idx) => {
+    marcarResuelto(
+      usuarioId,
+      problemaFacilSenior.id,
+      LENGUAJES[idx % LENGUAJES.length],
+      5 + idx,
+    )
+  })
+
+  // Variedad de progreso extra por participante, para que el leaderboard
+  // tenga puntajes y tiempos distintos en vez de un empate parejo. Se deja
+  // deliberadamente afuera un par de problemas de cada grupo (los últimos
+  // del pool) para que "Resuelto por nadie" tampoco esté vacío.
+  const poolVariedadInvitadoJunior = problemasInvitadoJunior.slice(0, -2)
+  const poolVariedadSenior = problemasSenior.slice(0, -1)
+  idsInvitado.forEach((usuarioId, idx) => {
+    const cantidad = 1 + (idx % 6)
+    for (let k = 0; k < cantidad; k++) {
+      const problema =
+        poolVariedadInvitadoJunior[
+          (idx + k) % poolVariedadInvitadoJunior.length
+        ]
+      marcarResuelto(
+        usuarioId,
+        problema.id,
+        LENGUAJES[(idx + k) % LENGUAJES.length],
+        10 + idx * 3 + k * 4,
+      )
+    }
+  })
+  idsJunior.forEach((usuarioId, idx) => {
+    const cantidad = 1 + (idx % 8)
+    for (let k = 0; k < cantidad; k++) {
+      const problema =
+        poolVariedadInvitadoJunior[
+          (idx + k + 3) % poolVariedadInvitadoJunior.length
+        ]
+      marcarResuelto(
+        usuarioId,
+        problema.id,
+        LENGUAJES[(idx + k) % LENGUAJES.length],
+        10 + idx * 3 + k * 4,
+      )
+    }
+  })
+  idsSenior.forEach((usuarioId, idx) => {
+    const cantidad = 1 + (idx % 5)
+    for (let k = 0; k < cantidad; k++) {
+      const problema =
+        poolVariedadSenior[(idx + k + 1) % poolVariedadSenior.length]
+      marcarResuelto(
+        usuarioId,
+        problema.id,
+        LENGUAJES[(idx + k) % LENGUAJES.length],
+        10 + idx * 3 + k * 4,
+      )
+    }
+  })
+
+  // "Problema en llamas": muchos intentos fallidos y pocos aciertos, uno por
+  // grupo. Se usa un problema distinto al de "resuelto por todos" de arriba.
+  const ahora = new Date()
+  const participantesInvitadoJunior = [...idsInvitado, ...idsJunior]
+  const problemaEnLlamasInvitadoJunior = problemasInvitadoJunior[4]
+  const problemaEnLlamasSenior = problemasSenior[1]
+
+  type FilaCorrida = {
+    usuarioId: string
+    problemaId: string
+    contador: number
+    veredicto: EstadoEnvio
+    segundosAtras: number
+  }
+  const filasCorridas: FilaCorrida[] = []
+
+  participantesInvitadoJunior.slice(0, 12).forEach((usuarioId, idx) => {
+    filasCorridas.push({
+      usuarioId,
+      problemaId: problemaEnLlamasInvitadoJunior.id,
+      contador: 3 + (idx % 3),
+      veredicto: 'respuesta_incorrecta',
+      segundosAtras: idx * 20,
+    })
+  })
+  marcarResuelto(
+    participantesInvitadoJunior[0],
+    problemaEnLlamasInvitadoJunior.id,
+    'python',
+    40,
   )
-  console.log(
-    `  Participante -> correo: participante@torneo.local contraseña: ${participanteContrasena}`,
+
+  idsSenior.slice(0, 10).forEach((usuarioId, idx) => {
+    filasCorridas.push({
+      usuarioId,
+      problemaId: problemaEnLlamasSenior.id,
+      contador: 2 + (idx % 4),
+      veredicto: 'error_ejecucion',
+      segundosAtras: idx * 25,
+    })
+  })
+  marcarResuelto(idsSenior[0], problemaEnLlamasSenior.id, 'java', 50)
+
+  await db.insert(envios).values(
+    resueltos.map((r) => ({
+      id: crypto.randomUUID(),
+      usuarioId: r.usuarioId,
+      problemaId: r.problemaId,
+      codigo: '# Solución de prueba generada por la seed\n',
+      lenguaje: r.lenguaje,
+      estado: 'aceptado' as const,
+      estadoProgreso: 'completado' as const,
+      creadoEn: new Date(
+        torneoIniciadoEn.getTime() + r.minutosDesdeInicio * 60000,
+      ),
+    })),
   )
-  console.log(
-    `  Admins masivos       -> admin1..admin5@torneo.local        contraseña: ${CONTRASENA_MASIVA}`,
+
+  await db.insert(corridas).values(
+    filasCorridas.map((c) => ({
+      id: crypto.randomUUID(),
+      usuarioId: c.usuarioId,
+      problemaId: c.problemaId,
+      contador: c.contador,
+      ultimoCodigo: '// intento de prueba generado por la seed\n',
+      ultimoLenguaje: 'python',
+      ultimoVeredicto: c.veredicto,
+      ultimaEjecucionEn: new Date(ahora.getTime() - c.segundosAtras * 1000),
+    })),
   )
-  console.log(
-    `  Participantes masivos -> usuario1..usuario40@torneo.local  contraseña: ${CONTRASENA_MASIVA}`,
+
+  // Ventajas/desventajas asignadas (algunas ya usadas), para que el panel de
+  // beneficios no esté vacío.
+  type FilaBeneficio = {
+    usuarioId: string
+    clave: ClaveBeneficio
+    usada: boolean
+    objetivoUsuarioId?: string
+    objetivoIngeniero?: Ingeniero
+  }
+  const filasBeneficios: FilaBeneficio[] = [
+    { usuarioId: idsInvitado[0], clave: 'busqueda_google', usada: true },
+    {
+      usuarioId: idsInvitado[1],
+      clave: 'consultar_ingeniero',
+      usada: true,
+      objetivoIngeniero: 'Ingeniero 1',
+    },
+    {
+      usuarioId: idsInvitado[3],
+      clave: 'prompt_ia',
+      usada: false,
+    },
+    {
+      usuarioId: idsJunior[0],
+      clave: 'ver_codigo',
+      usada: false,
+      objetivoUsuarioId: idsJunior[1],
+    },
+    { usuarioId: idsJunior[2], clave: 'cupon_premio', usada: true },
+    { usuarioId: idsSenior[0], clave: 'salir_caminar', usada: true },
+    {
+      usuarioId: idsSenior[1],
+      clave: 'reiniciar_compu',
+      usada: false,
+      objetivoUsuarioId: idsSenior[2],
+    },
+    {
+      usuarioId: idsSenior[3],
+      clave: 'poner_cancion',
+      usada: true,
+      objetivoUsuarioId: idsSenior[4],
+    },
+  ]
+
+  await db.insert(beneficios).values(
+    filasBeneficios.map((b, idx) => ({
+      id: crypto.randomUUID(),
+      usuarioId: b.usuarioId,
+      clave: b.clave,
+      asignadoEn: new Date(torneoIniciadoEn.getTime() + idx * 60000),
+      usadoEn: b.usada
+        ? new Date(torneoIniciadoEn.getTime() + (idx + 1) * 90000)
+        : null,
+      objetivoUsuarioId: b.objetivoUsuarioId ?? null,
+      objetivoIngeniero: b.objetivoIngeniero ?? null,
+    })),
   )
+
+  console.log(
+    '\nListo. Credenciales de prueba (todas con contraseña test123):\n',
+  )
+  console.log(`  Admin        -> correo: admin@gmail.com`)
+  console.log(`  Participante -> correo: participante@gmail.com`)
+  console.log(`  Admins masivos         -> admin1..admin5@gmail.com`)
+  console.log(`  Participantes masivos  -> usuario1..usuario40@gmail.com`)
   console.log(
     '  (usuario1-13: invitado, usuario14-26: junior, usuario27-40: senior)',
   )
   console.log(
-    '\n24 problemas creados (8 invitado + 8 junior en el grupo invitado_junior, 8 senior).',
+    `\n${problemasInvitadoJunior.length} problemas invitado_junior + ${problemasSenior.length} problemas senior = ${todosLosProblemas.length} problemas creados.`,
   )
   console.log(
-    'Todas las cuentas ya están marcadas como "ingresadas" (check-in hecho).',
+    'Todas las cuentas ya están marcadas como "ingresadas" (check-in hecho) y el torneo ya está iniciado.',
+  )
+  console.log(
+    `Se generaron ${resueltos.length} envíos completados, ${filasCorridas.length} corridas y ${filasBeneficios.length} beneficios para poblar /clasificacion.`,
   )
   console.log(`admin id: ${adminId}`)
   console.log(`participante id: ${participanteId}`)
